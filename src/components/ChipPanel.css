@@ -1,0 +1,68 @@
+.chip-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.chip-section-header {
+  margin-bottom: 1.25rem;
+}
+
+.chip-section-title {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  margin: 0;
+}
+
+.chip-section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0 0;
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.chip-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chip-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  width: fit-content;
+}
+
+.chip-label.main    { background-color: #ffebee; color: #c62828; }
+.chip-label.foreign { background-color: #e3f2fd; color: #1976d2; }
+.chip-label.trust   { background-color: #fff3e0; color: #f57c00; }
+.chip-label.dealer  { background-color: #f3e5f5; color: #7b1fa2; }
+
+.chip-item.highlight {
+  grid-column: 1 / -1;
+  background: linear-gradient(to right, #ffffff, #fcfcfc);
+  padding: 1rem;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+}
+
+.chip-item.highlight .chip-subchart {
+  height: 140px;
+}
+
+.chip-subchart {
+  width: 100%;
+  height: 120px;
+  background-color: var(--bg-card);
+  border-radius: 4px;
+}

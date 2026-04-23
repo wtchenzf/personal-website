@@ -1,0 +1,75 @@
+.investment-header {
+  margin-bottom: 2.5rem;
+}
+
+.investment-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.investment-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 300;
+  margin-top: 0.5rem;
+}
+
+/* Tabs */
+.tabs-container {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 0;
+  transition: var(--transition-smooth);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-btn:hover {
+  color: var(--accent-indigo);
+}
+
+.tab-btn.active {
+  color: var(--accent-indigo);
+  font-weight: 600;
+  border-bottom-color: var(--accent-gold);
+}
+
+/* Chart panel */
+.tab-content {
+  background-color: var(--bg-card);
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Disclaimer */
+.data-disclaimer {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: right;
+  letter-spacing: 0.03em;
+}

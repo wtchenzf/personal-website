@@ -1,0 +1,77 @@
+.home-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.home-greeting {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 1.5rem;
+}
+
+.home-title {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--accent-indigo);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.home-title em {
+  font-style: normal;
+  position: relative;
+  display: inline-block;
+  color: var(--accent-matcha);
+}
+
+.home-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--accent-gold);
+  margin: 2rem auto;
+}
+
+.home-subtitle {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 480px;
+  line-height: 1.8;
+  margin-bottom: 3rem;
+}
+
+.home-tags {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-tag {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 1.25rem;
+  border-radius: 2px;
+  transition: var(--transition-smooth);
+}
+
+.home-tag:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}

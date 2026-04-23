@@ -1,0 +1,157 @@
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chart-title {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  margin: 0 0 0.4rem 0;
+  letter-spacing: 0.03em;
+}
+
+.chart-price {
+  font-family: 'Inter', var(--font-sans);
+  font-size: 2.25rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.price-up   { color: var(--accent-danger); }
+.price-down { color: var(--accent-matcha); }
+
+.price-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+.price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.price-details {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-item {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.detail-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.chart-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.chart-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.price-diff {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.chart-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 2px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border: 1px solid transparent;
+  transition: var(--transition-smooth);
+}
+
+.chart-btn:hover {
+  color: var(--accent-indigo);
+  border-color: #d1d5db;
+}
+
+.chart-btn.active {
+  background-color: var(--accent-indigo);
+  color: #fff;
+  border-color: var(--accent-indigo);
+}
+
+.chart-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.main-chart {
+  width: 100%;
+  height: 380px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sub-chart {
+  width: 100%;
+  height: 160px;
+  border-radius: 2px;
+  overflow: hidden;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.25rem;
+}
+
+.vol-chart {
+  width: 100%;
+  height: 100px;
+  border-radius: 2px;
+  overflow: hidden;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.25rem;
+}
+

@@ -1,0 +1,108 @@
+.tools-header {
+  margin-bottom: 4rem;
+}
+
+.tools-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.tools-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  font-weight: 300;
+  max-width: 520px;
+  line-height: 1.8;
+}
+
+/* Card */
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tool-number {
+  font-family: 'Inter', var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold);
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.tool-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-indigo);
+  margin-bottom: 1.25rem;
+  transition: var(--transition-smooth);
+}
+
+.card:hover .tool-icon-wrapper {
+  color: var(--accent-matcha);
+  transform: scale(1.1);
+}
+
+.tool-title {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+
+.tool-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.tool-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.tool-tag {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.6rem;
+  border-radius: 2px;
+}
+
+.tool-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-indigo);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  width: fit-content;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--accent-gold);
+  transition: var(--transition-smooth);
+}
+
+.tool-link-btn:hover {
+  color: var(--accent-matcha);
+  border-color: var(--accent-matcha);
+  gap: 0.75rem;
+}
