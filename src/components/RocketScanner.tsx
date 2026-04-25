@@ -26,11 +26,11 @@ const MOCK_ROCKETS: RocketStock[] = [
     chips: {
       mainForce: 15000, foreign: 8500, trust: 3200, dealer: 1500,
       history: [
-        { date: '04/23', mainForce: 15000, foreign: 8500, trust: 3200 },
-        { date: '04/22', mainForce: -2000, foreign: -3500, trust: 1200 },
-        { date: '04/21', mainForce: 4500, foreign: 3200, trust: 800 },
-        { date: '04/20', mainForce: 6200, foreign: 4500, trust: 1100 },
-        { date: '04/17', mainForce: 1500, foreign: 1000, trust: 300 },
+        { date: '04/24', mainForce: 15000, foreign: 8500, trust: 3200 },
+        { date: '04/23', mainForce: -2000, foreign: -3500, trust: 1200 },
+        { date: '04/22', mainForce: 4500, foreign: 3200, trust: 800 },
+        { date: '04/21', mainForce: 6200, foreign: 4500, trust: 1100 },
+        { date: '04/20', mainForce: 1500, foreign: 1000, trust: 300 },
       ]
     }
   },
@@ -40,53 +40,53 @@ const MOCK_ROCKETS: RocketStock[] = [
     chips: {
       mainForce: -8500, foreign: -6200, trust: 1200, dealer: -500,
       history: [
-        { date: '04/23', mainForce: -8500, foreign: -6200, trust: 1200 },
-        { date: '04/22', mainForce: 3200, foreign: 2100, trust: 850 },
-        { date: '04/21', mainForce: 1500, foreign: 1100, trust: 400 },
-        { date: '04/20', mainForce: 4500, foreign: 3200, trust: 1100 },
-        { date: '04/17', mainForce: 2100, foreign: 1500, trust: 500 },
+        { date: '04/24', mainForce: -8500, foreign: -6200, trust: 1200 },
+        { date: '04/23', mainForce: 3200, foreign: 2100, trust: 850 },
+        { date: '04/22', mainForce: 1500, foreign: 1100, trust: 400 },
+        { date: '04/21', mainForce: 4500, foreign: 3200, trust: 1100 },
+        { date: '04/20', mainForce: 2100, foreign: 1500, trust: 500 },
       ]
     }
   },
   { 
-    id: '3', symbol: '6442', name: '光聖', price: 2020.0, change: 7.5, volRatio: 4.2, strength: 98, 
+    id: '3', symbol: '6442', name: '光聖', price: 2150.0, change: 7.5, volRatio: 4.2, strength: 98, 
     reason: '【矽光子傳奇】CPO 訂單能見度直達 2027 年，光聖作為核心供應商，具備極高的獲利領先優勢。股價今日再次挑戰歷史新高，主力大戶瘋狂掃貨，籌碼極度集中。',
     chips: {
       mainForce: 12520, foreign: 8200, trust: 3200, dealer: 1120,
       history: [
-        { date: '04/23', mainForce: 12520, foreign: 8200, trust: 3200 },
-        { date: '04/22', mainForce: 4500, foreign: 3200, trust: 850 },
-        { date: '04/21', mainForce: 1200, foreign: 800, trust: 300 },
-        { date: '04/20', mainForce: 3500, foreign: 2500, trust: 650 },
-        { date: '04/17', mainForce: 850, foreign: 500, trust: 250 },
+        { date: '04/24', mainForce: 12520, foreign: 8200, trust: 3200 },
+        { date: '04/23', mainForce: 4500, foreign: 3200, trust: 850 },
+        { date: '04/22', mainForce: 1200, foreign: 800, trust: 300 },
+        { date: '04/21', mainForce: 3500, foreign: 2500, trust: 650 },
+        { date: '04/20', mainForce: 850, foreign: 500, trust: 250 },
       ]
     }
   },
   { 
-    id: '4', symbol: '3017', name: '奇鋐', price: 2700.0, change: 5.2, volRatio: 2.5, strength: 94, 
+    id: '4', symbol: '3017', name: '奇鋐', price: 2850.0, change: 5.2, volRatio: 2.5, strength: 94, 
     reason: '【冷卻之王】液冷技術進入全面商用，奇鋐的 CDU 與冷卻液出口全球第一。隨著伺服器功率攀升，熱管理需求無止盡增加。法人連續買超 15 日，強勢格局未變。',
     chips: {
       mainForce: 5100, foreign: 3200, trust: 1500, dealer: 400,
       history: [
-        { date: '04/23', mainForce: 5100, foreign: 3200, trust: 1500 },
-        { date: '04/22', mainForce: 2100, foreign: 1500, trust: 450 },
-        { date: '04/21', mainForce: 800, foreign: 500, trust: 200 },
-        { date: '04/20', mainForce: 1500, foreign: 1100, trust: 300 },
-        { date: '04/17', mainForce: 600, foreign: 400, trust: 150 },
+        { date: '04/24', mainForce: 5100, foreign: 3200, trust: 1500 },
+        { date: '04/23', mainForce: 2100, foreign: 1500, trust: 450 },
+        { date: '04/22', mainForce: 800, foreign: 500, trust: 200 },
+        { date: '04/21', mainForce: 1500, foreign: 1100, trust: 300 },
+        { date: '04/20', mainForce: 600, foreign: 400, trust: 150 },
       ]
     }
   },
   { 
-    id: '5', symbol: '3661', name: '世芯-KY', price: 3980.0, change: 2.1, volRatio: 1.5, strength: 88, 
+    id: '5', symbol: '3661', name: '世芯-KY', price: 4120.0, change: 2.1, volRatio: 1.5, strength: 88, 
     reason: '【AI ASIC 核心】雖然盤中遭遇小幅波動，但收盤仍展現強大韌性。2nm 設計案的權利金收入將在下半年進入認列高峰。券商報告一致給予強力買進評等，目標價直指 4500 元。',
     chips: {
       mainForce: 2150, foreign: 1450, trust: 450, dealer: 250,
       history: [
-        { date: '04/23', mainForce: 2150, foreign: 1450, trust: 450 },
-        { date: '04/22', mainForce: -200, foreign: -450, trust: 120 },
-        { date: '04/21', mainForce: 850, foreign: 600, trust: 180 },
-        { date: '04/20', mainForce: 1100, foreign: 800, trust: 250 },
-        { date: '04/17', mainForce: 500, foreign: 350, trust: 100 },
+        { date: '04/24', mainForce: 2150, foreign: 1450, trust: 450 },
+        { date: '04/23', mainForce: -200, foreign: -450, trust: 120 },
+        { date: '04/22', mainForce: 850, foreign: 600, trust: 180 },
+        { date: '04/21', mainForce: 1100, foreign: 800, trust: 250 },
+        { date: '04/20', mainForce: 500, foreign: 350, trust: 100 },
       ]
     }
   },

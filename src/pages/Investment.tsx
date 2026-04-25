@@ -19,11 +19,11 @@ import './Investment.css';
 
 // ── Symbol tabs ──────────────────────────────────────────────────────────────
 const SYMBOL_TABS = [
-  { id: '2330', symbol: '2330.TW', name: 'TSMC',        label: 'TSMC (2330)', basePrice: 1650,   vol: 0.024, target: 2080.00, lineOnly: false },
-  { id: '2454', symbol: '2454.TW', name: 'MediaTek',    label: 'MediaTek (2454)', basePrice: 1850,  vol: 0.035, target: 2215.00, lineOnly: false },
-  { id: 'gold', symbol: 'GC=F',    name: 'Gold',        label: 'Gold',   basePrice: 3950,  vol: 0.015, target: 4709.98, lineOnly: false },
-  { id: 'silv', symbol: 'SI=F',    name: 'Silver',      label: 'Silver', basePrice: 56.5,  vol: 0.028, target: 78.0,    lineOnly: false },
-  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',       label: 'VIXTWN',        basePrice: 13.5,    vol: 0.05,  target: 32.04,   lineOnly: true  },
+  { id: '2330', symbol: '2330.TW', name: 'TSMC',        label: 'TSMC (2330)', basePrice: 1850,   vol: 0.024, target: 2185.00, lineOnly: false },
+  { id: '2454', symbol: '2454.TW', name: 'MediaTek',    label: 'MediaTek (2454)', basePrice: 1950,  vol: 0.035, target: 2435.00, lineOnly: false },
+  { id: 'gold', symbol: 'GC=F',    name: 'Gold',        label: 'Gold',   basePrice: 4400,  vol: 0.015, target: 4715.00, lineOnly: false },
+  { id: 'silv', symbol: 'SI=F',    name: 'Silver',      label: 'Silver', basePrice: 71.2,  vol: 0.028, target: 76.2,    lineOnly: false },
+  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',       label: 'VIXTWN',        basePrice: 15.2,    vol: 0.05,  target: 18.8,   lineOnly: true  },
 ];
 
 export default function Investment() {
@@ -40,9 +40,9 @@ export default function Investment() {
       else if (t.id === 'silv') seed = SEED_DATA_SILVER;
       else if (t.id === 'vix')  seed = SEED_DATA_VIX;
 
-      const generated = generateMockStockData(260, t.basePrice, t.vol, t.target, seed); 
-      // Filter for 2026 data only
-      m[t.id] = generated.filter(d => d.time >= '2026-01-01');
+      const generated = generateMockStockData(60, t.basePrice, t.vol, t.target, seed); 
+      // Filter for 2026.4.1 onwards
+      m[t.id] = generated.filter(d => d.time >= '2026-04-01');
     });
     return m;
   }, []);
@@ -54,9 +54,9 @@ export default function Investment() {
         let seed = undefined;
         if (t.id === '2330') seed = CHIP_DATA_2330;
         else if (t.id === '2454') seed = CHIP_DATA_2454;
-        const generated = generateChipData(260, t.id === '2454' ? 500 : 300, seed);
-        // Filter for 2026 data only
-        c[t.id] = generated.filter(d => d.time >= '2026-01-01');
+        const generated = generateChipData(60, t.id === '2454' ? 500 : 300, seed);
+        // Filter for 2026.4.1 onwards
+        c[t.id] = generated.filter(d => d.time >= '2026-04-01');
       }
     });
     return c;
@@ -65,20 +65,20 @@ export default function Investment() {
   // For VIXTWN convert OHLC → line only
   const vixTarget = SYMBOL_TABS.find(t => t.id === 'vix')?.target ?? 32.04;
   const vixLineData = useMemo(() => {
-    const generated = generateLineData(260, 13.5, 0.07, vixTarget, SEED_DATA_VIX.map(d=>({time:d.time, value: d.close})));
-    return generated.filter(d => d.time >= '2026-01-01');
+    const generated = generateLineData(60, 15.2, 0.07, vixTarget, SEED_DATA_VIX.map(d=>({time:d.time, value: d.close})));
+    return generated.filter(d => d.time >= '2026-04-01');
   }, [vixTarget]);
 
   // ── Market dashboard mock data ─────────────────────────────────────────────
   const dashData = useMemo(() => ({
-    longShort:   generateBarData(120, 0.25).filter(d => d.time >= '2026-01-01'),             
-    brokers:     generateBarData(120, 30).filter(d => d.time >= '2026-01-01'),               
-    marginBal:   generateTrendLine(260, 4385, 0.0001, 0.012).filter(d => d.time >= '2026-01-01'), 
+    longShort:   generateBarData(60, 0.25).filter(d => d.time >= '2026-04-01'),             
+    brokers:     generateBarData(60, 30).filter(d => d.time >= '2026-04-01'),               
+    marginBal:   generateTrendLine(60, 4385, 0.0001, 0.012).filter(d => d.time >= '2026-04-01'), 
     breadth:     (() => {
-      const b = generateBreadthData(260);
+      const b = generateBreadthData(60);
       return {
-        ma20: b.ma20.filter((d: any) => d.time >= '2026-01-01'),
-        ma60: b.ma60.filter((d: any) => d.time >= '2026-01-01'),
+        ma20: b.ma20.filter((d: any) => d.time >= '2026-04-01'),
+        ma60: b.ma60.filter((d: any) => d.time >= '2026-04-01'),
       };
     })(),               
   }), []);
@@ -90,8 +90,8 @@ export default function Investment() {
 
   // Stats for dashboard panels
   const latestLS   = dashData.longShort[dashData.longShort.length - 1]?.value ?? 0;
-  const latestBrok = -30.7; // Verified for 04-23
-  const latestMar  = 4385.45; // Verified for 04-23
+  const latestBrok = 18.5; // Updated for 04-24
+  const latestMar  = 4412.30; // Updated for 04-24
   const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 0;
   const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 0;
 
