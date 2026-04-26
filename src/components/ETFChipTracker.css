@@ -1,0 +1,328 @@
+/* ── ETF Chip Tracker ──────────────────────────────────────────────────────── */
+
+.etf-tracker-container {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+  border-left: 4px solid var(--accent-gold);
+}
+
+/* Header */
+.etf-tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.etf-tracker-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  background-color: var(--accent-gold);
+  color: #1a1a2e;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.etf-tracker-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.etf-tracker-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.etf-nav-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.etf-nav-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.etf-nav-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--accent-indigo);
+}
+
+/* ETF selector tabs */
+.etf-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.etf-tab {
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 2px solid #e5e7eb;
+  color: var(--text-secondary);
+  transition: var(--transition-smooth);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.etf-tab.active {
+  background-color: #1a1a2e;
+  color: var(--accent-gold);
+  border-color: #1a1a2e;
+}
+
+.etf-tab:not(.active):hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-indigo);
+}
+
+/* Full name label */
+.etf-fullname {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  padding-left: 0.25rem;
+}
+
+/* Buy / Sell toggle */
+.etf-section-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.etf-toggle-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  transition: var(--transition-smooth);
+  color: var(--text-secondary);
+  background: #f3f4f6;
+}
+
+.etf-toggle-btn.buy.active {
+  background: #1f1a14;
+  color: #ff7033;
+  border-color: #1f1a14;
+}
+
+.etf-toggle-btn.sell.active {
+  background: #101e16;
+  color: #33c058;
+  border-color: #101e16;
+}
+
+.etf-toggle-btn:not(.active):hover {
+  background: #e9ecef;
+}
+
+/* Section banner (dark header bar) */
+.etf-section-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0;
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.etf-section-banner.buy {
+  background: #1f1a14;
+  border-top: 2px solid #ff7033;
+}
+
+.etf-section-banner.sell {
+  background: #101e16;
+  border-top: 2px solid #33c058;
+}
+
+.etf-banner-etf {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+}
+
+.etf-section-banner.buy  .etf-banner-dir { color: #ff7033; font-weight: 700; font-size: 0.85rem; }
+.etf-section-banner.sell .etf-banner-dir { color: #33c058; font-weight: 700; font-size: 0.85rem; }
+
+.etf-banner-summary {
+  font-size: 0.82rem;
+  color: #c8c8d8;
+  font-weight: 400;
+}
+
+/* Stock rows */
+.etf-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 1rem;
+}
+
+.etf-stock-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0;
+  animation: fadeIn 0.4s ease forwards;
+  opacity: 0;
+  transition: filter 0.15s;
+}
+
+.etf-stock-row.buy  { background: #272115; }
+.etf-stock-row.sell { background: #111d14; }
+
+.etf-stock-row:last-child {
+  border-radius: 0 0 4px 4px;
+}
+
+.etf-stock-row:hover {
+  filter: brightness(1.18);
+}
+
+/* Rank number */
+.etf-row-rank {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #686878;
+}
+
+/* Stock name + code */
+.etf-row-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.etf-row-stockname {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e8e8f0;
+}
+
+.etf-row-code {
+  font-size: 0.72rem;
+  color: #888898;
+}
+
+/* Amount */
+.etf-row-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.etf-row-amt-val {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.etf-row-amt-val.buy  { color: #ff7033; }
+.etf-row-amt-val.sell { color: #33c058; }
+
+.etf-row-shares {
+  font-size: 0.72rem;
+  color: #888898;
+}
+
+/* Tags */
+.etf-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.etf-tag {
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  font-size: 0.68rem;
+  color: #aaaacc;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Weight */
+.etf-row-weight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.etf-weight-label {
+  font-size: 0.65rem;
+  color: #666676;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.etf-weight-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #c8c8d8;
+}
+
+.etf-status-badge {
+  padding: 1px 5px;
+  background: rgba(255, 80, 80, 0.15);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: 2px;
+  font-size: 0.62rem;
+  color: #ff6060;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+/* Disclaimer */
+.etf-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .etf-stock-row {
+    grid-template-columns: 32px 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .etf-row-tags  { grid-column: 1 / -1; }
+  .etf-row-weight { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 0.5rem; }
+}
+
+@media (max-width: 600px) {
+  .etf-tracker-header { flex-direction: column; gap: 0.75rem; }
+  .etf-nav-group      { align-items: flex-start; }
+  .etf-banner-summary { display: none; }
+}

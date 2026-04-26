@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import StockChart from '../components/StockChart';
 import MarketPanel from '../components/MarketPanel';
 import RocketScanner from '../components/RocketScanner';
+import ETFChipTracker from '../components/ETFChipTracker';
 import {
   generateMockStockData,
   generateLineData,
@@ -132,6 +133,8 @@ export default function Investment() {
       </div>
 
       <RocketScanner />
+
+      <ETFChipTracker />
 
       <p className="data-disclaimer">
         ※ 圖表資料為高擬真模擬數據，僅供介面展示，不代表實際行情。
