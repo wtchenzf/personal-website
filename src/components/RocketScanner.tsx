@@ -19,74 +19,75 @@ interface RocketStock {
   };
 }
 
+// Data verified from 鉅亨網 (OHLC) and Yahoo Finance 法人買賣 as of 2026/04/24
 const MOCK_ROCKETS: RocketStock[] = [
-  { 
-    id: '1', symbol: '2317', name: '鴻海', price: 225.0, change: 1.8, volRatio: 2.1, strength: 82, 
-    reason: '【AI 整合亮點】隨著 Blackwell 伺服器機櫃進入密集出貨期，鴻海展現強大的系統整合實力。今日雖然大盤震盪，但鴻海表現相對穩健，吸引長線資金布局。',
+  {
+    id: '1', symbol: '2317', name: '鴻海', price: 221.5, change: -1.56, volRatio: 1.3, strength: 72,
+    reason: '【AI 伺服器出貨王】本週 22 日外資單日大買 40,064 張創近期新高，23 日再買 27,796 張，兩日合計逾 6.8 萬張強力卡位。24 日因短線獲利了結小幅拉回，但整體籌碼仍偏多，Blackwell GB200 機櫃出貨量持續放大，長線布局邏輯不變。',
     chips: {
-      mainForce: 15000, foreign: 8500, trust: 3200, dealer: 1500,
+      mainForce: -4595, foreign: -4277, trust: -488, dealer: 170,
       history: [
-        { date: '04/24', mainForce: 15000, foreign: 8500, trust: 3200 },
-        { date: '04/23', mainForce: -2000, foreign: -3500, trust: 1200 },
-        { date: '04/22', mainForce: 4500, foreign: 3200, trust: 800 },
-        { date: '04/21', mainForce: 6200, foreign: 4500, trust: 1100 },
-        { date: '04/20', mainForce: 1500, foreign: 1000, trust: 300 },
+        { date: '04/24', mainForce: -4595,  foreign: -4277, trust:  -488 },
+        { date: '04/23', mainForce: 27885,  foreign: 27796, trust:   210 },
+        { date: '04/22', mainForce: 48397,  foreign: 40064, trust:  6320 },
+        { date: '04/21', mainForce: 15590,  foreign: 15363, trust:  -612 },
+        { date: '04/20', mainForce: 10409,  foreign:  9876, trust:  -266 },
       ]
     }
   },
-  { 
-    id: '2', symbol: '2382', name: '廣達', price: 322.0, change: -2.1, volRatio: 1.8, strength: 75, 
-    reason: '【漲多拉回】AI 伺服器營收貢獻顯著，但近期股價漲幅已大，今日遭遇獲利了結賣壓。技術面觀察 315 元支撐位，法人籌碼雖有調節但長線展望不變。',
+  {
+    id: '2', symbol: '2382', name: '廣達', price: 323.0, change: 0.31, volRatio: 0.9, strength: 65,
+    reason: '【AI 伺服器龍頭整理】外資 20-21 日連兩日合計買超 1.3 萬張墊高成本，23-24 日拉回整理。AI 伺服器占營收比重持續攀升，目前股價在 320 元附近獲支撐，等待下一段主升波。',
     chips: {
-      mainForce: -8500, foreign: -6200, trust: 1200, dealer: -500,
+      mainForce: 3183, foreign: 5908, trust: -2403, dealer: -322,
       history: [
-        { date: '04/24', mainForce: -8500, foreign: -6200, trust: 1200 },
-        { date: '04/23', mainForce: 3200, foreign: 2100, trust: 850 },
-        { date: '04/22', mainForce: 1500, foreign: 1100, trust: 400 },
-        { date: '04/21', mainForce: 4500, foreign: 3200, trust: 1100 },
-        { date: '04/20', mainForce: 2100, foreign: 1500, trust: 500 },
+        { date: '04/24', mainForce:  3183, foreign:  5908, trust: -2403 },
+        { date: '04/23', mainForce: -3652, foreign: -2629, trust:  -440 },
+        { date: '04/22', mainForce: -2125, foreign: -1598, trust:  -712 },
+        { date: '04/21', mainForce:  6869, foreign:  6444, trust:  -144 },
+        { date: '04/20', mainForce:  7039, foreign:  6946, trust:   -77 },
       ]
     }
   },
-  { 
-    id: '3', symbol: '6442', name: '光聖', price: 2150.0, change: 7.5, volRatio: 4.2, strength: 98, 
-    reason: '【矽光子傳奇】CPO 訂單能見度直達 2027 年，光聖作為核心供應商，具備極高的獲利領先優勢。股價今日再次挑戰歷史新高，主力大戶瘋狂掃貨，籌碼極度集中。',
+  {
+    id: '3', symbol: '6442', name: '光聖', price: 1880.0, change: -6.93, volRatio: 0.8, strength: 32,
+    reason: '【矽光子修正壓力】4/20 急漲後法人連續四日賣超，投信 23-24 日累計倒出逾 1,200 張，籌碼明顯鬆動。短線需觀察 1,820 元支撐是否守穩，若量縮止跌可視為反彈機會，但建議等均線回穩再行介入。',
     chips: {
-      mainForce: 12520, foreign: 8200, trust: 3200, dealer: 1120,
+      mainForce: -846, foreign: -279, trust: -542, dealer: -25,
       history: [
-        { date: '04/24', mainForce: 12520, foreign: 8200, trust: 3200 },
-        { date: '04/23', mainForce: 4500, foreign: 3200, trust: 850 },
-        { date: '04/22', mainForce: 1200, foreign: 800, trust: 300 },
-        { date: '04/21', mainForce: 3500, foreign: 2500, trust: 650 },
-        { date: '04/20', mainForce: 850, foreign: 500, trust: 250 },
+        { date: '04/24', mainForce:  -846, foreign:  -279, trust:  -542 },
+        { date: '04/23', mainForce:  -625, foreign:    74, trust:  -684 },
+        { date: '04/22', mainForce:  -132, foreign:   -31, trust:   -95 },
+        { date: '04/21', mainForce:   -30, foreign:   -74, trust:   157 },
+        { date: '04/20', mainForce:  1162, foreign:  1011, trust:    55 },
       ]
     }
   },
-  { 
-    id: '4', symbol: '3017', name: '奇鋐', price: 2850.0, change: 5.2, volRatio: 2.5, strength: 94, 
-    reason: '【冷卻之王】液冷技術進入全面商用，奇鋐的 CDU 與冷卻液出口全球第一。隨著伺服器功率攀升，熱管理需求無止盡增加。法人連續買超 15 日，強勢格局未變。',
+  {
+    id: '4', symbol: '3017', name: '奇鋐', price: 2945.0, change: 9.89, volRatio: 1.5, strength: 95,
+    reason: '【液冷霸主飆漲停】今日以漲停 +9.89% 收盤，量能較前日明顯放大，投信連續買超動能強勁。液冷 CDU 出貨量隨 AI 伺服器功率提升持續擴大，GB300 導入後單機熱管理需求翻倍，法人給予強烈買進評等。',
     chips: {
-      mainForce: 5100, foreign: 3200, trust: 1500, dealer: 400,
+      mainForce: 662, foreign: 341, trust: 229, dealer: 92,
       history: [
-        { date: '04/24', mainForce: 5100, foreign: 3200, trust: 1500 },
-        { date: '04/23', mainForce: 2100, foreign: 1500, trust: 450 },
-        { date: '04/22', mainForce: 800, foreign: 500, trust: 200 },
-        { date: '04/21', mainForce: 1500, foreign: 1100, trust: 300 },
-        { date: '04/20', mainForce: 600, foreign: 400, trust: 150 },
+        { date: '04/24', mainForce:  662, foreign:  341, trust:  229 },
+        { date: '04/23', mainForce: -208, foreign: -925, trust:  764 },
+        { date: '04/22', mainForce:   -6, foreign: -294, trust:  228 },
+        { date: '04/21', mainForce: -371, foreign: -447, trust:  122 },
+        { date: '04/20', mainForce:  487, foreign:  120, trust:  320 },
       ]
     }
   },
-  { 
-    id: '5', symbol: '3661', name: '世芯-KY', price: 4120.0, change: 2.1, volRatio: 1.5, strength: 88, 
-    reason: '【AI ASIC 核心】雖然盤中遭遇小幅波動，但收盤仍展現強大韌性。2nm 設計案的權利金收入將在下半年進入認列高峰。券商報告一致給予強力買進評等，目標價直指 4500 元。',
+  {
+    id: '5', symbol: '3661', name: '世芯-KY', price: 4215.0, change: 5.90, volRatio: 0.9, strength: 90,
+    reason: '【AI ASIC 設計領頭羊】外資本週連五日買超合計逾 3,800 張，21 日更與投信聯手大買逾 2,000 張。2nm ASIC 設計案持續落地，下半年權利金收入高峰期將至，目標價上看 4,800 元。',
     chips: {
-      mainForce: 2150, foreign: 1450, trust: 450, dealer: 250,
+      mainForce: 429, foreign: 251, trust: 95, dealer: 83,
       history: [
-        { date: '04/24', mainForce: 2150, foreign: 1450, trust: 450 },
-        { date: '04/23', mainForce: -200, foreign: -450, trust: 120 },
-        { date: '04/22', mainForce: 850, foreign: 600, trust: 180 },
-        { date: '04/21', mainForce: 1100, foreign: 800, trust: 250 },
-        { date: '04/20', mainForce: 500, foreign: 350, trust: 100 },
+        { date: '04/24', mainForce:  429, foreign:  251, trust:   95 },
+        { date: '04/23', mainForce: 1075, foreign: 1124, trust:   42 },
+        { date: '04/22', mainForce:  590, foreign:  553, trust:   81 },
+        { date: '04/21', mainForce: 2163, foreign: 1426, trust:  604 },
+        { date: '04/20', mainForce:  523, foreign:  478, trust:   12 },
       ]
     }
   },
@@ -194,7 +195,9 @@ export default function RocketScanner() {
                     </div>
                     <div className="stat">
                       <span className="label">今日漲幅</span>
-                      <span className="value up">+{stock.change}%</span>
+                      <span className={`value ${stock.change >= 0 ? 'up' : 'down'}`}>
+                        {stock.change >= 0 ? '+' : ''}{stock.change}%
+                      </span>
                     </div>
                     <div className="stat">
                       <span className="label">量能倍率</span>
