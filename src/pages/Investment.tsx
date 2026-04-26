@@ -18,31 +18,31 @@ import {
 import './Investment.css';
 
 // ── Symbol tabs ──────────────────────────────────────────────────────────────
+// basePrice = estimated price ~60 days before 04/24 (around Feb 23, 2026)
 const SYMBOL_TABS = [
-  { id: '2330', symbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1700,  vol: 0.022, target: 2185,  lineOnly: false },
-  { id: '2454', symbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1200,  vol: 0.038, target: 2435,  lineOnly: false },
-  { id: 'gold', symbol: 'GC=F',   name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4200,  vol: 0.014, target: 4709,  lineOnly: false },
-  { id: 'silv', symbol: 'SI=F',   name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 62.0,  vol: 0.025, target: 75.63, lineOnly: false },
-  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 32.0,  vol: 0.06,  target: 18.8,  lineOnly: true  },
+  { id: '2330', symbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1900,  vol: 0.018, target: 2185,  lineOnly: false },
+  { id: '2454', symbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1650,  vol: 0.028, target: 2435,  lineOnly: false },
+  { id: 'gold', symbol: 'GC=F',   name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4100,  vol: 0.012, target: 4709,  lineOnly: false },
+  { id: 'silv', symbol: 'SI=F',   name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 58.0,  vol: 0.022, target: 75.63, lineOnly: false },
+  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 32.0,  vol: 0.05,  target: 18.8,  lineOnly: true  },
 ];
 
 export default function Investment() {
   const [activeTab, setActiveTab] = useState(SYMBOL_TABS[0].id);
 
-  // ── Memoised mock data ────────────────────────────────────────────────────
+  // ── Memoised data ─────────────────────────────────────────────────────────
+  // Full 60-day dataset — no date filter so MACD/KD/RSI have enough history.
+  // Seed data anchors from 03/26 onward are real; earlier dates are generated.
   const symbolData = useMemo(() => {
     const m: Record<string, any> = {};
-    SYMBOL_TABS.forEach(t => { 
+    SYMBOL_TABS.forEach(t => {
       let seed = undefined;
       if (t.id === '2330') seed = SEED_DATA_2330;
       else if (t.id === '2454') seed = SEED_DATA_2454;
       else if (t.id === 'gold') seed = SEED_DATA_GOLD;
       else if (t.id === 'silv') seed = SEED_DATA_SILVER;
       else if (t.id === 'vix')  seed = SEED_DATA_VIX;
-
-      const generated = generateMockStockData(60, t.basePrice, t.vol, t.target, seed); 
-      // Filter for 2026.4.1 onwards
-      m[t.id] = generated.filter(d => d.time >= '2026-04-01');
+      m[t.id] = generateMockStockData(60, t.basePrice, t.vol, t.target, seed);
     });
     return m;
   }, []);
@@ -55,18 +55,17 @@ export default function Investment() {
         if (t.id === '2330') seed = CHIP_DATA_2330;
         else if (t.id === '2454') seed = CHIP_DATA_2454;
         const generated = generateChipData(60, t.id === '2454' ? 500 : 300, seed);
-        // Filter for 2026.4.1 onwards
-        c[t.id] = generated.filter(d => d.time >= '2026-04-01');
+        // Chip seeds only cover April — show April data only
+        c[t.id] = generated.filter((d: any) => d.time >= '2026-04-01');
       }
     });
     return c;
   }, []);
 
-  // For VIXTWN convert OHLC → line only
-  const vixTarget = SYMBOL_TABS.find(t => t.id === 'vix')?.target ?? 32.04;
+  // For VIXTWN convert OHLC → line only (full 60 days)
+  const vixTarget = SYMBOL_TABS.find(t => t.id === 'vix')?.target ?? 18.8;
   const vixLineData = useMemo(() => {
-    const generated = generateLineData(60, 15.2, 0.07, vixTarget, SEED_DATA_VIX.map(d=>({time:d.time, value: d.close})));
-    return generated.filter(d => d.time >= '2026-04-01');
+    return generateLineData(60, 32.0, 0.06, vixTarget, SEED_DATA_VIX.map(d => ({ time: d.time, value: d.close })));
   }, [vixTarget]);
 
   // ── Market dashboard mock data ─────────────────────────────────────────────
@@ -85,7 +84,10 @@ export default function Investment() {
 
   const active = SYMBOL_TABS.find(t => t.id === activeTab) || SYMBOL_TABS[0];
   const activeData = activeTab === 'vix'
-    ? (symbolData['vix'] || []).map((d: any, i: number) => ({ ...d, close: vixLineData[i]?.value ?? d.close }))
+    ? (symbolData['vix'] || []).map((d: any) => {
+        const match = vixLineData.find((v: any) => v.time === d.time);
+        return { ...d, close: match?.value ?? d.close };
+      })
     : symbolData[activeTab];
 
   // Stats for dashboard panels

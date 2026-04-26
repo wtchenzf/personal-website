@@ -1,14 +1,21 @@
 import type { OHLCData, ChipData } from '../utils/technicalIndicators';
 
 /**
- * Real market data for April 2026.
+ * Real market data — March 26 to April 24, 2026.
  * OHLC: verified from 鉅亨網 (cnyes.com)
  * Institutional (籌碼): verified from Yahoo Finance 法人買賣
  * Note: 2026/04/03 & 04/06 were holiday (清明節連假), no trading.
+ * Seed data starts from 03/26 so indicators (MACD/KD/RSI) have enough history.
  */
 
 // ── TSMC (2330) ────────────────────────────────────────────────────────────────
 export const SEED_DATA_2330: OHLCData[] = [
+  // March (real data from 鉅亨網)
+  { time: '2026-03-26', open: 1850, high: 1865, low: 1840, close: 1840, volume: 22290 },
+  { time: '2026-03-27', open: 1805, high: 1825, low: 1800, close: 1820, volume: 32169 },
+  { time: '2026-03-30', open: 1780, high: 1800, low: 1780, close: 1780, volume: 45895 },
+  { time: '2026-03-31', open: 1775, high: 1790, low: 1760, close: 1760, volume: 58387 },
+  // April (real data from 鉅亨網)
   { time: '2026-04-01', open: 1840, high: 1855, low: 1830, close: 1855, volume: 38166 },
   { time: '2026-04-02', open: 1865, high: 1865, low: 1805, close: 1810, volume: 28389 },
   { time: '2026-04-07', open: 1850, high: 1860, low: 1835, close: 1860, volume: 19712 },
@@ -50,6 +57,12 @@ export const CHIP_DATA_2330: ChipData[] = [
 
 // ── MediaTek (2454) ────────────────────────────────────────────────────────────
 export const SEED_DATA_2454: OHLCData[] = [
+  // March (real data from 鉅亨網)
+  { time: '2026-03-26', open: 1610, high: 1640, low: 1590, close: 1590, volume:  7823 },
+  { time: '2026-03-27', open: 1560, high: 1585, low: 1545, close: 1585, volume:  7444 },
+  { time: '2026-03-30', open: 1540, high: 1555, low: 1505, close: 1510, volume:  8154 },
+  { time: '2026-03-31', open: 1525, high: 1540, low: 1490, close: 1490, volume: 10675 },
+  // April (real data from 鉅亨網)
   { time: '2026-04-01', open: 1550, high: 1550, low: 1460, close: 1465, volume: 11670 },
   { time: '2026-04-02', open: 1500, high: 1510, low: 1445, close: 1465, volume:  9302 },
   { time: '2026-04-07', open: 1480, high: 1480, low: 1430, close: 1470, volume:  7421 },
