@@ -25,6 +25,7 @@ interface ReversalStock {
   id: string;
   symbol: string;
   name: string;
+  scanDate: string;   // date signal was first identified
   price: number;
   change: number;
   priorLow: { date: string; price: number };
@@ -194,7 +195,7 @@ const MOCK_ROCKETS: RocketStock[] = [
 const BOTTOM_REVERSALS: ReversalStock[] = [
   {
     // 雙底：04/20 低 83.8，04/23 回測 84.3 守穩，04/24 投信首度翻多
-    id: 'r1', symbol: '2344', name: '華邦電', price: 88.2, change: 0.46,
+    id: 'r1', symbol: '2344', name: '華邦電', scanDate: '04/24', price: 88.2, change: 0.46,
     priorLow: { date: '04/20', price: 83.8 }, recoverPct: 5.2, daysFromLow: 3,
     kdK: 19.8, kdD: 15.2,
     volRatio: 1.0, strength: 68,
@@ -212,7 +213,7 @@ const BOTTOM_REVERSALS: ReversalStock[] = [
   },
   {
     // W 底：4/2 初跌 259，4/14 反彈 301，4/20-21 再探 269-271 確立 W 底
-    id: 'r2', symbol: '2449', name: '京元電', price: 286.0, change: 3.06,
+    id: 'r2', symbol: '2449', name: '京元電', scanDate: '04/24', price: 286.0, change: 3.06,
     priorLow: { date: '04/21', price: 269.0 }, recoverPct: 6.3, daysFromLow: 2,
     kdK: 24.5, kdD: 18.8,
     volRatio: 1.4, strength: 74,
@@ -230,7 +231,7 @@ const BOTTOM_REVERSALS: ReversalStock[] = [
   },
   {
     // 4/7 低點 379 後整理 12 日，今日外資+自營商同步翻多
-    id: 'r3', symbol: '3034', name: '聯詠', price: 418.0, change: 2.96,
+    id: 'r3', symbol: '3034', name: '聯詠', scanDate: '04/24', price: 418.0, change: 2.96,
     priorLow: { date: '04/07', price: 379.0 }, recoverPct: 10.3, daysFromLow: 12,
     kdK: 22.8, kdD: 19.3,
     volRatio: 1.1, strength: 62,
@@ -248,7 +249,7 @@ const BOTTOM_REVERSALS: ReversalStock[] = [
   },
   {
     // 4/7 低後反彈，4/20-23 在 454-465 整理形成次底，今日突破 +6.78%
-    id: 'r4', symbol: '3711', name: '日月光投控', price: 496.0, change: 6.78,
+    id: 'r4', symbol: '3711', name: '日月光投控', scanDate: '04/24', price: 496.0, change: 6.78,
     priorLow: { date: '04/20', price: 454.5 }, recoverPct: 9.1, daysFromLow: 3,
     kdK: 23.8, kdD: 18.5,
     volRatio: 1.3, strength: 70,
@@ -266,7 +267,7 @@ const BOTTOM_REVERSALS: ReversalStock[] = [
   },
   {
     // 4/7 低點 191 後整理 12 日，外資開始試探性進場，自營商仍在出清
-    id: 'r5', symbol: '6239', name: '力成', price: 210.0, change: 1.45,
+    id: 'r5', symbol: '6239', name: '力成', scanDate: '04/24', price: 210.0, change: 1.45,
     priorLow: { date: '04/07', price: 191.0 }, recoverPct: 9.9, daysFromLow: 12,
     kdK: 21.5, kdD: 17.4,
     volRatio: 0.9, strength: 48,
@@ -486,6 +487,7 @@ export default function RocketScanner() {
                     <div className="name-group">
                       <span className="stock-symbol">{stock.symbol}</span>
                       <span className="stock-name">{stock.name}</span>
+                      <span className="scan-date-badge">📅 {stock.scanDate}</span>
                     </div>
                   </div>
 
