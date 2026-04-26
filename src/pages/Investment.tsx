@@ -19,11 +19,11 @@ import './Investment.css';
 
 // ── Symbol tabs ──────────────────────────────────────────────────────────────
 const SYMBOL_TABS = [
-  { id: '2330', symbol: '2330.TW', name: 'TSMC',        label: 'TSMC (2330)', basePrice: 1850,   vol: 0.024, target: 2185.00, lineOnly: false },
-  { id: '2454', symbol: '2454.TW', name: 'MediaTek',    label: 'MediaTek (2454)', basePrice: 1950,  vol: 0.035, target: 2435.00, lineOnly: false },
-  { id: 'gold', symbol: 'GC=F',    name: 'Gold',        label: 'Gold',   basePrice: 4400,  vol: 0.015, target: 4715.00, lineOnly: false },
-  { id: 'silv', symbol: 'SI=F',    name: 'Silver',      label: 'Silver', basePrice: 71.2,  vol: 0.028, target: 76.2,    lineOnly: false },
-  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',       label: 'VIXTWN',        basePrice: 15.2,    vol: 0.05,  target: 18.8,   lineOnly: true  },
+  { id: '2330', symbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1750,  vol: 0.022, target: 2185, lineOnly: false },
+  { id: '2454', symbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1850,  vol: 0.032, target: 2435, lineOnly: false },
+  { id: 'gold', symbol: 'GC=F',   name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4200,  vol: 0.014, target: 4709, lineOnly: false },
+  { id: 'silv', symbol: 'SI=F',   name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 65.0,  vol: 0.025, target: 75.63, lineOnly: false },
+  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 28.0,  vol: 0.06,  target: 18.8, lineOnly: true  },
 ];
 
 export default function Investment() {
@@ -90,8 +90,8 @@ export default function Investment() {
 
   // Stats for dashboard panels
   const latestLS   = dashData.longShort[dashData.longShort.length - 1]?.value ?? 0;
-  const latestBrok = 18.5; // Updated for 04-24
-  const latestMar  = 4412.30; // Updated for 04-24
+  const latestBrok = 25.8; // 04-24 官股買超
+  const latestMar  = 4528.60; // 04-24 融資餘額
   const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 0;
   const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 0;
 

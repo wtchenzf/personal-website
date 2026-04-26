@@ -80,8 +80,8 @@ export default function ChipPanel({ data }: ChipPanelProps) {
   return (
     <div className="chip-panel">
       <div className="chip-section-header">
-        <h3 className="chip-section-title">主力與法人籌碼動向 (單位: 億元)</h3>
-        <p className="chip-section-subtitle">每日買賣超 · 數據同步</p>
+        <h3 className="chip-section-title">主力與法人籌碼動向</h3>
+        <p className="chip-section-subtitle">每日買賣超 · 單位：張</p>
       </div>
       
       <div className="chip-grid">
