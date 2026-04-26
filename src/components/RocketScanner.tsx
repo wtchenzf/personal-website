@@ -6,6 +6,7 @@ interface RocketStock {
   id: string;
   symbol: string;
   name: string;
+  scanDate: string;   // date signal was first identified, e.g. '04/22'
   price: number;
   change: number;
   volRatio: number;
@@ -117,7 +118,7 @@ const OHLC_MAP: Record<string, OHLCBar[]> = {
 // Data verified from 鉅亨網 (OHLC) and Yahoo Finance 法人買賣 as of 2026/04/24
 const MOCK_ROCKETS: RocketStock[] = [
   {
-    id: '1', symbol: '2317', name: '鴻海', price: 221.5, change: -1.56, volRatio: 1.3, strength: 72,
+    id: '1', symbol: '2317', name: '鴻海', scanDate: '04/22', price: 221.5, change: -1.56, volRatio: 1.3, strength: 72,
     reason: '【AI 伺服器出貨王】本週 22 日外資單日大買 40,064 張創近期新高，23 日再買 27,796 張，兩日合計逾 6.8 萬張強力卡位。24 日因短線獲利了結小幅拉回，但整體籌碼仍偏多，Blackwell GB200 機櫃出貨量持續放大，長線布局邏輯不變。',
     chips: {
       mainForce: -4595, foreign: -4277, trust: -488, dealer: 170,
@@ -131,7 +132,7 @@ const MOCK_ROCKETS: RocketStock[] = [
     }
   },
   {
-    id: '2', symbol: '2382', name: '廣達', price: 323.0, change: 0.31, volRatio: 0.9, strength: 65,
+    id: '2', symbol: '2382', name: '廣達', scanDate: '04/20', price: 323.0, change: 0.31, volRatio: 0.9, strength: 65,
     reason: '【AI 伺服器龍頭整理】外資 20-21 日連兩日合計買超 1.3 萬張墊高成本，23-24 日拉回整理。AI 伺服器占營收比重持續攀升，目前股價在 320 元附近獲支撐，等待下一段主升波。',
     chips: {
       mainForce: 3183, foreign: 5908, trust: -2403, dealer: -322,
@@ -145,7 +146,7 @@ const MOCK_ROCKETS: RocketStock[] = [
     }
   },
   {
-    id: '3', symbol: '6442', name: '光聖', price: 1880.0, change: -6.93, volRatio: 0.8, strength: 32,
+    id: '3', symbol: '6442', name: '光聖', scanDate: '04/20', price: 1880.0, change: -6.93, volRatio: 0.8, strength: 32,
     reason: '【矽光子修正壓力】4/20 急漲後法人連續四日賣超，投信 23-24 日累計倒出逾 1,200 張，籌碼明顯鬆動。短線需觀察 1,820 元支撐是否守穩，若量縮止跌可視為反彈機會，但建議等均線回穩再行介入。',
     chips: {
       mainForce: -846, foreign: -279, trust: -542, dealer: -25,
@@ -159,7 +160,7 @@ const MOCK_ROCKETS: RocketStock[] = [
     }
   },
   {
-    id: '4', symbol: '3017', name: '奇鋐', price: 2945.0, change: 9.89, volRatio: 1.5, strength: 95,
+    id: '4', symbol: '3017', name: '奇鋐', scanDate: '04/24', price: 2945.0, change: 9.89, volRatio: 1.5, strength: 95,
     reason: '【液冷霸主飆漲停】今日以漲停 +9.89% 收盤，量能較前日明顯放大，投信連續買超動能強勁。液冷 CDU 出貨量隨 AI 伺服器功率提升持續擴大，GB300 導入後單機熱管理需求翻倍，法人給予強烈買進評等。',
     chips: {
       mainForce: 662, foreign: 341, trust: 229, dealer: 92,
@@ -173,7 +174,7 @@ const MOCK_ROCKETS: RocketStock[] = [
     }
   },
   {
-    id: '5', symbol: '3661', name: '世芯-KY', price: 4215.0, change: 5.90, volRatio: 0.9, strength: 90,
+    id: '5', symbol: '3661', name: '世芯-KY', scanDate: '04/21', price: 4215.0, change: 5.90, volRatio: 0.9, strength: 90,
     reason: '【AI ASIC 設計領頭羊】外資本週連五日買超合計逾 3,800 張，21 日更與投信聯手大買逾 2,000 張。2nm ASIC 設計案持續落地，下半年權利金收入高峰期將至，目標價上看 4,800 元。',
     chips: {
       mainForce: 429, foreign: 251, trust: 95, dealer: 83,
@@ -398,6 +399,7 @@ export default function RocketScanner() {
                     <div className="name-group">
                       <span className="stock-symbol">{stock.symbol}</span>
                       <span className="stock-name">{stock.name}</span>
+                      <span className="scan-date-badge">📅 {stock.scanDate}</span>
                     </div>
                   </div>
 

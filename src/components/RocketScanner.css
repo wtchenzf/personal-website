@@ -199,6 +199,20 @@
   color: var(--accent-indigo);
 }
 
+.scan-date-badge {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 1px 7px;
+  background: #f0f4ff;
+  border: 1px solid #c7d5f8;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
 .rocket-stats {
   display: flex;
   gap: 2rem;
