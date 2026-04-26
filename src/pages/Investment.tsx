@@ -19,11 +19,11 @@ import './Investment.css';
 
 // ── Symbol tabs ──────────────────────────────────────────────────────────────
 const SYMBOL_TABS = [
-  { id: '2330', symbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1750,  vol: 0.022, target: 2185, lineOnly: false },
-  { id: '2454', symbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1850,  vol: 0.032, target: 2435, lineOnly: false },
-  { id: 'gold', symbol: 'GC=F',   name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4200,  vol: 0.014, target: 4709, lineOnly: false },
-  { id: 'silv', symbol: 'SI=F',   name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 65.0,  vol: 0.025, target: 75.63, lineOnly: false },
-  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 28.0,  vol: 0.06,  target: 18.8, lineOnly: true  },
+  { id: '2330', symbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1700,  vol: 0.022, target: 2185,  lineOnly: false },
+  { id: '2454', symbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1200,  vol: 0.038, target: 2435,  lineOnly: false },
+  { id: 'gold', symbol: 'GC=F',   name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4200,  vol: 0.014, target: 4709,  lineOnly: false },
+  { id: 'silv', symbol: 'SI=F',   name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 62.0,  vol: 0.025, target: 75.63, lineOnly: false },
+  { id: 'vix',  symbol: 'VIXTWN', name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 32.0,  vol: 0.06,  target: 18.8,  lineOnly: true  },
 ];
 
 export default function Investment() {
