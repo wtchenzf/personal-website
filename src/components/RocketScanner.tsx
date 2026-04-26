@@ -28,6 +28,8 @@ interface ReversalStock {
   priorLow: { date: string; price: number };
   recoverPct: number;
   daysFromLow: number;
+  kdK: number;
+  kdD: number;
   volRatio: number;
   strength: number;
   reason: string;
@@ -114,85 +116,91 @@ const MOCK_ROCKETS: RocketStock[] = [
   },
 ];
 
-// 破底翻候選 — 低點後強力反彈，法人籌碼轉多 (資料參考 2026/04 實際走勢)
+// 破底翻候選 — KD<20 黃金交叉、法人剛轉買、低點僅反彈 8-14%（早期佈局時機）
+// 前 3 日籌碼仍偏空，24 日起三方同步轉多；KD 超賣黃金交叉剛形成
 const BOTTOM_REVERSALS: ReversalStock[] = [
   {
-    id: 'r1', symbol: '3035', name: '智原', price: 185.0, change: 9.79,
-    priorLow: { date: '04/02', price: 139.0 }, recoverPct: 33.1, daysFromLow: 14,
-    volRatio: 2.1, strength: 92,
-    reason: '【AI ASIC 設計破底翻】關稅重擊後股價於 4/2 跌至近期低點 139 元，隨後川普宣布 90 日暫緩，外資與投信聯手強力回補。今日爆量漲停，14 日累計從低點反彈 33%，2nm ASIC 流片訂單確認，下半年出貨進入高峰。',
+    id: 'r1', symbol: '8046', name: '南電', price: 87.5, change: 3.55,
+    priorLow: { date: '04/08', price: 79.2 }, recoverPct: 10.5, daysFromLow: 10,
+    kdK: 22.4, kdD: 18.6,
+    volRatio: 1.9, strength: 58,
+    reason: '【ABF 基板超賣黃金交叉】4/8 創近三年低點 79.2 元，KD 雙雙跌入 18 以下極度超賣區。今日 K 值上穿 D 值形成黃金交叉，為近 6 個月首見。外資本週前三日仍在賣，24 日首度轉買 +428 張，投信連兩日買超確認底部。ABF 高階基板下半年訂單能見度佳，台積電 CoWoS 擴產帶動配套需求，超跌反彈空間大。',
     chips: {
-      mainForce: 1850, foreign: 312, trust: 1523, dealer: 15,
+      mainForce: 589, foreign: 428, trust: 142, dealer: 19,
       history: [
-        { date: '04/24', mainForce:  1850, foreign:   312, trust:  1523 },
-        { date: '04/23', mainForce:  2103, foreign:   487, trust:  1608 },
-        { date: '04/22', mainForce:  1542, foreign:   231, trust:  1290 },
-        { date: '04/21', mainForce:  1918, foreign:   195, trust:  1710 },
-        { date: '04/20', mainForce:   876, foreign:   -48, trust:   920 },
+        { date: '04/24', mainForce:   589, foreign:   428, trust:   142 },
+        { date: '04/23', mainForce:   201, foreign:  -312, trust:    98 },
+        { date: '04/22', mainForce:  -345, foreign:  -508, trust:    32 },
+        { date: '04/21', mainForce:  -612, foreign:  -774, trust:   -88 },
+        { date: '04/20', mainForce:  -890, foreign: -1023, trust:  -210 },
       ]
     }
   },
   {
-    id: 'r2', symbol: '3189', name: '景碩', price: 526.0, change: 9.81,
-    priorLow: { date: '04/01', price: 321.0 }, recoverPct: 63.9, daysFromLow: 16,
-    volRatio: 3.2, strength: 98,
-    reason: '【ABF 載板破底翻王】4 月初受法說會不如預期下殺至 321 元，遭外資大量砍倉。關稅暫緩消息一出，機構急速回補，16 日爆出近年最大量。CoWoS / SoIC 先進封裝載板需求暴增，GB300 導入將直接帶動 Q3 出貨翻倍。',
+    id: 'r2', symbol: '3037', name: '欣興', price: 60.5, change: 4.31,
+    priorLow: { date: '04/09', price: 53.8 }, recoverPct: 12.5, daysFromLow: 9,
+    kdK: 20.8, kdD: 16.3,
+    volRatio: 2.3, strength: 54,
+    reason: '【高階 PCB 底部突破】4/9 恐慌殺盤至 53.8 元，KD 跌至 14-16 超賣極值。今日 K 穿越 D 完成黃金交叉，量能同步放大至前日 2.3 倍。投信今日首度進場買超 +215 張，外資由連七日賣超轉為買超 +381 張，主力資金大幅縮手拋壓。800G 光模組 PCB 載板需求持續擴增，法人預估 Q2 起毛利率回升，目標價 72 元。',
     chips: {
-      mainForce: 2340, foreign: 485, trust: 1841, dealer: 14,
+      mainForce: 612, foreign: 381, trust: 215, dealer: 16,
       history: [
-        { date: '04/24', mainForce:  2340, foreign:   485, trust:  1841 },
-        { date: '04/23', mainForce:  3105, foreign:   712, trust:  2380 },
-        { date: '04/22', mainForce:  2876, foreign:   534, trust:  2321 },
-        { date: '04/21', mainForce:  2012, foreign:   320, trust:  1680 },
-        { date: '04/20', mainForce:  1340, foreign:    88, trust:  1245 },
+        { date: '04/24', mainForce:   612, foreign:   381, trust:   215 },
+        { date: '04/23', mainForce:   -98, foreign:  -245, trust:    42 },
+        { date: '04/22', mainForce:  -421, foreign:  -612, trust:   -35 },
+        { date: '04/21', mainForce:  -756, foreign:  -934, trust:  -112 },
+        { date: '04/20', mainForce: -1102, foreign: -1345, trust:  -208 },
       ]
     }
   },
   {
-    id: 'r3', symbol: '3105', name: '穩懋', price: 151.0, change: 7.86,
-    priorLow: { date: '04/07', price: 105.5 }, recoverPct: 43.1, daysFromLow: 11,
-    volRatio: 1.8, strength: 83,
-    reason: '【GaN 射頻晶片破底翻】關稅衝擊疊加庫存調整，4/7 重挫至 105.5 元。隨後 AI 資料中心 800G 光模組需求確認帶動 GaN 射頻 PA 回溫，外資近 5 日累計買超 3,900 張。下半年 LNA 與功率放大器出貨成長能見度高，法人目標價 175 元。',
+    id: 'r3', symbol: '3034', name: '聯詠', price: 257.0, change: 3.62,
+    priorLow: { date: '04/09', price: 228.5 }, recoverPct: 12.5, daysFromLow: 9,
+    kdK: 21.5, kdD: 17.2,
+    volRatio: 1.7, strength: 60,
+    reason: '【顯示驅動 IC 超賣反彈】4/9 跌至 228.5 元，KD 雙雙壓至 15-17 超賣區，本週前三日主力、外資、投信齊賣。今日法人三方同時轉買，為關稅風波以來首次，KD 黃金交叉確立底部訊號。OLED 驅動 IC 滲透率持續上升、TV 面板備貨潮啟動，下半年出貨量成長確定性高，基本面支撐底部明確。',
     chips: {
-      mainForce: 823, foreign: 761, trust: 48, dealer: 14,
+      mainForce: 724, foreign: 542, trust: 168, dealer: 14,
       history: [
-        { date: '04/24', mainForce:   823, foreign:   761, trust:    48 },
-        { date: '04/23', mainForce:   914, foreign:   863, trust:    38 },
-        { date: '04/22', mainForce:   732, foreign:   698, trust:    18 },
-        { date: '04/21', mainForce:   685, foreign:   640, trust:    32 },
-        { date: '04/20', mainForce:   571, foreign:   546, trust:    12 },
+        { date: '04/24', mainForce:   724, foreign:   542, trust:   168 },
+        { date: '04/23', mainForce:   -52, foreign:  -198, trust:    55 },
+        { date: '04/22', mainForce:  -388, foreign:  -521, trust:   -74 },
+        { date: '04/21', mainForce:  -645, foreign:  -812, trust:  -138 },
+        { date: '04/20', mainForce:  -934, foreign: -1102, trust:  -265 },
       ]
     }
   },
   {
-    id: 'r4', symbol: '8046', name: '南電', price: 119.0, change: 5.31,
-    priorLow: { date: '04/08', price: 79.0 }, recoverPct: 50.6, daysFromLow: 10,
-    volRatio: 1.6, strength: 79,
-    reason: '【ABF 基板破底翻】4/8 跌破前低至 79 元創三年新低，超跌後吸引主力逢低進場。投信近 8 日連續買超合計逾 5,200 張，ABF 高階基板供給緊俏，下半年訂單能見度佳。台積電 CoWoS-S 擴產帶動配套需求，估 Q2 起毛利率止跌回升。',
+    id: 'r4', symbol: '3105', name: '穩懋', price: 118.5, change: 3.49,
+    priorLow: { date: '04/07', price: 105.5 }, recoverPct: 12.3, daysFromLow: 11,
+    kdK: 23.1, kdD: 18.8,
+    volRatio: 1.6, strength: 55,
+    reason: '【GaN 射頻 PA 底部翻轉】4/7 下探至 105.5 元近年低點，KD 跌至 17-19 超賣。今日 K 值上穿 D 值，外資由連 8 日賣超轉為買超，投信同步進場，三方籌碼首次齊多。800G 乙太網路及衛星通訊 GaN 功率放大器需求未因關稅受損，大客戶拉貨確認，下半年出貨能見度高，超跌幅度大、反彈空間足。',
     chips: {
-      mainForce: 645, foreign: 88, trust: 542, dealer: 15,
+      mainForce: 445, foreign: 312, trust: 118, dealer: 15,
       history: [
-        { date: '04/24', mainForce:   645, foreign:    88, trust:   542 },
-        { date: '04/23', mainForce:   712, foreign:   102, trust:   603 },
-        { date: '04/22', mainForce:   580, foreign:    74, trust:   498 },
-        { date: '04/21', mainForce:   634, foreign:    56, trust:   571 },
-        { date: '04/20', mainForce:   490, foreign:    42, trust:   441 },
+        { date: '04/24', mainForce:   445, foreign:   312, trust:   118 },
+        { date: '04/23', mainForce:   -75, foreign:  -182, trust:    38 },
+        { date: '04/22', mainForce:  -312, foreign:  -445, trust:   -42 },
+        { date: '04/21', mainForce:  -534, foreign:  -698, trust:   -95 },
+        { date: '04/20', mainForce:  -812, foreign:  -965, trust:  -185 },
       ]
     }
   },
   {
-    id: 'r5', symbol: '6415', name: '矽力-KY', price: 1265.0, change: 9.57,
-    priorLow: { date: '04/08', price: 885.0 }, recoverPct: 43.0, daysFromLow: 10,
-    volRatio: 2.4, strength: 88,
-    reason: '【PMIC 龍頭破底翻】4/8 伴隨台股崩跌至 885 元，外資賣超逾 2,400 張。關稅暫緩後機構急速補回，今日成交量為低點當日 2.4 倍。AI GPU 電源管理需求強勁，Blackwell 每顆 GPU 搭配 PMIC 數量提升，大客戶 NVIDIA 拉貨持續，下半年每股獲利上修幅度可期。',
+    id: 'r5', symbol: '2383', name: '台光電', price: 512.0, change: 4.07,
+    priorLow: { date: '04/08', price: 458.0 }, recoverPct: 11.8, daysFromLow: 10,
+    kdK: 20.2, kdD: 15.9,
+    volRatio: 2.1, strength: 56,
+    reason: '【AI 伺服器高頻銅箔基板底部啟動】4/8 下殺至 458 元，KD 跌至 14-16 極度超賣。今日 K 穿越 D 值形成黃金交叉，為近年首見超賣訊號確立。外資由連 9 日賣超轉為買超，投信今日首度進場。AI 伺服器高速信號傳輸對 M7/M4A 高頻銅箔基板需求爆增，台積電 CoWoS 及 GB300 訂單帶動 Q2-Q3 出貨確定性高，此刻仍近低點為早期佈局時機。',
     chips: {
-      mainForce: 312, foreign: 148, trust: 156, dealer: 8,
+      mainForce: 534, foreign: 398, trust: 124, dealer: 12,
       history: [
-        { date: '04/24', mainForce:   312, foreign:   148, trust:   156 },
-        { date: '04/23', mainForce:   423, foreign:   210, trust:   205 },
-        { date: '04/22', mainForce:   385, foreign:   175, trust:   203 },
-        { date: '04/21', mainForce:   298, foreign:   132, trust:   161 },
-        { date: '04/20', mainForce:   201, foreign:    88, trust:   108 },
+        { date: '04/24', mainForce:   534, foreign:   398, trust:   124 },
+        { date: '04/23', mainForce:    42, foreign:  -165, trust:    68 },
+        { date: '04/22', mainForce:  -298, foreign:  -487, trust:   -45 },
+        { date: '04/21', mainForce:  -612, foreign:  -798, trust:  -118 },
+        { date: '04/20', mainForce:  -945, foreign: -1124, trust:  -235 },
       ]
     }
   },
@@ -375,8 +383,10 @@ export default function RocketScanner() {
       {showResults && !isRocket && (
         <div className="scan-results animate-fade-in">
           <div className="reversal-legend">
-            <span className="legend-item"><span className="dot low"></span>前低</span>
+            <span className="legend-item"><span className="dot low"></span>前低價</span>
             <span className="legend-item"><span className="dot now"></span>今日收盤</span>
+            <span className="legend-item"><span className="legend-kd-badge">黃金交叉</span>KD &lt; 20 超賣反轉</span>
+            <span className="legend-item" style={{ color: 'var(--accent-matcha)', fontWeight: 600 }}>低點僅反彈 10–13%，早期佈局時機</span>
           </div>
           <div className="results-grid">
             {BOTTOM_REVERSALS.map((stock, idx) => (
@@ -410,10 +420,10 @@ export default function RocketScanner() {
                       <span className="value up">+{stock.recoverPct.toFixed(1)}%</span>
                     </div>
                     <div className="stat">
-                      <span className="label">強勢力道</span>
-                      <div className="strength-bar-box">
-                        <div className="strength-bar" style={{ width: `${stock.strength}%` }}></div>
-                        <span className="strength-value">{stock.strength}</span>
+                      <span className="label">KD 指標</span>
+                      <div className="kd-box">
+                        <span className="kd-values">K {stock.kdK.toFixed(1)} / D {stock.kdD.toFixed(1)}</span>
+                        <span className="kd-badge">黃金交叉</span>
                       </div>
                     </div>
                   </div>

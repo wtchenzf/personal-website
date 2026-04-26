@@ -505,12 +505,25 @@
   margin-bottom: 1rem;
   font-size: 0.75rem;
   color: var(--text-secondary);
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.legend-kd-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #fff3cd;
+  border: 1px solid #c9a82c;
+  color: #8a6800;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 3px;
 }
 
 .dot {
@@ -522,6 +535,31 @@
 
 .dot.low { background: var(--accent-matcha); }
 .dot.now { background: var(--accent-danger); }
+
+/* KD display in reversal card */
+.kd-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.kd-values {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-indigo);
+}
+
+.kd-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #fff3cd;
+  border: 1px solid #c9a82c;
+  color: #8a6800;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
 
 /* Bottom reversal timeline */
 .reversal-timeline {
