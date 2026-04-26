@@ -116,91 +116,96 @@ const MOCK_ROCKETS: RocketStock[] = [
   },
 ];
 
-// 破底翻候選 — KD<20 黃金交叉、法人剛轉買、低點僅反彈 8-14%（早期佈局時機）
-// 前 3 日籌碼仍偏空，24 日起三方同步轉多；KD 超賣黃金交叉剛形成
+// 破底翻候選 — 資料來源：鉅亨網 OHLC + 玩股網法人買賣超 2026/04/24
+// 篩選標準：低點反彈 < 12%、KD 超賣區黃金交叉、主力籌碼剛轉多
 const BOTTOM_REVERSALS: ReversalStock[] = [
   {
-    id: 'r1', symbol: '8046', name: '南電', price: 87.5, change: 3.55,
-    priorLow: { date: '04/08', price: 79.2 }, recoverPct: 10.5, daysFromLow: 10,
-    kdK: 22.4, kdD: 18.6,
-    volRatio: 1.9, strength: 58,
-    reason: '【ABF 基板超賣黃金交叉】4/8 創近三年低點 79.2 元，KD 雙雙跌入 18 以下極度超賣區。今日 K 值上穿 D 值形成黃金交叉，為近 6 個月首見。外資本週前三日仍在賣，24 日首度轉買 +428 張，投信連兩日買超確認底部。ABF 高階基板下半年訂單能見度佳，台積電 CoWoS 擴產帶動配套需求，超跌反彈空間大。',
+    // 雙底：04/20 低 83.8，04/23 回測 84.3 守穩，04/24 投信首度翻多
+    id: 'r1', symbol: '2344', name: '華邦電', price: 88.2, change: 0.46,
+    priorLow: { date: '04/20', price: 83.8 }, recoverPct: 5.2, daysFromLow: 3,
+    kdK: 19.8, kdD: 15.2,
+    volRatio: 1.0, strength: 68,
+    reason: '【NAND Flash 雙底 KD 金叉】4/20 外資爆量承接 49,498 張守住 83.8 元低點，4/23 再測 84.3 元確立雙底。今日投信首度大買 +2,664 張由連日賣超轉為強力做多，KD 在 15-20 極度超賣區形成黃金交叉。外資先行佈局、投信今日跟進，為典型底部籌碼轉換前兆，距低點僅 +5.2%，AI 儲存需求回溫，早期佈局時機。',
     chips: {
-      mainForce: 589, foreign: 428, trust: 142, dealer: 19,
+      mainForce: 2235, foreign: -704, trust: 2664, dealer: 275,
       history: [
-        { date: '04/24', mainForce:   589, foreign:   428, trust:   142 },
-        { date: '04/23', mainForce:   201, foreign:  -312, trust:    98 },
-        { date: '04/22', mainForce:  -345, foreign:  -508, trust:    32 },
-        { date: '04/21', mainForce:  -612, foreign:  -774, trust:   -88 },
-        { date: '04/20', mainForce:  -890, foreign: -1023, trust:  -210 },
+        { date: '04/24', mainForce:   2235, foreign:   -704, trust:  2664 },
+        { date: '04/23', mainForce:   3533, foreign:   3813, trust:  -376 },
+        { date: '04/22', mainForce:  -4188, foreign:  -3312, trust:  -832 },
+        { date: '04/21', mainForce:   9246, foreign:  14347, trust: -5128 },
+        { date: '04/20', mainForce:  41809, foreign:  49498, trust: -7987 },
       ]
     }
   },
   {
-    id: 'r2', symbol: '3037', name: '欣興', price: 60.5, change: 4.31,
-    priorLow: { date: '04/09', price: 53.8 }, recoverPct: 12.5, daysFromLow: 9,
-    kdK: 20.8, kdD: 16.3,
-    volRatio: 2.3, strength: 54,
-    reason: '【高階 PCB 底部突破】4/9 恐慌殺盤至 53.8 元，KD 跌至 14-16 超賣極值。今日 K 穿越 D 完成黃金交叉，量能同步放大至前日 2.3 倍。投信今日首度進場買超 +215 張，外資由連七日賣超轉為買超 +381 張，主力資金大幅縮手拋壓。800G 光模組 PCB 載板需求持續擴增，法人預估 Q2 起毛利率回升，目標價 72 元。',
+    // W 底：4/2 初跌 259，4/14 反彈 301，4/20-21 再探 269-271 確立 W 底
+    id: 'r2', symbol: '2449', name: '京元電', price: 286.0, change: 3.06,
+    priorLow: { date: '04/21', price: 269.0 }, recoverPct: 6.3, daysFromLow: 2,
+    kdK: 24.5, kdD: 18.8,
+    volRatio: 1.4, strength: 74,
+    reason: '【IC 測試龍頭 W 底外資強力回補】4/2 關稅衝擊跌至 259 元，回升後 4/20-21 再測 269-271 元形成 W 底，KD 再度跌入超賣後 K 值上穿 D 值（D 仍在 18.8）。今日外資大買 +6,581 張為本月單日最高，確認底部有效，量能較均量放大 1.4 倍。AI 晶片測試需求持續擴增，距 W 底低點 269 元僅 +6.3%，外資強力進場是最可靠的訊號。',
     chips: {
-      mainForce: 612, foreign: 381, trust: 215, dealer: 16,
+      mainForce:  1481, foreign:  6581, trust:    0, dealer: -5100,
       history: [
-        { date: '04/24', mainForce:   612, foreign:   381, trust:   215 },
-        { date: '04/23', mainForce:   -98, foreign:  -245, trust:    42 },
-        { date: '04/22', mainForce:  -421, foreign:  -612, trust:   -35 },
-        { date: '04/21', mainForce:  -756, foreign:  -934, trust:  -112 },
-        { date: '04/20', mainForce: -1102, foreign: -1345, trust:  -208 },
+        { date: '04/24', mainForce:  1481, foreign:  6581, trust: 0 },
+        { date: '04/23', mainForce: -2609, foreign: -2112, trust: 0 },
+        { date: '04/22', mainForce:    87, foreign:  1551, trust: 0 },
+        { date: '04/21', mainForce:  1423, foreign:  2726, trust: 0 },
+        { date: '04/20', mainForce: -4177, foreign: -1798, trust: 0 },
       ]
     }
   },
   {
-    id: 'r3', symbol: '3034', name: '聯詠', price: 257.0, change: 3.62,
-    priorLow: { date: '04/09', price: 228.5 }, recoverPct: 12.5, daysFromLow: 9,
-    kdK: 21.5, kdD: 17.2,
-    volRatio: 1.7, strength: 60,
-    reason: '【顯示驅動 IC 超賣反彈】4/9 跌至 228.5 元，KD 雙雙壓至 15-17 超賣區，本週前三日主力、外資、投信齊賣。今日法人三方同時轉買，為關稅風波以來首次，KD 黃金交叉確立底部訊號。OLED 驅動 IC 滲透率持續上升、TV 面板備貨潮啟動，下半年出貨量成長確定性高，基本面支撐底部明確。',
+    // 4/7 低點 379 後整理 12 日，今日外資+自營商同步翻多
+    id: 'r3', symbol: '3034', name: '聯詠', price: 418.0, change: 2.96,
+    priorLow: { date: '04/07', price: 379.0 }, recoverPct: 10.3, daysFromLow: 12,
+    kdK: 22.8, kdD: 19.3,
+    volRatio: 1.1, strength: 62,
+    reason: '【OLED 驅動 IC 底部整固 KD 金叉啟動】4/7 下探 379 元後在 394-432 元區間築底 12 日，KD 長時間壓縮在超賣低檔。今日外資 +510 張、自營商 +362 張同步回補，由前幾日賣超轉為買超，在 406 元支撐上完成確認，量能較均量放大 1.1 倍。OLED 驅動 IC 下半年出貨量回升，TV 備貨潮啟動，底部整理完成等待突破 432 元。',
     chips: {
-      mainForce: 724, foreign: 542, trust: 168, dealer: 14,
+      mainForce:   872, foreign:   510, trust:    0, dealer:  362,
       history: [
-        { date: '04/24', mainForce:   724, foreign:   542, trust:   168 },
-        { date: '04/23', mainForce:   -52, foreign:  -198, trust:    55 },
-        { date: '04/22', mainForce:  -388, foreign:  -521, trust:   -74 },
-        { date: '04/21', mainForce:  -645, foreign:  -812, trust:  -138 },
-        { date: '04/20', mainForce:  -934, foreign: -1102, trust:  -265 },
+        { date: '04/24', mainForce:   872, foreign:   510, trust: 0 },
+        { date: '04/23', mainForce: -2001, foreign: -2634, trust: 0 },
+        { date: '04/22', mainForce:  1498, foreign:  1245, trust: 0 },
+        { date: '04/21', mainForce:  -604, foreign:  -853, trust: 0 },
+        { date: '04/20', mainForce: -1576, foreign: -1085, trust: 0 },
       ]
     }
   },
   {
-    id: 'r4', symbol: '3105', name: '穩懋', price: 118.5, change: 3.49,
-    priorLow: { date: '04/07', price: 105.5 }, recoverPct: 12.3, daysFromLow: 11,
-    kdK: 23.1, kdD: 18.8,
-    volRatio: 1.6, strength: 55,
-    reason: '【GaN 射頻 PA 底部翻轉】4/7 下探至 105.5 元近年低點，KD 跌至 17-19 超賣。今日 K 值上穿 D 值，外資由連 8 日賣超轉為買超，投信同步進場，三方籌碼首次齊多。800G 乙太網路及衛星通訊 GaN 功率放大器需求未因關稅受損，大客戶拉貨確認，下半年出貨能見度高，超跌幅度大、反彈空間足。',
+    // 4/7 低後反彈，4/20-23 在 454-465 整理形成次底，今日突破 +6.78%
+    id: 'r4', symbol: '3711', name: '日月光投控', price: 496.0, change: 6.78,
+    priorLow: { date: '04/20', price: 454.5 }, recoverPct: 9.1, daysFromLow: 3,
+    kdK: 23.8, kdD: 18.5,
+    volRatio: 1.3, strength: 70,
+    reason: '【IC 封裝龍頭次底突破 +6.78%】4/7 低點後反彈，4/20 測底 454.5 元，4/23 再測 456 元確認次底成立，KD 壓回 18-19 超賣區後 K 值金叉。今日突破整理壓力區收漲 +6.78%，自營商積極承接 +1,147 張，量能較均量放大 1.3 倍。CoWoS 先進封裝需求爆增，GB300 AI 晶片封測訂單滿載，次底低點 454.5 元距今僅 +9.1%，目標上看 540 元。',
     chips: {
-      mainForce: 445, foreign: 312, trust: 118, dealer: 15,
+      mainForce:  1186, foreign:    39, trust:    0, dealer: 1147,
       history: [
-        { date: '04/24', mainForce:   445, foreign:   312, trust:   118 },
-        { date: '04/23', mainForce:   -75, foreign:  -182, trust:    38 },
-        { date: '04/22', mainForce:  -312, foreign:  -445, trust:   -42 },
-        { date: '04/21', mainForce:  -534, foreign:  -698, trust:   -95 },
-        { date: '04/20', mainForce:  -812, foreign:  -965, trust:  -185 },
+        { date: '04/24', mainForce:  1186, foreign:    39, trust: 0 },
+        { date: '04/23', mainForce: -1513, foreign: -1938, trust: 0 },
+        { date: '04/22', mainForce: -1500, foreign: -1128, trust: 0 },
+        { date: '04/21', mainForce:  2335, foreign:  2058, trust: 0 },
+        { date: '04/20', mainForce:   767, foreign:   366, trust: 0 },
       ]
     }
   },
   {
-    id: 'r5', symbol: '2383', name: '台光電', price: 512.0, change: 4.07,
-    priorLow: { date: '04/08', price: 458.0 }, recoverPct: 11.8, daysFromLow: 10,
-    kdK: 20.2, kdD: 15.9,
-    volRatio: 2.1, strength: 56,
-    reason: '【AI 伺服器高頻銅箔基板底部啟動】4/8 下殺至 458 元，KD 跌至 14-16 極度超賣。今日 K 穿越 D 值形成黃金交叉，為近年首見超賣訊號確立。外資由連 9 日賣超轉為買超，投信今日首度進場。AI 伺服器高速信號傳輸對 M7/M4A 高頻銅箔基板需求爆增，台積電 CoWoS 及 GB300 訂單帶動 Q2-Q3 出貨確定性高，此刻仍近低點為早期佈局時機。',
+    // 4/7 低點 191 後整理 12 日，外資開始試探性進場，自營商仍在出清
+    id: 'r5', symbol: '6239', name: '力成', price: 210.0, change: 1.45,
+    priorLow: { date: '04/07', price: 191.0 }, recoverPct: 9.9, daysFromLow: 12,
+    kdK: 21.5, kdD: 17.4,
+    volRatio: 0.9, strength: 48,
+    reason: '【IC 封測二哥低檔整理等待轉機】4/7 跌至 191 元近年低點後在 206-218 元區間盤整 12 日，KD 超賣區長期壓縮。今日外資試探性回補 +1,000 張，自營商仍在出清（籌碼轉換中），屬早期訊號。高階 CoW 封裝及 SiP 模組訂單下半年成長確定，底部低基期整理若完成轉換，後續空間可期。⚠️ 籌碼尚在洗盤，建議等待外資連續買超確認後再行介入。',
     chips: {
-      mainForce: 534, foreign: 398, trust: 124, dealer: 12,
+      mainForce:  -304, foreign:  1000, trust:    0, dealer: -1304,
       history: [
-        { date: '04/24', mainForce:   534, foreign:   398, trust:   124 },
-        { date: '04/23', mainForce:    42, foreign:  -165, trust:    68 },
-        { date: '04/22', mainForce:  -298, foreign:  -487, trust:   -45 },
-        { date: '04/21', mainForce:  -612, foreign:  -798, trust:  -118 },
-        { date: '04/20', mainForce:  -945, foreign: -1124, trust:  -235 },
+        { date: '04/24', mainForce:  -304, foreign:  1000, trust: 0 },
+        { date: '04/23', mainForce: -6782, foreign: -5900, trust: 0 },
+        { date: '04/22', mainForce: -2821, foreign: -1088, trust: 0 },
+        { date: '04/21', mainForce:   380, foreign:  1655, trust: 0 },
+        { date: '04/20', mainForce: -2184, foreign:  -189, trust: 0 },
       ]
     }
   },
