@@ -642,6 +642,34 @@
   font-style: italic;
 }
 
+/* ── Mini K-Line chart ──────────────────────────────────────────────────────── */
+.mini-kline-wrap {
+  padding-top: 0.5rem;
+}
+
+.mini-kline-legend {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+.mkl-item { white-space: nowrap; }
+.mkl-up   { color: #c0392b; }
+.mkl-down { color: #4a7c59; }
+.mkl-ma5  { color: #e67e22; }
+.mkl-ma10 { color: #8e44ad; }
+.mkl-range {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 0.68rem;
+}
+
 @media (max-width: 1024px) {
   .rocket-item {
     grid-template-columns: 1fr;

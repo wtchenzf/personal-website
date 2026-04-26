@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
 import './RocketScanner.css';
 
 interface RocketStock {
@@ -41,6 +42,77 @@ interface ReversalStock {
     history: { date: string; mainForce: number; foreign: number; trust: number }[];
   };
 }
+
+// ── OHLC generation ──────────────────────────────────────────────────────────
+// 22 trading days from 03/26 to 04/24 (weekends and TW holidays excluded)
+const TRADING_DATES = [
+  '2026-03-26','2026-03-27',
+  '2026-03-30','2026-03-31',
+  '2026-04-01','2026-04-02','2026-04-03',
+  '2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10',
+  '2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17',
+  '2026-04-20','2026-04-21','2026-04-22','2026-04-23','2026-04-24',
+];
+
+// Mulberry32 seeded RNG for deterministic charts
+function mkRng(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// anchors = [[dateIdx, closePrice], …], sorted asc, last entry must be [21, todayClose]
+// vol = daily volatility fraction (e.g. 0.018 → ±1.8% noise around the trend)
+function buildOHLC(anchors: [number, number][], vol: number, seed: number): OHLCBar[] {
+  const rand = mkRng(seed);
+  const n = TRADING_DATES.length; // 22
+  const closes: number[] = new Array(n);
+
+  for (let a = 0; a < anchors.length - 1; a++) {
+    const [i0, p0] = anchors[a];
+    const [i1, p1] = anchors[a + 1];
+    const steps = i1 - i0;
+    for (let i = i0; i <= i1; i++) {
+      const t = steps === 0 ? 1 : (i - i0) / steps;
+      const base = p0 + (p1 - p0) * t;
+      // no noise on exact anchor points so key levels are preserved
+      const noise = (i === i0 || i === i1) ? 0 : (rand() - 0.5) * vol * base * 1.5;
+      closes[i] = base + noise;
+    }
+  }
+
+  return TRADING_DATES.map((time, i) => {
+    const close = +Math.max(closes[i], 0.01).toFixed(2);
+    const prevClose = i > 0 ? closes[i - 1] : close;
+    const open  = +(prevClose  * (1 + (rand() - 0.5) * vol * 0.3)).toFixed(2);
+    const bodyH = Math.max(open, close);
+    const bodyL = Math.min(open, close);
+    const high  = +(bodyH * (1 + rand() * vol * 0.7)).toFixed(2);
+    const low   = +(bodyL * (1 - rand() * vol * 0.7)).toFixed(2);
+    return { time, open, high, low, close };
+  });
+}
+
+// Pre-built OHLC keyed by stock id — computed once at module load
+// Date index reference: 0=03/26, 5=04/02, 8=04/07, 17=04/20, 18=04/21, 21=04/24
+const OHLC_MAP: Record<string, OHLCBar[]> = {
+  // ── Rocket stocks ──────────────────────────────────────────────────────────
+  '1': buildOHLC([[0,248],[6,253],[12,238],[17,228],[21,221.5]], 0.015, 2317), // 鴻海  high→drift down
+  '2': buildOHLC([[0,290],[4,285],[9,298],[15,310],[21,323.0]], 0.018, 2382), // 廣達  gradual uptrend
+  '3': buildOHLC([[0,1380],[11,1450],[16,2050],[19,1950],[21,1880]], 0.028, 6442), // 光聖 spike+pullback
+  '4': buildOHLC([[0,2050],[5,2180],[10,2380],[16,2700],[21,2945]], 0.022, 3017), // 奇鋐 strong uptrend
+  '5': buildOHLC([[0,3380],[7,3620],[13,3880],[18,4080],[21,4215]], 0.020, 3661), // 世芯 uptrend
+  // ── Reversal stocks (bottom patterns) ─────────────────────────────────────
+  'r1': buildOHLC([[0,103],[8,98],[13,92],[17,83.8],[18,84.3],[21,88.2]], 0.018, 2344), // 華邦電 雙底
+  'r2': buildOHLC([[0,295],[5,259],[12,301],[18,269],[21,286.0]], 0.020, 2449),          // 京元電 W底
+  'r3': buildOHLC([[0,480],[5,460],[8,379],[13,400],[17,410],[21,418.0]], 0.022, 3034), // 聯詠
+  'r4': buildOHLC([[0,545],[8,528],[14,490],[17,454.5],[18,465],[21,496.0]], 0.020, 3711), // 日月光
+  'r5': buildOHLC([[0,248],[5,230],[8,191],[13,208],[17,207],[21,210.0]], 0.022, 6239), // 力成
+};
 
 // Data verified from 鉅亨網 (OHLC) and Yahoo Finance 法人買賣 as of 2026/04/24
 const MOCK_ROCKETS: RocketStock[] = [
@@ -220,7 +292,7 @@ export default function RocketScanner() {
   const [scanProgress, setScanProgress] = useState(0);
   const [currentSymbol, setCurrentSymbol] = useState('0000');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips'>('main');
+  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips' | 'chart'>('main');
 
   const startScan = () => {
     setIsScanning(true);
@@ -375,8 +447,14 @@ export default function RocketScanner() {
                       >
                         籌碼詳細資料
                       </button>
+                      <button
+                        className={`detail-tab-btn ${activeDetailTab === 'chart' ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveDetailTab('chart'); }}
+                      >
+                        📈 K線圖
+                      </button>
                     </div>
-                    <ChipsDetailContent stock={stock} activeTab={activeDetailTab} />
+                    <ChipsDetailContent stock={stock} activeTab={activeDetailTab} ohlcData={OHLC_MAP[stock.id] ?? []} />
                   </div>
                 )}
               </div>
@@ -467,8 +545,14 @@ export default function RocketScanner() {
                       >
                         籌碼詳細資料
                       </button>
+                      <button
+                        className={`detail-tab-btn ${activeDetailTab === 'chart' ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveDetailTab('chart'); }}
+                      >
+                        📈 K線圖
+                      </button>
                     </div>
-                    <ChipsDetailContent stock={stock} activeTab={activeDetailTab} />
+                    <ChipsDetailContent stock={stock} activeTab={activeDetailTab} ohlcData={OHLC_MAP[stock.id] ?? []} />
                   </div>
                 )}
               </div>
@@ -491,7 +575,21 @@ export default function RocketScanner() {
   );
 }
 
-function ChipsDetailContent({ stock, activeTab }: { stock: RocketStock | ReversalStock; activeTab: 'main' | 'chips' }) {
+function ChipsDetailContent({
+  stock, activeTab, ohlcData,
+}: {
+  stock: RocketStock | ReversalStock;
+  activeTab: 'main' | 'chips' | 'chart';
+  ohlcData: OHLCBar[];
+}) {
+  if (activeTab === 'chart') {
+    return (
+      <div className="details-content">
+        <MiniKLineChart data={ohlcData} />
+      </div>
+    );
+  }
+
   return (
     <div className="details-content">
       {activeTab === 'main' ? (
