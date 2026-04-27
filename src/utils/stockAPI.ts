@@ -9,7 +9,7 @@
  * app falls back to mock/seed data automatically.
  */
 
-import { type OHLCData } from './technicalIndicators';
+import { type OHLCData, type ChipData } from './technicalIndicators';
 
 const BASE = (import.meta.env.VITE_STOCK_API_URL as string | undefined) ?? '';
 
@@ -105,6 +105,22 @@ export async function fetchOHLC(
     })
     .filter((d): d is OHLCData => d !== null)
     .sort((a, b) => a.time.localeCompare(b.time));
+}
+
+/**
+ * Fetch last 40 trading days of 三大法人 chip data from TWSE via Worker.
+ * Only works for TWSE-listed stocks (2330, 2454, etc.).
+ * Values are in 張 (trading lots).
+ */
+export async function fetchChips(symbol: string): Promise<ChipData[]> {
+  if (!BASE) return [];
+  // Strip exchange suffix: "2330.TW" → "2330"
+  const stockNo = symbol.replace(/\.[A-Z]+$/, '');
+  const url = `${BASE}/chips?symbol=${encodeURIComponent(stockNo)}&days=40`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Chips HTTP ${res.status}`);
+  const json = await res.json();
+  return (json?.chips ?? []) as ChipData[];
 }
 
 /** Returns true if a Worker URL has been configured. */

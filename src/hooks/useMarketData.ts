@@ -11,8 +11,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchQuotes, fetchOHLC, isAPIConfigured, type QuoteResult } from '../utils/stockAPI';
-import { type OHLCData } from '../utils/technicalIndicators';
+import { fetchQuotes, fetchOHLC, fetchChips, isAPIConfigured, type QuoteResult } from '../utils/stockAPI';
+import { type OHLCData, type ChipData } from '../utils/technicalIndicators';
 
 const POLL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -27,6 +27,7 @@ export interface SymbolDef {
 export interface MarketDataResult {
   quotes:      Record<string, QuoteResult>;   // keyed by SymbolDef.id
   ohlcData:    Record<string, OHLCData[]>;    // keyed by SymbolDef.id
+  chipData:    Record<string, ChipData[]>;    // keyed by SymbolDef.id (TWSE stocks only)
   status:      DataStatus;
   lastUpdated: Date | null;
   refresh:     () => void;
@@ -40,11 +41,13 @@ export function useMarketData(
 
   const [quotes,      setQuotes]      = useState<Record<string, QuoteResult>>({});
   const [ohlcData,    setOhlcData]    = useState<Record<string, OHLCData[]>>({});
+  const [chipData,    setChipData]    = useState<Record<string, ChipData[]>>({});
   const [status,      setStatus]      = useState<DataStatus>(configured ? 'loading' : 'mock');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // In-session OHLC cache (avoids re-fetching the same tab)
+  // In-session caches (avoid re-fetching on tab switch)
   const ohlcCache = useRef<Record<string, OHLCData[]>>({});
+  const chipCache = useRef<Record<string, ChipData[]>>({});
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Fetch all quotes ───────────────────────────────────────────────────────
@@ -92,6 +95,30 @@ export function useMarketData(
     }
   }, [configured]);
 
+  // ── Fetch 三大法人 chip data for one tab (TWSE stocks only) ───────────────
+  const fetchChipData = useCallback(async (def: SymbolDef) => {
+    if (!configured || def.lineOnly) return;
+    // Only fetch for TWSE-listed stocks (4-digit codes)
+    const stockNo = def.yahooSymbol.replace(/\.[A-Z]+$/, '');
+    if (!/^\d{4}$/.test(stockNo)) return;
+
+    // Serve from cache first
+    if (chipCache.current[def.id]) {
+      setChipData(prev => ({ ...prev, [def.id]: chipCache.current[def.id] }));
+      return;
+    }
+
+    try {
+      const chips = await fetchChips(def.yahooSymbol);
+      if (chips.length) {
+        chipCache.current[def.id] = chips;
+        setChipData(prev => ({ ...prev, [def.id]: chips }));
+      }
+    } catch (err) {
+      console.warn(`[useMarketData] chip fetch error for ${def.yahooSymbol}:`, err);
+    }
+  }, [configured]);
+
   // ── Initial load + polling ─────────────────────────────────────────────────
   useEffect(() => {
     if (!configured) return;
@@ -101,16 +128,20 @@ export function useMarketData(
     return () => { if (pollTimer.current) clearInterval(pollTimer.current); };
   }, [configured, fetchAllQuotes]);
 
-  // ── Fetch chart when active tab changes ───────────────────────────────────
+  // ── Fetch chart + chips when active tab changes ────────────────────────────
   useEffect(() => {
     if (!configured) return;
     const def = symbols.find(s => s.id === activeId);
-    if (def) fetchChart(def);
-  }, [activeId, configured, fetchChart, symbols]);
+    if (def) {
+      fetchChart(def);
+      fetchChipData(def);
+    }
+  }, [activeId, configured, fetchChart, fetchChipData, symbols]);
 
   return {
     quotes,
     ohlcData,
+    chipData,
     status,
     lastUpdated,
     refresh: fetchAllQuotes,

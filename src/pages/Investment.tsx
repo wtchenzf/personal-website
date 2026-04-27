@@ -44,7 +44,7 @@ export default function Investment() {
   const [activeTab, setActiveTab] = useState(SYMBOL_TABS[0].id);
 
   // ── Real-time data hook ───────────────────────────────────────────────────
-  const { quotes, ohlcData, status, lastUpdated, refresh } =
+  const { quotes, ohlcData, chipData: liveChipData, status, lastUpdated, refresh } =
     useMarketData(SYMBOL_DEFS, activeTab);
 
   // ── Mock / seed data (fallback) ────────────────────────────────────────────
@@ -184,7 +184,7 @@ export default function Investment() {
           symbol={active.symbol}
           name={active.name}
           data={activeData}
-          chipData={chipData[activeTab]}
+          chipData={liveChipData[activeTab] ?? chipData[activeTab]}
           lineOnly={active.lineOnly}
         />
       </div>
@@ -194,7 +194,7 @@ export default function Investment() {
 
       <p className="data-disclaimer">
         {status === 'live'
-          ? '※ K 線資料來自 Yahoo Finance（延遲約 15 分鐘）；籌碼為盤後模擬資料。'
+          ? '※ K 線資料來自 Yahoo Finance（延遲約 15 分鐘）；三大法人籌碼來自 TWSE（盤後 T+0，約 17:30 更新）。'
           : '※ 圖表資料為高擬真模擬數據，僅供介面展示，不代表實際行情。'}
       </p>
 
