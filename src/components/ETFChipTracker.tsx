@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { fetchChips, isAPIConfigured } from '../utils/stockAPI';
+import { type ChipData } from '../utils/technicalIndicators';
 import './ETFChipTracker.css';
 
 interface ETFHolding {
@@ -36,7 +38,7 @@ const ETF_DATA: ETFInfo[] = [
     fullName: '富邦台灣AI人工智慧ETF',
     nav: 15.23,
     data: {
-      date: '04/24',
+      date: '04/25',
       buySummary: 'AI 基礎建設與高階零組件持續擴大部位',
       sellSummary: '調節電池與部分非主線題材，釋放資金效率',
       buys: [
@@ -64,7 +66,7 @@ const ETF_DATA: ETFInfo[] = [
     fullName: '國泰台灣半導體領航ETF',
     nav: 12.87,
     data: {
-      date: '04/24',
+      date: '04/25',
       buySummary: '半導體設計龍頭強勢佈局，聚焦AI晶片與先進製程IP',
       sellSummary: '調節傳統封裝與記憶體，集中資金於高毛利IC設計',
       buys: [
@@ -91,7 +93,7 @@ const ETF_DATA: ETFInfo[] = [
     fullName: '元大台灣AI科技旗艦ETF',
     nav: 13.54,
     data: {
-      date: '04/24',
+      date: '04/25',
       buySummary: 'AI伺服器組裝鏈加碼，散熱與電源管理雙主軸同步放大',
       sellSummary: '調節消費性電子與傳統IT，聚焦AI高成長標的',
       buys: [
@@ -117,13 +119,38 @@ const ETF_DATA: ETFInfo[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ETFChipTracker() {
-  const [activeETF, setActiveETF] = useState(ETF_DATA[0].id);
-  const [section, setSection] = useState<'buy' | 'sell'>('buy');
+  const [activeETF,  setActiveETF]  = useState(ETF_DATA[0].id);
+  const [section,    setSection]    = useState<'buy' | 'sell'>('buy');
+  const [chipView,   setChipView]   = useState<'holdings' | 'institutional'>('holdings');
+
+  // Plan B: real T86 三大法人 for each ETF
+  const [instData,   setInstData]   = useState<Record<string, ChipData[]>>({});
+  const cacheRef = useRef<Record<string, ChipData[]>>({});
+  const apiOn = isAPIConfigured();
+
+  useEffect(() => {
+    if (!apiOn) return;
+    const etfCode = activeETF; // e.g. '00981A'
+    if (cacheRef.current[etfCode]) {
+      setInstData(prev => ({ ...prev, [etfCode]: cacheRef.current[etfCode] }));
+      return;
+    }
+    fetchChips(etfCode).then(chips => {
+      if (chips.length) {
+        cacheRef.current[etfCode] = chips;
+        setInstData(prev => ({ ...prev, [etfCode]: chips }));
+      }
+    }).catch(() => {/* silent */});
+  }, [activeETF, apiOn]);
 
   const etf = ETF_DATA.find(e => e.id === activeETF) ?? ETF_DATA[0];
   const { data } = etf;
   const list = section === 'buy' ? data.buys : data.sells;
   const summary = section === 'buy' ? data.buySummary : data.sellSummary;
+
+  const instChips   = instData[activeETF] ?? [];
+  const latestChip  = instChips.length ? instChips[instChips.length - 1] : null;
+  const recent5     = instChips.slice(-5).reverse();
 
   return (
     <div className="etf-tracker-container card">
@@ -135,7 +162,7 @@ export default function ETFChipTracker() {
           <p className="etf-tracker-subtitle">主動型 AI ETF 持股異動 · 每日前十大買超 / 賣超標的</p>
         </div>
         <div className="etf-nav-group">
-          <span className="etf-nav-label">淨值 (04/24)</span>
+          <span className="etf-nav-label">淨值 (04/25)</span>
           <span className="etf-nav-value">{etf.nav.toFixed(2)}</span>
         </div>
       </div>
@@ -156,6 +183,77 @@ export default function ETFChipTracker() {
       {/* ETF full name */}
       <div className="etf-fullname">{etf.fullName}</div>
 
+      {/* View mode toggle: holdings vs institutional */}
+      <div className="etf-view-toggle">
+        <button
+          className={`etf-view-btn ${chipView === 'holdings' ? 'active' : ''}`}
+          onClick={() => setChipView('holdings')}
+        >
+          📋 持股異動
+        </button>
+        <button
+          className={`etf-view-btn ${chipView === 'institutional' ? 'active' : ''}`}
+          onClick={() => setChipView('institutional')}
+        >
+          {apiOn && instChips.length > 0
+            ? <><span className="etf-live-dot" />法人動向（即時）</>
+            : '🏦 法人動向'}
+        </button>
+      </div>
+
+      {/* ── Institutional view (Plan B real T86 data) ── */}
+      {chipView === 'institutional' && (
+        <div className="etf-inst-view">
+          {instChips.length === 0 ? (
+            <p className="etf-inst-empty">
+              {apiOn ? '資料載入中…' : '需設定 VITE_STOCK_API_URL 才能顯示即時資料'}
+            </p>
+          ) : (
+            <>
+              {/* Latest day summary cards */}
+              {latestChip && (
+                <div className="etf-inst-summary">
+                  {[
+                    { label: '外資', value: latestChip.foreign,   color: '#2962FF' },
+                    { label: '投信', value: latestChip.trust,     color: '#FF6D00' },
+                    { label: '自營商', value: latestChip.dealer,  color: '#7B1FA2' },
+                    { label: '三大合計', value: latestChip.mainForce, color: latestChip.mainForce >= 0 ? '#c0392b' : '#4a7c59' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="etf-inst-card">
+                      <span className="etf-inst-card-label">{label}</span>
+                      <span className="etf-inst-card-val" style={{ color }}>
+                        {value >= 0 ? '+' : ''}{value.toLocaleString()}
+                      </span>
+                      <span className="etf-inst-card-unit">張</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 5-day history table */}
+              <div className="etf-inst-table">
+                <div className="etf-inst-row etf-inst-header">
+                  <span>日期</span><span>外資</span><span>投信</span><span>自營商</span><span>合計</span>
+                </div>
+                {recent5.map(d => (
+                  <div key={d.time} className="etf-inst-row">
+                    <span className="etf-inst-date">{d.time.slice(5)}</span>
+                    <span className={d.foreign   >= 0 ? 'up' : 'down'}>{d.foreign   >= 0 ? '+' : ''}{d.foreign.toLocaleString()}</span>
+                    <span className={d.trust     >= 0 ? 'up' : 'down'}>{d.trust     >= 0 ? '+' : ''}{d.trust.toLocaleString()}</span>
+                    <span className={d.dealer    >= 0 ? 'up' : 'down'}>{d.dealer    >= 0 ? '+' : ''}{d.dealer.toLocaleString()}</span>
+                    <span className={d.mainForce >= 0 ? 'up' : 'down'}>{d.mainForce >= 0 ? '+' : ''}{d.mainForce.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="etf-inst-note">※ 三大法人資料來自 TWSE T86，每日 17:30 後更新（單位：張）</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Holdings view (Plan A manual data) ── */}
+      {chipView === 'holdings' && (
+        <>
       {/* Buy / Sell toggle */}
       <div className="etf-section-toggle">
         <button
@@ -222,8 +320,10 @@ export default function ETFChipTracker() {
       </div>
 
       <p className="etf-disclaimer">
-        ※ 持股異動資料為模擬展示，僅供介面參考，不代表實際 ETF 持股變化。
+        ※ 持股異動資料以 04/25 人工核對資料為基準，僅供介面參考，不代表實際 ETF 持股變化。
       </p>
+        </>
+      )}
     </div>
   );
 }

@@ -107,6 +107,41 @@ export async function fetchOHLC(
     .sort((a, b) => a.time.localeCompare(b.time));
 }
 
+// ── Scanner result types ──────────────────────────────────────────────────────
+
+export interface ScannedStock {
+  code:       string;
+  name:       string;
+  price:      number;
+  chg:        number;      // price change amount (NT$)
+  changePct:  number;      // percentage change
+  vol:        number;      // shares traded
+  volRatio:   number;      // today vs 5-day avg
+  recoverPct?: number;     // reversal only: bounce % from recent low
+  tags:       string[];    // auto-generated signal tags
+  scanDate:   string;      // 'MM/DD'
+  strength:   number;      // 0–99 signal score
+}
+
+export interface ScanResult {
+  rockets:   ScannedStock[];
+  reversals: ScannedStock[];
+  scanDate:  string;       // 'MM/DD' of the trading day scanned
+  source:    'TWSE';
+}
+
+/** Run full-market scan (潛力飆股 + 破底翻) via Worker. */
+export async function fetchScan(): Promise<ScanResult | null> {
+  if (!BASE) return null;
+  try {
+    const res = await fetch(`${BASE}/scan`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.rockets || !json.reversals) return null;
+    return json as ScanResult;
+  } catch { return null; }
+}
+
 /**
  * Fetch last 40 trading days of 三大法人 chip data from TWSE via Worker.
  * Only works for TWSE-listed stocks (2330, 2454, etc.).
