@@ -1,5 +1,5 @@
 /**
- * stock-proxy — Cloudflare Worker v1.6
+ * stock-proxy — Cloudflare Worker v1.7
  * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner).
  *
  * Endpoints
@@ -243,8 +243,8 @@ function screenStocks(days) {
     const volRatio = td.vol / avgVol;
 
     // ── 潛力飆股: momentum breakout ─────────────────────────────────────────
-    // Criteria: up 3-9.5%, volume ≥ 2×, bullish candle (close ≥ open)
-    if (changePct >= 3 && changePct < 9.6 && volRatio >= 2.0 && td.close >= td.open) {
+    // Criteria: up 2-9.5%, volume ≥ 1.5×, bullish candle (close ≥ open)
+    if (changePct >= 2 && changePct < 9.6 && volRatio >= 1.5 && td.close >= td.open) {
       const tags = [`量增${volRatio.toFixed(1)}×`, `漲幅+${changePct.toFixed(1)}%`];
       if (volRatio >= 3) tags.push('量創新高');
       if (changePct >= 6) tags.push('強勢突破');
@@ -257,16 +257,16 @@ function screenStocks(days) {
     }
 
     // ── 破底翻: reversal after recent weakness ───────────────────────────────
-    // Criteria: recent 2 days had ≥1 down day (-2%), today bounces ≥3.5%
+    // Criteria: recent 2 days had ≥1 down day (-1.5%), today bounces ≥2.5%
     const recentPcts = [];
     for (let i = hist.length - 2; i < hist.length - 0; i++) {
       if (i < 1) continue;
       const pct = (hist[i].close - hist[i-1].close) / hist[i-1].close * 100;
       recentPcts.push(pct);
     }
-    const wasWeak = recentPcts.some(p => p < -2.0);
+    const wasWeak = recentPcts.some(p => p < -1.5);
 
-    if (wasWeak && changePct >= 3.5 && volRatio >= 1.5) {
+    if (wasWeak && changePct >= 2.5 && volRatio >= 1.3) {
       const priorLowClose = Math.min(...hist.slice(-3).map(h => h.low || h.close));
       const recoverPct = (td.close - priorLowClose) / priorLowClose * 100;
       reversals.push({
@@ -302,7 +302,7 @@ export default {
     const url = new URL(request.url);
 
     // ── Health ──────────────────────────────────────────────────────────────
-    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '1.6' });
+    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '1.7' });
 
     // ── Debug ───────────────────────────────────────────────────────────────
     if (url.pathname === '/debug') {
@@ -357,8 +357,8 @@ export default {
     // ── /scan ────────────────────────────────────────────────────────────────
     // Full-market scanner using TWSE STOCK_DAY_ALL for the last 6 trading days.
     // Screens all TSE-listed 4-digit stocks for:
-    //   潛力飆股: price up 3–9.5%, volume ≥ 2× 5-day avg, bullish candle
-    //   破底翻:   prior 2-day weakness, today bounces ≥ 3.5% with volume ≥ 1.5×
+    //   潛力飆股: price up 2–9.5%, volume ≥ 1.5× 5-day avg, bullish candle
+    //   破底翻:   prior 2-day weakness (-1.5%), today bounces ≥ 2.5% with volume ≥ 1.3×
     // Returns top 8 of each, sorted by changePct × volRatio score.
     if (url.pathname === '/scan') {
       try {

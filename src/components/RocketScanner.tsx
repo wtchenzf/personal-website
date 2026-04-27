@@ -160,9 +160,7 @@ export default function RocketScanner() {
     // Real API fetch runs in parallel with the animation
     if (apiOn) {
       fetchScan().then(result => {
-        if (result && (result.rockets.length || result.reversals.length)) {
-          setScanResult(result);
-        }
+        if (result) setScanResult(result);
       }).catch(() => setScanError(true));
     }
   }, [apiOn]);

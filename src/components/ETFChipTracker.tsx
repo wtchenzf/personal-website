@@ -121,7 +121,9 @@ const ETF_DATA: ETFInfo[] = [
 export default function ETFChipTracker() {
   const [activeETF,  setActiveETF]  = useState(ETF_DATA[0].id);
   const [section,    setSection]    = useState<'buy' | 'sell'>('buy');
-  const [chipView,   setChipView]   = useState<'holdings' | 'institutional'>('holdings');
+  const [chipView,   setChipView]   = useState<'holdings' | 'institutional'>(
+    isAPIConfigured() ? 'institutional' : 'holdings'
+  );
 
   // Plan B: real T86 三大法人 for each ETF
   const [instData,   setInstData]   = useState<Record<string, ChipData[]>>({});
