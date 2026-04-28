@@ -42,7 +42,7 @@ export default function MarketPanel({ title, subtitle, type, series, stats }: Ma
       grid: GRID,
       width: chartRef.current.clientWidth,
       height: 160,
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#e5e7eb' },
+      timeScale: { timeVisible: false, secondsVisible: false, borderColor: '#e5e7eb' },
       rightPriceScale: { borderColor: '#e5e7eb' },
     });
 

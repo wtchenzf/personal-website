@@ -3,6 +3,7 @@ import StockChart from '../components/StockChart';
 import MarketPanel from '../components/MarketPanel';
 import RocketScanner from '../components/RocketScanner';
 import ETFChipTracker from '../components/ETFChipTracker';
+import EarningsCalendar from '../components/EarningsCalendar';
 import { useMarketData } from '../hooks/useMarketData';
 import {
   generateMockStockData,
@@ -382,6 +383,8 @@ export default function Investment() {
           ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比參考玩股網，市場寬度以玩股網 04/28 實測值為基準。'
           : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–04/28）；散戶多空比參考玩股網圖表估算；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點。'}
       </p>
+
+      <EarningsCalendar />
     </div>
   );
 }

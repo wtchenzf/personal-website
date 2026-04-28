@@ -1,0 +1,221 @@
+/* EarningsCalendar — 台股大廠法說會行事曆 */
+
+.ec-section {
+  margin-top: 3rem;
+}
+
+.ec-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Timeline wrapper ─────────────────────────────────── */
+.ec-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 0.6rem;
+  padding-left: 0;
+}
+
+/* ── Section labels (已舉行 / 即將舉行) ──────────────── */
+.ec-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  margin-left: -1px;
+  border-left: 3px solid transparent;
+  margin-bottom: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.ec-label-past {
+  color: #9ca3af;
+  border-left-color: #d1d5db;
+}
+
+.ec-label-upcoming {
+  color: var(--accent-gold);
+  border-left-color: var(--accent-gold);
+}
+
+/* ── Day group ────────────────────────────────────────── */
+.ec-day-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem 0.6rem 1.25rem;
+  position: relative;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+
+.ec-day-group::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  background: white;
+}
+
+/* Past: muted */
+.ec-past {
+  opacity: 0.55;
+}
+.ec-past::before {
+  background: #d1d5db;
+  border-color: #d1d5db;
+}
+
+/* Today: highlighted */
+.ec-today {
+  background: #fffbf0;
+  opacity: 1;
+}
+.ec-today::before {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  width: 10px;
+  height: 10px;
+  left: -6px;
+  box-shadow: 0 0 0 3px rgba(184, 142, 64, 0.18);
+}
+
+/* Upcoming: normal */
+.ec-upcoming::before {
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+}
+
+/* ── Day header ───────────────────────────────────────── */
+.ec-day-hdr {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+
+.ec-day-date {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ec-day-weekday {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.ec-today-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--accent-gold);
+  color: white;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+/* ── Events list ──────────────────────────────────────── */
+.ec-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.ec-event {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ec-code {
+  font-family: 'Inter', var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  background: #eef0fb;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
+.ec-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.ec-quarter {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+
+.ec-time {
+  font-family: 'Inter', var(--font-sans);
+  font-size: 0.68rem;
+  color: #6b7280;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.ec-note {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ── Responsive: 2-col grid for wider screens ─────────── */
+@media (min-width: 640px) {
+  .ec-day-group {
+    gap: 1rem;
+  }
+  .ec-day-hdr {
+    min-width: 88px;
+  }
+  .ec-events {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ec-event {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 3px 8px;
+    gap: 0.4rem;
+  }
+  .ec-upcoming .ec-event {
+    background: #f0f4ff;
+    border-color: #c7d2fe;
+  }
+  .ec-today .ec-event {
+    background: #fff8e6;
+    border-color: #f0d080;
+  }
+  .ec-time {
+    margin-left: 0;
+  }
+}
