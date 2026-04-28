@@ -1,6 +1,6 @@
 /**
- * stock-proxy — Cloudflare Worker v1.7
- * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner).
+ * stock-proxy — Cloudflare Worker v1.8
+ * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner + market data).
  *
  * Endpoints
  *   GET /                                   → health check
@@ -8,6 +8,7 @@
  *   GET /chart?symbol=2330.TW&range=3mo     → Yahoo Finance OHLC (3 months)
  *   GET /chips?symbol=2330&days=40          → TWSE T86 三大法人 (last N trading days)
  *   GET /scan                               → TWSE 全市場掃描：潛力飆股 + 破底翻
+ *   GET /market?days=30                     → TWSE 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
  *   GET /debug                              → crumb diagnostic
  */
 
@@ -16,10 +17,11 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
-const QUOTE_TTL = 60;
-const CHART_TTL = 300;
-const CHIP_TTL  = 3600;   // TWSE updates at ~17:30 daily
-const SCAN_TTL  = 1800;   // 30 min cache for scan results
+const QUOTE_TTL  = 60;
+const CHART_TTL  = 300;
+const CHIP_TTL   = 3600;   // TWSE updates at ~17:30 daily
+const SCAN_TTL   = 1800;   // 30 min cache for scan results
+const MARKET_TTL = 3600;   // 1 hour cache for market indicators
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -292,6 +294,66 @@ function screenStocks(days) {
   };
 }
 
+// ── TWSE Market Indicator helpers ─────────────────────────────────────────────
+
+/**
+ * Fetch one day of 融資餘額 from TWSE MI_MARGN.
+ * Returns { time:'YYYY-MM-DD', value: 億元 } or null.
+ */
+async function fetchMarginDay(date) {
+  const url = `https://www.twse.com.tw/exchangeReport/MI_MARGN?response=json&date=${date}&selectType=ALL`;
+  try {
+    const res = await fetch(url, { headers: TWSE_HEADERS });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.stat !== 'OK') return null;
+
+    // tables[0] = 信用交易統計
+    // Columns: [項目, 買進, 賣出, 現金(券)償還, 前日餘額, 今日餘額]
+    // Row "融資金額(仟元)" → today's balance in 千元
+    const rows = json.tables?.[0]?.data ?? [];
+    for (const row of rows) {
+      if (/融資金額/.test(String(row[0] ?? ''))) {
+        const raw = String(row[5] ?? '').replace(/,/g, '');
+        const k = parseInt(raw, 10); // 千元
+        if (!isNaN(k) && k > 1e8) {  // sanity: > 1,000億
+          const time = `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`;
+          return { time, value: +(k / 100000).toFixed(1) }; // 千元 → 億元
+        }
+      }
+    }
+    return null;
+  } catch { return null; }
+}
+
+/**
+ * Fetch one day of 三大法人大盤買賣超 from TWSE BFI82U.
+ * Returns { time:'YYYY-MM-DD', value: 億元, color } or null.
+ */
+async function fetchInstDay(date) {
+  const url = `https://www.twse.com.tw/fund/BFI82U?response=json&dayDate=${date}&type=day`;
+  try {
+    const res = await fetch(url, { headers: TWSE_HEADERS });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.stat !== 'OK') return null;
+
+    // Columns: [機構, 買進金額, 賣出金額, 買賣差額]; last row = 合計
+    const data = json.data ?? [];
+    let totalRow = data.find(r => String(r[0] ?? '').includes('合計'));
+    if (!totalRow) totalRow = data[data.length - 1];
+    if (!totalRow) return null;
+
+    const raw = String(totalRow[3] ?? '').replace(/,/g, '');
+    const nt = parseInt(raw, 10); // NT$
+    if (isNaN(nt)) return null;
+
+    const net = +(nt / 1e8).toFixed(1); // 元 → 億元
+    const time = `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`;
+    return { time, value: net, color: net >= 0 ? '#c0392b' : '#4a7c59' };
+  } catch { return null; }
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default {
@@ -302,7 +364,7 @@ export default {
     const url = new URL(request.url);
 
     // ── Health ──────────────────────────────────────────────────────────────
-    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '1.7' });
+    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '1.8' });
 
     // ── Debug ───────────────────────────────────────────────────────────────
     if (url.pathname === '/debug') {
@@ -374,6 +436,27 @@ export default {
 
         const result = screenStocks(validDays);
         return jsonResp(result, 200, SCAN_TTL);
+      } catch (e) { return jsonResp({ error: String(e) }, 502); }
+    }
+
+    // ── /market?days=30 ─────────────────────────────────────────────────────
+    // Fetches last N trading days of:
+    //   融資餘額     (TWSE MI_MARGN)  — margin balance in 億元
+    //   三大法人買賣超 (TWSE BFI82U)  — institutional net buy/sell in 億元
+    if (url.pathname === '/market') {
+      try {
+        const n     = Math.min(parseInt(url.searchParams.get('days') || '30', 10), 60);
+        const dates = lastNWeekdays(n);
+
+        const [marginItems, instItems] = await Promise.all([
+          Promise.all(dates.map(fetchMarginDay)),
+          Promise.all(dates.map(fetchInstDay)),
+        ]);
+
+        const margin = marginItems.filter(Boolean).sort((a, b) => a.time.localeCompare(b.time));
+        const inst   = instItems.filter(Boolean).sort((a, b) => a.time.localeCompare(b.time));
+
+        return jsonResp({ margin, inst, source: 'TWSE' }, 200, MARKET_TTL);
       } catch (e) { return jsonResp({ error: String(e) }, 502); }
     }
 

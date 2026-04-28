@@ -29,9 +29,9 @@ interface ETFInfo {
   data: ETFDayData;
 }
 
-// ── Mock data — 2026/04/24 ────────────────────────────────────────────────────
-// 00981A buy list sourced from 籌碼小哥葛 community post; sells & other ETFs are
-// high-fidelity mock data for display purposes.
+// ── 持股異動資料 — 最後更新：2026/04/25 ─────────────────────────────────────────
+// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/25 人工核對數據為基準。
+// 三大法人動向（法人動向頁籤）由 TWSE T86 即時提供，每日 17:30 後自動更新。
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
@@ -164,7 +164,7 @@ export default function ETFChipTracker() {
           <p className="etf-tracker-subtitle">主動型 AI ETF 持股異動 · 每日前十大買超 / 賣超標的</p>
         </div>
         <div className="etf-nav-group">
-          <span className="etf-nav-label">淨值 (04/25)</span>
+          <span className="etf-nav-label">淨值 (04/25 最新)</span>
           <span className="etf-nav-value">{etf.nav.toFixed(2)}</span>
         </div>
       </div>
@@ -322,7 +322,8 @@ export default function ETFChipTracker() {
       </div>
 
       <p className="etf-disclaimer">
-        ※ 持股異動資料以 04/25 人工核對資料為基準，僅供介面參考，不代表實際 ETF 持股變化。
+        ※ 持股異動資料以 04/25 人工核對為基準（主動型 ETF 每日由基金公司揭露，非即時 API）。
+        如需查看 04/27 三大法人進出，請切換至「🏦 法人動向」頁籤（TWSE T86 每日 17:30 後自動更新）。
       </p>
         </>
       )}

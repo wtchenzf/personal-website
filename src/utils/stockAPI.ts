@@ -162,3 +162,32 @@ export async function fetchChips(symbol: string): Promise<ChipData[]> {
 export function isAPIConfigured(): boolean {
   return BASE.length > 0;
 }
+
+// ── Market indicator types ────────────────────────────────────────────────────
+
+export interface MarketDayData {
+  time:   string;   // 'YYYY-MM-DD'
+  value:  number;   // 億元
+  color?: string;   // for bar charts
+}
+
+export interface MarketData {
+  margin: MarketDayData[];  // 大盤融資餘額 (億元)
+  inst:   MarketDayData[];  // 三大法人大盤買賣超 (億元)
+  source: 'TWSE';
+}
+
+/**
+ * Fetch last N trading days of market indicators from Worker.
+ * Returns: 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
+ */
+export async function fetchMarket(days: number = 30): Promise<MarketData | null> {
+  if (!BASE) return null;
+  try {
+    const res = await fetch(`${BASE}/market?days=${days}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.margin) return null;
+    return json as MarketData;
+  } catch { return null; }
+}
