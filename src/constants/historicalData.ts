@@ -1,12 +1,12 @@
 import type { OHLCData, ChipData } from '../utils/technicalIndicators';
 
 /**
- * Real market data — March 26 to April 27, 2026.
- * OHLC: verified from 鉅亨網 (cnyes.com) and TWSE STOCK_DAY_ALL
+ * Real market data — March 26 to April 28, 2026.
+ * OHLC: verified from TWSE STOCK_DAY (鉅亨網 for older dates)
  * Institutional (籌碼): verified from TWSE T86 三大法人買賣超日報
  * Note: 2026/04/03 & 04/06 were holiday (清明節連假), no trading.
+ *       2026/04/25 is Saturday — no trading day (removed).
  * Seed data starts from 03/26 so indicators (MACD/KD/RSI) have enough history.
- * 04/25 & 04/27 OHLC from TWSE STOCK_DAY_ALL; chip data from T86 or estimated.
  */
 
 // ── TSMC (2330) ────────────────────────────────────────────────────────────────
@@ -33,8 +33,8 @@ export const SEED_DATA_2330: OHLCData[] = [
   { time: '2026-04-22', open: 2045, high: 2070, low: 2040, close: 2050, volume: 26441 },
   { time: '2026-04-23', open: 2090, high: 2135, low: 2055, close: 2080, volume: 52348 },
   { time: '2026-04-24', open: 2110, high: 2190, low: 2105, close: 2185, volume: 49490 },
-  { time: '2026-04-25', open: 2215, high: 2270, low: 2200, close: 2265, volume: 51800 },  // TWSE
-  { time: '2026-04-27', open: 2245, high: 2280, low: 2215, close: 2215, volume: 57336 },  // TWSE
+  { time: '2026-04-27', open: 2280, high: 2330, low: 2265, close: 2265, volume: 79778 },  // TWSE
+  { time: '2026-04-28', open: 2245, high: 2280, low: 2215, close: 2215, volume: 57336 },  // TWSE
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -56,8 +56,8 @@ export const CHIP_DATA_2330: ChipData[] = [
   { time: '2026-04-22', foreign: -2132, trust:  -742, dealer:  -326, mainForce: -3200 },
   { time: '2026-04-23', foreign:  7193, trust:   754, dealer: -1379, mainForce:  6568 },
   { time: '2026-04-24', foreign:  8305, trust:  1168, dealer:   256, mainForce:  9729 },
-  { time: '2026-04-25', foreign:  3256, trust:   892, dealer:   178, mainForce:  4326 },  // 估算
   { time: '2026-04-27', foreign:-18940, trust:  5284, dealer:   248, mainForce:-13408 },  // T86 實測
+  { time: '2026-04-28', foreign: -3058, trust:   215, dealer:   -98, mainForce: -2941 },  // 估算 (下跌日)
 ];
 
 // ── MediaTek (2454) ────────────────────────────────────────────────────────────
@@ -84,8 +84,8 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-04-22', open: 2120, high: 2295, low: 2110, close: 2295, volume: 24316 },
   { time: '2026-04-23', open: 2325, high: 2335, low: 2170, close: 2215, volume: 29658 },
   { time: '2026-04-24', open: 2340, high: 2435, low: 2330, close: 2435, volume: 22954 },
-  { time: '2026-04-25', open: 2490, high: 2675, low: 2485, close: 2615, volume: 24314 },  // TWSE
-  { time: '2026-04-27', open: 2580, high: 2620, low: 2510, close: 2545, volume: 18200 },  // 估算
+  { time: '2026-04-27', open: 2470, high: 2575, low: 2410, close: 2435, volume: 25539 },  // TWSE
+  { time: '2026-04-28', open: 2490, high: 2675, low: 2485, close: 2615, volume: 24314 },  // TWSE
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -106,8 +106,8 @@ export const CHIP_DATA_2454: ChipData[] = [
   { time: '2026-04-22', foreign:  -568, trust:  2528, dealer:   227, mainForce:  2187 },
   { time: '2026-04-23', foreign:   747, trust:   595, dealer:   232, mainForce:  1574 },
   { time: '2026-04-24', foreign:   829, trust:  1769, dealer:   119, mainForce:  2717 },
-  { time: '2026-04-25', foreign:  1250, trust:   625, dealer:   180, mainForce:  2055 },  // 估算（T86無記錄）
-  { time: '2026-04-27', foreign:  -850, trust:   380, dealer:  -125, mainForce:  -595 },  // 估算（T86無記錄）
+  { time: '2026-04-27', foreign:   144, trust:   566, dealer:   162, mainForce:   872 },  // T86 實測
+  { time: '2026-04-28', foreign:  1191, trust:  1215, dealer:   -23, mainForce:  2362 },  // T86 實測
 ];
 
 // ── Gold (GC=F) ────────────────────────────────────────────────────────────────
@@ -130,8 +130,8 @@ export const SEED_DATA_GOLD: OHLCData[] = [
   { time: '2026-04-22', open: 4782, high: 4798, low: 4735, close: 4746, volume: 2205 },
   { time: '2026-04-23', open: 4746, high: 4768, low: 4718, close: 4736, volume: 2105 },
   { time: '2026-04-24', open: 4736, high: 4742, low: 4695, close: 4709, volume: 2202 },
-  { time: '2026-04-25', open: 4709, high: 4732, low: 4678, close: 4695, volume: 2085 },
-  { time: '2026-04-27', open: 4695, high: 4715, low: 4648, close: 4660, volume: 2130 },
+  { time: '2026-04-27', open: 4709, high: 4762, low: 4688, close: 4748, volume: 2165 },  // 估算
+  { time: '2026-04-28', open: 4748, high: 4795, low: 4732, close: 4778, volume: 2215 },  // 估算
 ];
 
 // ── Silver (SI=F) ──────────────────────────────────────────────────────────────
@@ -154,8 +154,8 @@ export const SEED_DATA_SILVER: OHLCData[] = [
   { time: '2026-04-22', open: 78.94, high: 79.25, low: 77.48, close: 77.72, volume: 838 },
   { time: '2026-04-23', open: 77.72, high: 78.12, low: 76.52, close: 76.88, volume: 815 },
   { time: '2026-04-24', open: 76.88, high: 77.15, low: 75.28, close: 75.63, volume: 948 },
-  { time: '2026-04-25', open: 75.63, high: 76.20, low: 74.82, close: 74.95, volume: 882 },
-  { time: '2026-04-27', open: 74.95, high: 75.35, low: 73.75, close: 74.18, volume: 918 },
+  { time: '2026-04-27', open: 75.63, high: 76.45, low: 75.12, close: 76.08, volume: 895 },  // 估算
+  { time: '2026-04-28', open: 76.08, high: 77.25, low: 75.85, close: 76.95, volume: 928 },  // 估算
 ];
 
 // ── VIXTWN ─────────────────────────────────────────────────────────────────────
@@ -177,6 +177,6 @@ export const SEED_DATA_VIX: OHLCData[] = [
   { time: '2026-04-22', open: 19.35, high: 19.82, low: 18.72, close: 19.02, volume: 162 },
   { time: '2026-04-23', open: 19.02, high: 19.45, low: 18.38, close: 18.68, volume: 155 },
   { time: '2026-04-24', open: 18.68, high: 19.15, low: 18.22, close: 18.80, volume: 452 },
-  { time: '2026-04-25', open: 18.80, high: 19.25, low: 18.32, close: 18.45, volume: 338 },
-  { time: '2026-04-27', open: 18.45, high: 20.20, low: 18.38, close: 19.82, volume: 418 },
+  { time: '2026-04-27', open: 18.80, high: 19.35, low: 18.42, close: 19.05, volume: 365 },  // 估算
+  { time: '2026-04-28', open: 19.05, high: 20.15, low: 18.88, close: 19.72, volume: 425 },  // 估算
 ];
