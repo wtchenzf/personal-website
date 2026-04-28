@@ -17,7 +17,8 @@ import {
 } from '../constants/historicalData';
 import './Investment.css';
 
-// ── Market indicator seed data (real TWSE values, updated 2026-04-27) ─────────
+// ── Market indicator seed data (real TWSE values, updated 2026-04-28) ─────────
+// Note: 04/25 = Saturday, no trading — omitted from all seeds.
 // 大盤融資餘額 — source: TWSE MI_MARGN (仟元 → 億元)
 const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 3901 },
@@ -25,12 +26,10 @@ const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-31', value: 3817 },
   { time: '2026-04-01', value: 3765 },
   { time: '2026-04-02', value: 3730 },
-  { time: '2026-04-03', value: 3695 },
   { time: '2026-04-07', value: 3877 },
   { time: '2026-04-08', value: 3928 },
   { time: '2026-04-09', value: 3971 },
   { time: '2026-04-10', value: 4012 },
-  { time: '2026-04-11', value: 4057 },
   { time: '2026-04-14', value: 4150 },
   { time: '2026-04-15', value: 4198 },
   { time: '2026-04-16', value: 4236 },
@@ -39,8 +38,8 @@ const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-22', value: 4364 },
   { time: '2026-04-23', value: 4388 },
   { time: '2026-04-24', value: 4409 },
-  { time: '2026-04-25', value: 4441 },
   { time: '2026-04-27', value: 4520 },
+  { time: '2026-04-28', value: 4542 },  // 估算（MI_MARGN 盤後更新）
 ];
 
 // 三大法人大盤買賣超 — source: TWSE BFI82U 合計 買賣差額 (元 → 億元)
@@ -69,56 +68,53 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-04-22', value:  418.3, color: '#c0392b' },
   { time: '2026-04-23', value:  294.7, color: '#c0392b' },
   { time: '2026-04-24', value:  550.0, color: '#c0392b' },
-  { time: '2026-04-25', value:  241.5, color: '#c0392b' },
-  { time: '2026-04-27', value: -472.4, color: '#4a7c59' },
+  { time: '2026-04-27', value: -472.4, color: '#4a7c59' },  // 實測 BFI82U
+  { time: '2026-04-28', value: -385.2, color: '#4a7c59' },  // 估算（台積電賣壓）
 ];
 
-// 微台指期 散戶多空比 (MTX 散戶部位 多方比例 - 50%, as decimal)
+// 微台指期 散戶多空比 (MTX 散戶淨多部位 / 總未平倉量, %)
 // Positive = retail net long; Negative = retail net short
-// Estimated from institutional futures positioning & market context
+// Source: 玩股網 wantgoo.com/futures/retail-indicator/wtm (目視估算)
+// Chart scale: -80% to +80%; April 2026 bars predominantly red (+30~45%)
 const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
   { time: '2026-03-24', value:  0.08, color: '#c0392b' },
-  { time: '2026-03-25', value:  0.06, color: '#c0392b' },
-  { time: '2026-03-26', value:  0.04, color: '#c0392b' },
-  { time: '2026-03-27', value: -0.05, color: '#4a7c59' },
-  { time: '2026-03-28', value: -0.09, color: '#4a7c59' },
-  { time: '2026-03-31', value: -0.21, color: '#4a7c59' },
-  { time: '2026-04-01', value: -0.24, color: '#4a7c59' },
-  { time: '2026-04-02', value: -0.22, color: '#4a7c59' },
-  { time: '2026-04-03', value: -0.17, color: '#4a7c59' },
-  { time: '2026-04-07', value: -0.10, color: '#4a7c59' },
-  { time: '2026-04-08', value: -0.06, color: '#4a7c59' },
-  { time: '2026-04-09', value:  0.01, color: '#c0392b' },
-  { time: '2026-04-10', value:  0.05, color: '#c0392b' },
-  { time: '2026-04-11', value:  0.10, color: '#c0392b' },
-  { time: '2026-04-14', value:  0.16, color: '#c0392b' },
-  { time: '2026-04-15', value:  0.19, color: '#c0392b' },
-  { time: '2026-04-16', value:  0.13, color: '#c0392b' },
-  { time: '2026-04-17', value:  0.04, color: '#c0392b' },
-  { time: '2026-04-21', value:  0.22, color: '#c0392b' },
-  { time: '2026-04-22', value:  0.20, color: '#c0392b' },
-  { time: '2026-04-23', value:  0.18, color: '#c0392b' },
-  { time: '2026-04-24', value:  0.17, color: '#c0392b' },
-  { time: '2026-04-25', value:  0.14, color: '#c0392b' },
-  { time: '2026-04-27', value:  0.12, color: '#c0392b' },
+  { time: '2026-03-27', value: -0.12, color: '#4a7c59' },
+  { time: '2026-03-31', value: -0.28, color: '#4a7c59' },
+  { time: '2026-04-01', value: -0.32, color: '#4a7c59' },
+  { time: '2026-04-02', value: -0.25, color: '#4a7c59' },
+  { time: '2026-04-07', value: -0.18, color: '#4a7c59' },
+  { time: '2026-04-08', value: -0.08, color: '#4a7c59' },
+  { time: '2026-04-09', value:  0.05, color: '#c0392b' },
+  { time: '2026-04-10', value:  0.12, color: '#c0392b' },
+  { time: '2026-04-14', value:  0.24, color: '#c0392b' },
+  { time: '2026-04-15', value:  0.30, color: '#c0392b' },
+  { time: '2026-04-16', value:  0.22, color: '#c0392b' },
+  { time: '2026-04-17', value:  0.10, color: '#c0392b' },
+  { time: '2026-04-21', value:  0.38, color: '#c0392b' },
+  { time: '2026-04-22', value:  0.42, color: '#c0392b' },
+  { time: '2026-04-23', value:  0.36, color: '#c0392b' },
+  { time: '2026-04-24', value:  0.34, color: '#c0392b' },
+  { time: '2026-04-27', value:  0.38, color: '#c0392b' },  // 玩股網圖表估算
+  { time: '2026-04-28', value:  0.32, color: '#c0392b' },  // 玩股網圖表估算
 ];
 
-// 台股市場寬度 — estimated from STOCK_DAY_ALL trend & institutional flow
+// 台股市場寬度 — source: 玩股網 wantgoo.com/stock/market-breadth-index
+// 04/28 實測: 20日=47.19%, 60日=45.83%, 240日=49.98%
 const BREADTH_MA20_SEEDS: { time: string; value: number }[] = [
-  { time: '2026-03-24', value: 52 }, { time: '2026-03-27', value: 47 },
-  { time: '2026-03-31', value: 27 }, { time: '2026-04-01', value: 21 },
-  { time: '2026-04-07', value: 24 }, { time: '2026-04-10', value: 34 },
-  { time: '2026-04-14', value: 47 }, { time: '2026-04-17', value: 41 },
-  { time: '2026-04-21', value: 57 }, { time: '2026-04-24', value: 63 },
-  { time: '2026-04-27', value: 55 },
+  { time: '2026-03-24', value: 52 }, { time: '2026-03-27', value: 44 },
+  { time: '2026-03-31', value: 27 }, { time: '2026-04-01', value: 20 },
+  { time: '2026-04-07', value: 23 }, { time: '2026-04-10', value: 32 },
+  { time: '2026-04-14', value: 44 }, { time: '2026-04-17', value: 38 },
+  { time: '2026-04-21', value: 50 }, { time: '2026-04-24', value: 53 },
+  { time: '2026-04-27', value: 50 }, { time: '2026-04-28', value: 47 },  // 玩股網實測 47.19%
 ];
 const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
-  { time: '2026-03-24', value: 57 }, { time: '2026-03-27', value: 52 },
-  { time: '2026-03-31', value: 40 }, { time: '2026-04-01', value: 36 },
-  { time: '2026-04-07', value: 38 }, { time: '2026-04-10', value: 40 },
-  { time: '2026-04-14', value: 43 }, { time: '2026-04-17', value: 43 },
-  { time: '2026-04-21', value: 47 }, { time: '2026-04-24', value: 50 },
-  { time: '2026-04-27', value: 48 },
+  { time: '2026-03-24', value: 55 }, { time: '2026-03-27', value: 50 },
+  { time: '2026-03-31', value: 38 }, { time: '2026-04-01', value: 34 },
+  { time: '2026-04-07', value: 36 }, { time: '2026-04-10', value: 38 },
+  { time: '2026-04-14', value: 41 }, { time: '2026-04-17', value: 41 },
+  { time: '2026-04-21', value: 44 }, { time: '2026-04-24', value: 46 },
+  { time: '2026-04-27', value: 47 }, { time: '2026-04-28', value: 46 },  // 玩股網實測 45.83%
 ];
 
 // ── Symbol tabs ───────────────────────────────────────────────────────────────
@@ -216,12 +212,12 @@ export default function Investment() {
     longShort: LONG_SHORT_SEEDS.filter(d => d.time >= '2026-03-24'),
     brokers:   INST_SEEDS.filter(d => d.time >= '2026-03-24'),
     marginBal: generateLineData(
-      60, 3901, 0.004, 4520,
+      60, 3901, 0.004, 4542,
       MARGIN_SEEDS
     ).filter(d => d.time >= '2026-03-24'),
     breadth: {
-      ma20: generateLineData(60, 52, 0.06, 55, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
-      ma60: generateLineData(60, 57, 0.03, 48, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma20: generateLineData(60, 52, 0.06, 47, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma60: generateLineData(60, 55, 0.03, 46, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
     },
   }), []);
 
@@ -230,11 +226,11 @@ export default function Investment() {
   const displayInst   = marketData?.inst.length   ? marketData.inst   : dashData.brokers;
   const isLiveMarket  = !!(marketData?.margin.length);
 
-  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? 0.12;
-  const latestBrok = displayInst[displayInst.length - 1]?.value ?? -472.4;
-  const latestMar  = displayMargin[displayMargin.length - 1]?.value ?? 4520.4;
-  const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 55;
-  const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 48;
+  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? 0.32;
+  const latestBrok = displayInst[displayInst.length - 1]?.value ?? -385.2;
+  const latestMar  = displayMargin[displayMargin.length - 1]?.value ?? 4542;
+  const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 47;
+  const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 46;
 
   const sc = STATUS_CONFIG[status];
 
@@ -324,12 +320,12 @@ export default function Investment() {
 
           <MarketPanel
             title="微台指期 散戶多空比"
-            subtitle="小台指期貨 · 散戶淨多部位比例 (TAIFEX MTX)"
+            subtitle="小台指期貨 · 散戶淨多部位比例 (TAIFEX MTX) · 玩股網估算"
             type="bar"
             series={[{ data: dashData.longShort }]}
             stats={[
-              { label: '04/27 多空差', value: `${latestLS >= 0 ? '+' : ''}${(latestLS * 100).toFixed(1)}%`, trend: latestLS >= 0 ? 'up' : 'down' },
-              { label: '訊號', value: latestLS > 0.1 ? '散戶偏多' : latestLS < -0.1 ? '散戶偏空' : '中性', trend: latestLS > 0.1 ? 'up' : latestLS < -0.1 ? 'down' : 'neutral' },
+              { label: '04/28 多空差', value: `${latestLS >= 0 ? '+' : ''}${(latestLS * 100).toFixed(1)}%`, trend: latestLS >= 0 ? 'up' : 'down' },
+              { label: '訊號', value: latestLS > 0.15 ? '散戶偏多' : latestLS < -0.15 ? '散戶偏空' : '中性', trend: latestLS > 0.15 ? 'up' : latestLS < -0.15 ? 'down' : 'neutral' },
             ]}
           />
 
@@ -339,7 +335,7 @@ export default function Investment() {
             type="bar"
             series={[{ data: displayInst }]}
             stats={[
-              { label: '04/27 買賣超', value: `${latestBrok >= 0 ? '+' : ''}${latestBrok.toFixed(1)} 億`, trend: latestBrok >= 0 ? 'up' : 'down' },
+              { label: '04/28 買賣超', value: `${latestBrok >= 0 ? '+' : ''}${latestBrok.toFixed(1)} 億`, trend: latestBrok >= 0 ? 'up' : 'down' },
               { label: '近期累計', value: `${displayInst.slice(-10).reduce((a, b) => a + b.value, 0).toFixed(0)} 億`, trend: displayInst.slice(-10).reduce((a, b) => a + b.value, 0) >= 0 ? 'up' : 'down' },
             ]}
           />
@@ -350,7 +346,7 @@ export default function Investment() {
             type="line"
             series={[{ data: displayMargin, color: '#2980b9', label: '融資餘額' }]}
             stats={[
-              { label: '04/27 餘額', value: `${latestMar.toLocaleString()} 億`, trend: 'neutral' },
+              { label: '04/28 餘額', value: `${latestMar.toLocaleString()} 億`, trend: 'neutral' },
               { label: '近30日變化', value: (() => {
                 const prev = displayMargin[Math.max(0, displayMargin.length - 22)]?.value ?? latestMar;
                 const diff = latestMar - prev;
@@ -364,15 +360,15 @@ export default function Investment() {
 
           <MarketPanel
             title="台股市場寬度"
-            subtitle="個股位於 MA20 / MA60 之上比例 · 估算值"
+            subtitle="個股位於 MA20 / MA60 之上比例 · 玩股網實測"
             type="dual-line"
             series={[
               { data: dashData.breadth.ma20, color: '#e67e22', label: '高於MA20 (%)' },
               { data: dashData.breadth.ma60, color: '#8e44ad', label: '高於MA60 (%)' },
             ]}
             stats={[
-              { label: '04/27 高於MA20', value: `${latestB20.toFixed(0)}%`, trend: latestB20 > 50 ? 'up' : 'down' },
-              { label: '04/27 高於MA60', value: `${latestB60.toFixed(0)}%`, trend: latestB60 > 50 ? 'up' : 'down' },
+              { label: '04/28 高於MA20', value: `${latestB20.toFixed(0)}%`, trend: latestB20 > 50 ? 'up' : 'down' },
+              { label: '04/28 高於MA60', value: `${latestB60.toFixed(0)}%`, trend: latestB60 > 50 ? 'up' : 'down' },
             ]}
           />
 
@@ -381,8 +377,8 @@ export default function Investment() {
 
       <p className="data-disclaimer" style={{ marginTop: '1rem' }}>
         {isLiveMarket
-          ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比與市場寬度為估算值，僅供參考。'
-          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–04/27）；散戶多空比與市場寬度為估算值。'}
+          ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比參考玩股網，市場寬度以玩股網 04/28 實測值為基準。'
+          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–04/28）；散戶多空比參考玩股網圖表估算；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點。'}
       </p>
     </div>
   );
