@@ -72,30 +72,32 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-04-28', value: -385.2, color: '#4a7c59' },  // 估算（台積電賣壓）
 ];
 
-// 微台指期 散戶多空比 (MTX 散戶淨多部位 / 總未平倉量, %)
-// Positive = retail net long; Negative = retail net short
-// Source: 玩股網 wantgoo.com/futures/retail-indicator/wtm (目視估算)
-// Chart scale: -80% to +80%; April 2026 bars predominantly red (+30~45%)
+// 微台指期 散戶多空比 — 來源：玩股網 wantgoo.com/futures/retail-indicator/wtm
+// 計算式：(散戶做多 - 散戶做空) / (散戶做多 + 散戶做空) × 100
+// 正值 = 散戶淨多 (偏多)；負值 = 散戶淨空 (偏空)
+// ⚠ 04/13 後為玩股網實測值；之前為估算
 const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
-  { time: '2026-03-24', value:  0.08, color: '#c0392b' },
-  { time: '2026-03-27', value: -0.12, color: '#4a7c59' },
-  { time: '2026-03-31', value: -0.28, color: '#4a7c59' },
-  { time: '2026-04-01', value: -0.32, color: '#4a7c59' },
-  { time: '2026-04-02', value: -0.25, color: '#4a7c59' },
-  { time: '2026-04-07', value: -0.18, color: '#4a7c59' },
-  { time: '2026-04-08', value: -0.08, color: '#4a7c59' },
-  { time: '2026-04-09', value:  0.05, color: '#c0392b' },
-  { time: '2026-04-10', value:  0.12, color: '#c0392b' },
-  { time: '2026-04-14', value:  0.24, color: '#c0392b' },
-  { time: '2026-04-15', value:  0.30, color: '#c0392b' },
-  { time: '2026-04-16', value:  0.22, color: '#c0392b' },
-  { time: '2026-04-17', value:  0.10, color: '#c0392b' },
-  { time: '2026-04-21', value:  0.38, color: '#c0392b' },
-  { time: '2026-04-22', value:  0.42, color: '#c0392b' },
-  { time: '2026-04-23', value:  0.36, color: '#c0392b' },
-  { time: '2026-04-24', value:  0.34, color: '#c0392b' },
-  { time: '2026-04-27', value:  0.38, color: '#c0392b' },  // 玩股網圖表估算
-  { time: '2026-04-28', value:  0.32, color: '#c0392b' },  // 玩股網圖表估算
+  { time: '2026-03-24', value:  0.08, color: '#c0392b' },  // 估算
+  { time: '2026-03-27', value:  0.05, color: '#c0392b' },  // 估算
+  { time: '2026-03-31', value: -0.15, color: '#4a7c59' },  // 估算
+  { time: '2026-04-01', value: -0.22, color: '#4a7c59' },  // 估算
+  { time: '2026-04-02', value: -0.28, color: '#4a7c59' },  // 估算
+  { time: '2026-04-07', value: -0.32, color: '#4a7c59' },  // 估算（關稅衝擊）
+  { time: '2026-04-08', value: -0.20, color: '#4a7c59' },  // 估算
+  { time: '2026-04-09', value: -0.12, color: '#4a7c59' },  // 估算
+  { time: '2026-04-10', value: -0.05, color: '#4a7c59' },  // 估算
+  { time: '2026-04-13', value: -0.1302, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-14', value: -0.2865, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-15', value: -0.0278, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-16', value: -0.0612, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-17', value:  0.1684, color: '#c0392b' }, // 玩股網實測
+  { time: '2026-04-20', value:  0.1340, color: '#c0392b' }, // 玩股網實測
+  { time: '2026-04-21', value: -0.1460, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-22', value: -0.0569, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-23', value:  0.0178, color: '#c0392b' }, // 玩股網實測
+  { time: '2026-04-24', value: -0.3606, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-27', value: -0.2094, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-28', value: -0.1242, color: '#4a7c59' }, // 玩股網實測
 ];
 
 // 台股市場寬度 — source: 玩股網 wantgoo.com/stock/market-breadth-index
@@ -226,7 +228,7 @@ export default function Investment() {
   const displayInst   = marketData?.inst.length   ? marketData.inst   : dashData.brokers;
   const isLiveMarket  = !!(marketData?.margin.length);
 
-  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? 0.32;
+  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? -0.1242;
   const latestBrok = displayInst[displayInst.length - 1]?.value ?? -385.2;
   const latestMar  = displayMargin[displayMargin.length - 1]?.value ?? 4542;
   const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 47;
@@ -325,7 +327,7 @@ export default function Investment() {
             series={[{ data: dashData.longShort }]}
             stats={[
               { label: '04/28 多空差', value: `${latestLS >= 0 ? '+' : ''}${(latestLS * 100).toFixed(1)}%`, trend: latestLS >= 0 ? 'up' : 'down' },
-              { label: '訊號', value: latestLS > 0.15 ? '散戶偏多' : latestLS < -0.15 ? '散戶偏空' : '中性', trend: latestLS > 0.15 ? 'up' : latestLS < -0.15 ? 'down' : 'neutral' },
+              { label: '訊號', value: latestLS > 0.05 ? '散戶偏多' : latestLS < -0.05 ? '散戶偏空' : '中性', trend: latestLS > 0.05 ? 'up' : latestLS < -0.05 ? 'down' : 'neutral' },
             ]}
           />
 

@@ -83,6 +83,18 @@ export default function MarketPanel({ title, subtitle, type, series, stats }: Ma
         </div>
       )}
 
+      {/* Color legend for dual-line charts */}
+      {type === 'dual-line' && series.some(s => s.label) && (
+        <div className="mp-legend">
+          {series.map(s => s.label ? (
+            <span key={s.label} className="mp-legend-item">
+              <span className="mp-legend-dot" style={{ background: s.color ?? '#666' }} />
+              <span className="mp-legend-label">{s.label}</span>
+            </span>
+          ) : null)}
+        </div>
+      )}
+
       <div ref={chartRef} className="mp-chart" />
     </div>
   );
