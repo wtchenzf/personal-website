@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import EarningsCalendar from '../components/EarningsCalendar';
 import './MarketCalendar.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -447,6 +448,9 @@ export default function MarketCalendar() {
         <span className="legend-item"><span className="cal-dot dot-TW" />台股</span>
         <span className="legend-item cal-legend-sep">已公布事件顯示實際數據</span>
       </div>
+
+      {/* ── 台股大廠法說會 ── */}
+      <EarningsCalendar />
     </div>
   );
 }
