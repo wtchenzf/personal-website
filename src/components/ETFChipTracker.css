@@ -164,6 +164,19 @@
 .etf-section-banner.buy  .etf-banner-dir { color: #ff7033; font-weight: 700; font-size: 0.85rem; }
 .etf-section-banner.sell .etf-banner-dir { color: #33c058; font-weight: 700; font-size: 0.85rem; }
 
+.etf-banner-date {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e0d8b0;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
 .etf-banner-summary {
   font-size: 0.82rem;
   color: #c8c8d8;
@@ -285,6 +298,19 @@
   font-size: 0.82rem;
   font-weight: 700;
   color: #c8c8d8;
+}
+
+.etf-row-date-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #9090aa;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .etf-status-badge {
