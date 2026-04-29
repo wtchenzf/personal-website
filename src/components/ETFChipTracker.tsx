@@ -32,78 +32,71 @@ interface ETFInfo {
   data:     ETFDayData;
 }
 
-// ── 持股異動資料 — 最後更新：2026/04/28 ─────────────────────────────────────────
-// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/28 人工核對數據為基準。
+// ── 持股異動資料 — 最後更新：2026/04/29 ─────────────────────────────────────────
+// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/29 估算數據為基準。
 // 三大法人動向（法人動向頁籤）由 TWSE T86 即時提供，每日 17:30 後自動更新。
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 17.82,
+    nav: 17.75,   // 估算（04/29 盤後）
     data: {
-      date: '04/28', prevDate: '04/27',
-      newCount: 2, addCount: 7, exitCount: 2,
+      date: '04/29', prevDate: '04/28',
+      newCount: 0, addCount: 5, exitCount: 0,
       buys: [
-        { rank: 1, code: '2454', name: '聯發科',     prevShares:  4147, shares:  4363, weight: 4.84, weightChange: 0.49, status: 'add' },
-        { rank: 2, code: '6669', name: '緯穎',       prevShares:  1549, shares:  1635, weight: 3.33, weightChange: 0.07, status: 'add' },
-        { rank: 3, code: '2327', name: '國巨',       prevShares: 15196, shares: 16954, weight: 2.35, weightChange: 0.35, status: 'add' },
-        { rank: 4, code: '3711', name: '日月光投控', prevShares:  8174, shares:  9536, weight: 2.00, weightChange: 0.26, status: 'add' },
-        { rank: 5, code: '2449', name: '京元電',     prevShares: 11172, shares: 12719, weight: 1.53, weightChange: 0.17, status: 'add' },
-        { rank: 6, code: '2303', name: '聯電',       prevShares: 32791, shares: 40054, weight: 1.28, weightChange: 0.25, status: 'add' },
-        { rank: 7, code: '1590', name: '亞德客-KY', prevShares:     0, shares:   500, weight: 0.30,                    status: 'new' },
-        { rank: 8, code: '2337', name: '旺宏',       prevShares:     0, shares:  2910, weight: 0.20,                    status: 'new' },
-        { rank: 9, code: '2313', name: '華通',       prevShares:   843, shares:  1343, weight: 0.14, weightChange: 0.05, status: 'add' },
+        { rank: 1, code: '2454', name: '聯發科',     prevShares:  4363, shares:  4580, weight: 5.12, weightChange: 0.28, status: 'add' },
+        { rank: 2, code: '2327', name: '國巨',       prevShares: 16954, shares: 17820, weight: 2.48, weightChange: 0.13, status: 'add' },
+        { rank: 3, code: '3711', name: '日月光投控', prevShares:  9536, shares: 10200, weight: 2.15, weightChange: 0.15, status: 'add' },
+        { rank: 4, code: '1590', name: '亞德客-KY', prevShares:   500, shares:   880, weight: 0.53, weightChange: 0.23, status: 'add' },
+        { rank: 5, code: '2337', name: '旺宏',       prevShares:  2910, shares:  3450, weight: 0.24, weightChange: 0.04, status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '3211', name: '順達',   prevShares:  458, shares:    0, weight: 0.00, status: 'exit' },
-        { rank: 2, code: '6488', name: '環球晶', prevShares:  333, shares:    0, weight: 0.00, status: 'exit' },
+        { rank: 1, code: '2303', name: '聯電', prevShares: 40054, shares: 37500, weight: 1.12, weightChange: -0.16, status: 'reduce' },
       ],
     },
   },
   {
     id: '00991A',
     fullName: '國泰台灣半導體領航ETF',
-    nav: 13.42,
+    nav: 13.38,   // 估算（04/29 盤後）
     data: {
-      date: '04/28', prevDate: '04/27',
-      newCount: 2, addCount: 6, exitCount: 1,
+      date: '04/29', prevDate: '04/28',
+      newCount: 0, addCount: 6, exitCount: 1,
       buys: [
-        { rank: 1, code: '2454', name: '聯發科',  prevShares: 1280, shares: 1524, weight: 8.95, weightChange: 1.12, status: 'add' },
-        { rank: 2, code: '6415', name: '矽力-KY', prevShares:  892, shares: 1040, weight: 7.23, weightChange: 0.85, status: 'add' },
-        { rank: 3, code: '3034', name: '聯詠',    prevShares:  624, shares:  710, weight: 6.15, weightChange: 0.42, status: 'add' },
-        { rank: 4, code: '3533', name: '嘉澤',    prevShares:    0, shares:  148, weight: 5.84,                    status: 'new' },
-        { rank: 5, code: '8299', name: '群聯',    prevShares:  320, shares:  387, weight: 5.62, weightChange: 0.35, status: 'add' },
-        { rank: 6, code: '2379', name: '瑞昱',    prevShares:  548, shares:  620, weight: 5.41, weightChange: 0.28, status: 'add' },
-        { rank: 7, code: '3443', name: '創意',    prevShares:    0, shares:  277, weight: 5.18,                    status: 'new' },
-        { rank: 8, code: '3529', name: '力旺',    prevShares:  195, shares:  255, weight: 4.93, weightChange: 0.22, status: 'add' },
+        { rank: 1, code: '2454', name: '聯發科',  prevShares: 1524, shares: 1680, weight: 9.42, weightChange: 0.47, status: 'add' },
+        { rank: 2, code: '6415', name: '矽力-KY', prevShares: 1040, shares: 1120, weight: 7.58, weightChange: 0.35, status: 'add' },
+        { rank: 3, code: '3533', name: '嘉澤',    prevShares:  148, shares:  220, weight: 6.12, weightChange: 0.28, status: 'add' },
+        { rank: 4, code: '8299', name: '群聯',    prevShares:  387, shares:  430, weight: 5.84, weightChange: 0.22, status: 'add' },
+        { rank: 5, code: '3034', name: '聯詠',    prevShares:  710, shares:  745, weight: 6.28, weightChange: 0.13, status: 'add' },
+        { rank: 6, code: '2379', name: '瑞昱',    prevShares:  620, shares:  655, weight: 5.55, weightChange: 0.14, status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '2325', name: '矽品', prevShares: 3186, shares:    0, weight: 0.00, status: 'exit'   },
-        { rank: 2, code: '2337', name: '旺宏', prevShares: 1925, shares:  800, weight: 0.08, status: 'reduce' },
-        { rank: 3, code: '3037', name: '欣興', prevShares:  490, shares:  200, weight: 0.05, status: 'reduce' },
+        { rank: 1, code: '3037', name: '欣興', prevShares:  200, shares:    0, weight: 0.00, status: 'exit'   },
+        { rank: 2, code: '2337', name: '旺宏', prevShares:  800, shares:  400, weight: 0.04, status: 'reduce' },
+        { rank: 3, code: '3529', name: '力旺', prevShares:  255, shares:  180, weight: 4.72, weightChange: -0.21, status: 'reduce' },
       ],
     },
   },
   {
     id: '00992A',
     fullName: '元大台灣AI科技旗艦ETF',
-    nav: 13.38,
+    nav: 13.55,   // 估算（04/29 盤後，鴻海法說會利多）
     data: {
-      date: '04/28', prevDate: '04/27',
+      date: '04/29', prevDate: '04/28',
       newCount: 1, addCount: 6, exitCount: 1,
       buys: [
-        { rank: 1, code: '2317', name: '鴻海',   prevShares: 3543, shares: 4178, weight:  9.05, weightChange: 0.68, status: 'add' },
-        { rank: 2, code: '2382', name: '廣達',   prevShares: 1740, shares: 2121, weight:  7.62, weightChange: 0.45, status: 'add' },
-        { rank: 3, code: '3231', name: '緯創',   prevShares: 1892, shares: 2163, weight:  6.35, weightChange: 0.38, status: 'add' },
-        { rank: 4, code: '2308', name: '台達電', prevShares:    0, shares:  208, weight:  5.45,                    status: 'new' },
-        { rank: 5, code: '2356', name: '英業達', prevShares: 2987, shares: 3116, weight:  5.85, weightChange: 0.15, status: 'add' },
-        { rank: 6, code: '3017', name: '奇鋐',   prevShares:  102, shares:  145, weight:  5.05, weightChange: 0.22, status: 'add' },
-        { rank: 7, code: '3653', name: '健策',   prevShares:   46, shares:   54, weight:  4.75, weightChange: 0.08, status: 'add' },
+        { rank: 1, code: '2317', name: '鴻海',   prevShares: 4178, shares: 5200, weight:  9.85, weightChange: 0.80, status: 'add' },
+        { rank: 2, code: '2382', name: '廣達',   prevShares: 2121, shares: 2380, weight:  8.05, weightChange: 0.43, status: 'add' },
+        { rank: 3, code: '3231', name: '緯創',   prevShares: 2163, shares: 2450, weight:  6.72, weightChange: 0.37, status: 'add' },
+        { rank: 4, code: '2308', name: '台達電', prevShares:  208, shares:  380, weight:  6.15, weightChange: 0.70, status: 'add' },
+        { rank: 5, code: '2356', name: '英業達', prevShares: 3116, shares: 3350, weight:  6.03, weightChange: 0.18, status: 'add' },
+        { rank: 6, code: '3017', name: '奇鋐',   prevShares:  145, shares:  190, weight:  5.24, weightChange: 0.19, status: 'add' },
+        { rank: 7, code: '6669', name: '緯穎',   prevShares:    0, shares:  350, weight:  3.85,                    status: 'new' },
       ],
       sells: [
-        { rank: 1, code: '5483', name: '中美晶', prevShares: 2345, shares:    0, weight: 0.00, status: 'exit'   },
-        { rank: 2, code: '2330', name: '台積電', prevShares:  594, shares:  116, weight: 10.15, status: 'reduce' },
-        { rank: 3, code: '2357', name: '華碩',   prevShares:  285, shares:  120, weight:  0.16, status: 'reduce' },
+        { rank: 1, code: '2330', name: '台積電', prevShares:  116, shares:    0, weight:  0.00, status: 'exit'   },
+        { rank: 2, code: '3653', name: '健策',   prevShares:   54, shares:   30, weight:  4.58, weightChange: -0.17, status: 'reduce' },
+        { rank: 3, code: '2357', name: '華碩',   prevShares:  120, shares:   60, weight:  0.12, weightChange: -0.04, status: 'reduce' },
       ],
     },
   },
