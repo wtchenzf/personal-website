@@ -110,7 +110,11 @@ const ETF_DATA: ETFInfo[] = [
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function ETFChipTracker() {
+interface ETFChipTrackerProps {
+  refreshTrigger?: number;
+}
+
+export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) {
   const [activeETF, setActiveETF] = useState(ETF_DATA[0].id);
   const [chipView,  setChipView]  = useState<'holdings' | 'institutional'>(
     isAPIConfigured() ? 'institutional' : 'holdings'
@@ -120,6 +124,13 @@ export default function ETFChipTracker() {
   const [instData, setInstData] = useState<Record<string, ChipData[]>>({});
   const cacheRef = useRef<Record<string, ChipData[]>>({});
   const apiOn = isAPIConfigured();
+
+  // When refreshTrigger changes (parent pressed update), bust cache & re-fetch
+  useEffect(() => {
+    if (refreshTrigger === undefined || refreshTrigger === 0) return;
+    cacheRef.current = {};
+    setInstData({});
+  }, [refreshTrigger]);
 
   useEffect(() => {
     if (!apiOn) return;
@@ -134,7 +145,7 @@ export default function ETFChipTracker() {
         setInstData(prev => ({ ...prev, [etfCode]: chips }));
       }
     }).catch(() => {/* silent */});
-  }, [activeETF, apiOn]);
+  }, [activeETF, apiOn, instData]);
 
   const etf       = ETF_DATA.find(e => e.id === activeETF) ?? ETF_DATA[0];
   const { data }  = etf;

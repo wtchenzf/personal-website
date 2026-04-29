@@ -39,7 +39,8 @@ const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-23', value: 4388 },
   { time: '2026-04-24', value: 4409 },
   { time: '2026-04-27', value: 4520 },
-  { time: '2026-04-28', value: 4542 },  // 估算（MI_MARGN 盤後更新）
+  { time: '2026-04-28', value: 4542 },
+  { time: '2026-04-29', value: 4571 },  // 估算（MI_MARGN 盤後更新）
 ];
 
 // 三大法人大盤買賣超 — source: TWSE BFI82U 合計 買賣差額 (元 → 億元)
@@ -69,7 +70,8 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-04-23', value:  294.7, color: '#c0392b' },
   { time: '2026-04-24', value:  550.0, color: '#c0392b' },
   { time: '2026-04-27', value: -472.4, color: '#4a7c59' },  // 實測 BFI82U
-  { time: '2026-04-28', value: -385.2, color: '#4a7c59' },  // 估算（台積電賣壓）
+  { time: '2026-04-28', value: -385.2, color: '#4a7c59' },  // 實測 BFI82U
+  { time: '2026-04-29', value: -333.0, color: '#4a7c59' },  // 估算（截圖數據）
 ];
 
 // 微台指期 散戶多空比 — 來源：玩股網 wantgoo.com/futures/retail-indicator/wtm
@@ -98,6 +100,7 @@ const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
   { time: '2026-04-24', value: -0.3606, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-27', value: -0.2094, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-28', value: -0.1242, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-29', value: -0.1580, color: '#4a7c59' }, // 估算
 ];
 
 // 台股市場寬度 — source: 玩股網 wantgoo.com/stock/market-breadth-index
@@ -109,6 +112,7 @@ const BREADTH_MA20_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-14', value: 44 }, { time: '2026-04-17', value: 38 },
   { time: '2026-04-21', value: 50 }, { time: '2026-04-24', value: 53 },
   { time: '2026-04-27', value: 50 }, { time: '2026-04-28', value: 47 },  // 玩股網實測 47.19%
+  { time: '2026-04-29', value: 45 },  // 估算
 ];
 const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 55 }, { time: '2026-03-27', value: 50 },
@@ -117,6 +121,7 @@ const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-14', value: 41 }, { time: '2026-04-17', value: 41 },
   { time: '2026-04-21', value: 44 }, { time: '2026-04-24', value: 46 },
   { time: '2026-04-27', value: 47 }, { time: '2026-04-28', value: 46 },  // 玩股網實測 45.83%
+  { time: '2026-04-29', value: 45 },  // 估算
 ];
 
 // ── Symbol tabs ───────────────────────────────────────────────────────────────
@@ -141,12 +146,22 @@ const STATUS_CONFIG = {
 } as const;
 
 export default function Investment() {
-  const [activeTab,   setActiveTab]   = useState(SYMBOL_TABS[0].id);
-  const [marketData,  setMarketData]  = useState<{ margin: MarketDayData[]; inst: MarketDayData[] } | null>(null);
+  const [activeTab,    setActiveTab]    = useState(SYMBOL_TABS[0].id);
+  const [marketData,   setMarketData]   = useState<{ margin: MarketDayData[]; inst: MarketDayData[] } | null>(null);
+  const [refreshTick,  setRefreshTick]  = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ── Real-time stock data hook ─────────────────────────────────────────────
   const { quotes, ohlcData, chipData: liveChipData, status, lastUpdated, refresh } =
     useMarketData(SYMBOL_DEFS, activeTab);
+
+  // ── Unified refresh handler ───────────────────────────────────────────────
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshTick(t => t + 1);
+    await refresh();
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   // ── Fetch real market indicator data on mount ─────────────────────────────
   useEffect(() => {
@@ -228,11 +243,12 @@ export default function Investment() {
   const displayInst   = marketData?.inst.length   ? marketData.inst   : dashData.brokers;
   const isLiveMarket  = !!(marketData?.margin.length);
 
-  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? -0.1242;
-  const latestBrok = displayInst[displayInst.length - 1]?.value ?? -385.2;
-  const latestMar  = displayMargin[displayMargin.length - 1]?.value ?? 4542;
-  const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 47;
-  const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 46;
+  const latestLS   = LONG_SHORT_SEEDS[LONG_SHORT_SEEDS.length - 1]?.value ?? -0.1580;
+  const latestBrok = displayInst[displayInst.length - 1]?.value ?? -333.0;
+  const latestMar  = displayMargin[displayMargin.length - 1]?.value ?? 4571;
+  const latestB20  = dashData.breadth.ma20[dashData.breadth.ma20.length - 1]?.value ?? 45;
+  const latestB60  = dashData.breadth.ma60[dashData.breadth.ma60.length - 1]?.value ?? 45;
+  const latestDate = INST_SEEDS[INST_SEEDS.length - 1]?.time.slice(5).replace('-', '/') ?? '04/29';
 
   const sc = STATUS_CONFIG[status];
 
@@ -255,11 +271,15 @@ export default function Investment() {
             更新：{lastUpdated.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
         )}
-        {status !== 'mock' && (
-          <button className="status-refresh-btn" onClick={refresh} title="手動更新">
-            ↻ 手動更新
-          </button>
-        )}
+        <button
+          className={`status-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          title="更新最新資料"
+        >
+          <span className={`refresh-icon ${isRefreshing ? 'spinning' : ''}`}>↻</span>
+          {isRefreshing ? '更新中…' : '更新資料'}
+        </button>
       </div>
 
       {/* ── Symbol tabs ── */}
@@ -304,7 +324,7 @@ export default function Investment() {
       </div>
 
       <RocketScanner />
-      <ETFChipTracker />
+      <ETFChipTracker refreshTrigger={refreshTick} />
 
       <p className="data-disclaimer">
         {status === 'live'
@@ -326,7 +346,7 @@ export default function Investment() {
             type="bar"
             series={[{ data: dashData.longShort }]}
             stats={[
-              { label: '04/28 多空差', value: `${latestLS >= 0 ? '+' : ''}${(latestLS * 100).toFixed(1)}%`, trend: latestLS >= 0 ? 'up' : 'down' },
+              { label: `${latestDate} 多空差`, value: `${latestLS >= 0 ? '+' : ''}${(latestLS * 100).toFixed(1)}%`, trend: latestLS >= 0 ? 'up' : 'down' },
               { label: '訊號', value: latestLS > 0.05 ? '散戶偏多' : latestLS < -0.05 ? '散戶偏空' : '中性', trend: latestLS > 0.05 ? 'up' : latestLS < -0.05 ? 'down' : 'neutral' },
             ]}
           />
@@ -337,7 +357,7 @@ export default function Investment() {
             type="bar"
             series={[{ data: displayInst }]}
             stats={[
-              { label: '04/28 買賣超', value: `${latestBrok >= 0 ? '+' : ''}${latestBrok.toFixed(1)} 億`, trend: latestBrok >= 0 ? 'up' : 'down' },
+              { label: `${latestDate} 買賣超`, value: `${latestBrok >= 0 ? '+' : ''}${latestBrok.toFixed(1)} 億`, trend: latestBrok >= 0 ? 'up' : 'down' },
               { label: '近期累計', value: `${displayInst.slice(-10).reduce((a, b) => a + b.value, 0).toFixed(0)} 億`, trend: displayInst.slice(-10).reduce((a, b) => a + b.value, 0) >= 0 ? 'up' : 'down' },
             ]}
           />
@@ -348,7 +368,7 @@ export default function Investment() {
             type="line"
             series={[{ data: displayMargin, color: '#2980b9', label: '融資餘額' }]}
             stats={[
-              { label: '04/28 餘額', value: `${latestMar.toLocaleString()} 億`, trend: 'neutral' },
+              { label: `${latestDate} 餘額`, value: `${latestMar.toLocaleString()} 億`, trend: 'neutral' },
               { label: '近30日變化', value: (() => {
                 const prev = displayMargin[Math.max(0, displayMargin.length - 22)]?.value ?? latestMar;
                 const diff = latestMar - prev;
@@ -369,8 +389,8 @@ export default function Investment() {
               { data: dashData.breadth.ma60, color: '#8e44ad', label: '高於MA60 (%)' },
             ]}
             stats={[
-              { label: '04/28 高於MA20', value: `${latestB20.toFixed(0)}%`, trend: latestB20 > 50 ? 'up' : 'down' },
-              { label: '04/28 高於MA60', value: `${latestB60.toFixed(0)}%`, trend: latestB60 > 50 ? 'up' : 'down' },
+              { label: `${latestDate} 高於MA20`, value: `${latestB20.toFixed(0)}%`, trend: latestB20 > 50 ? 'up' : 'down' },
+              { label: `${latestDate} 高於MA60`, value: `${latestB60.toFixed(0)}%`, trend: latestB60 > 50 ? 'up' : 'down' },
             ]}
           />
 

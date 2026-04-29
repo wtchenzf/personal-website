@@ -91,17 +91,44 @@
 
 .status-refresh-btn {
   margin-left: auto;
-  padding: 0.2rem 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #c7d2fe;
   border-radius: 4px;
+  background: #f0f4ff;
   color: var(--accent-indigo);
+  cursor: pointer;
   transition: var(--transition-smooth);
+  flex-shrink: 0;
 }
-.status-refresh-btn:hover {
+.status-refresh-btn:hover:not(:disabled) {
   border-color: var(--accent-indigo);
-  background: #eff3ff;
+  background: #e0e7ff;
+}
+.status-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.status-refresh-btn.refreshing {
+  background: #e0e7ff;
+  border-color: var(--accent-indigo);
+}
+.refresh-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.3s;
+}
+.refresh-icon.spinning {
+  animation: spin-once 0.8s linear infinite;
+}
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 /* ── Tab real-time price display ─────────────────────────────────────────── */
