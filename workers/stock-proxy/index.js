@@ -1,15 +1,16 @@
 /**
- * stock-proxy — Cloudflare Worker v1.8
+ * stock-proxy — Cloudflare Worker v1.9
  * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner + market data).
  *
  * Endpoints
- *   GET /                                   → health check
- *   GET /quote?symbols=2330.TW,GC=F,...     → Yahoo Finance quotes
- *   GET /chart?symbol=2330.TW&range=3mo     → Yahoo Finance OHLC (3 months)
- *   GET /chips?symbol=2330&days=40          → TWSE T86 三大法人 (last N trading days)
- *   GET /scan                               → TWSE 全市場掃描：潛力飆股 + 破底翻
- *   GET /market?days=30                     → TWSE 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
- *   GET /debug                              → crumb diagnostic
+ *   GET /                                          → health check
+ *   GET /quote?symbols=2330.TW,GC=F,...            → Yahoo Finance quotes
+ *   GET /chart?symbol=2330.TW&range=3mo            → Yahoo Finance OHLC (3 months)
+ *   GET /chips?symbol=2330&days=40                 → TWSE T86 三大法人 (last N trading days)
+ *   GET /scan                                      → TWSE 全市場掃描：潛力飆股 + 破底翻
+ *   GET /market?days=30                            → TWSE 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
+ *   GET /etf-holdings?stockNo=00981A               → 主動型ETF持股異動 (TWSE P60, 今日 vs 前日 diff)
+ *   GET /debug                                     → crumb diagnostic
  */
 
 const CORS = {
@@ -17,11 +18,12 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
-const QUOTE_TTL  = 60;
-const CHART_TTL  = 300;
-const CHIP_TTL   = 3600;   // TWSE updates at ~17:30 daily
-const SCAN_TTL   = 1800;   // 30 min cache for scan results
-const MARKET_TTL = 3600;   // 1 hour cache for market indicators
+const QUOTE_TTL    = 60;
+const CHART_TTL    = 300;
+const CHIP_TTL     = 3600;   // TWSE updates at ~17:30 daily
+const SCAN_TTL     = 1800;   // 30 min cache for scan results
+const MARKET_TTL   = 3600;   // 1 hour cache for market indicators
+const ETF_HOLD_TTL = 1800;   // 30 min cache for ETF holdings diff
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -354,6 +356,88 @@ async function fetchInstDay(date) {
   } catch { return null; }
 }
 
+// ── TWSE P60 主動型ETF持股 ────────────────────────────────────────────────────
+
+/**
+ * Fetch ETF holdings for one trading day from TWSE P60.
+ * Returns array of { rank, code, name, shares(張), weight(%) } or null.
+ */
+async function fetchP60(date, stockNo) {
+  const url = `https://www.twse.com.tw/fund/P60?response=json&date=${date}&stockNo=${stockNo}`;
+  try {
+    const res = await fetch(url, { headers: TWSE_HEADERS });
+    if (!res.ok) return null;
+    const json = await res.json();
+    // Accept stat 'OK' or missing (some TWSE endpoints omit it)
+    if (!json.data || !Array.isArray(json.data) || !json.data.length) return null;
+
+    return json.data.map((row, i) => {
+      // Common P60 layout: [rank, code, name, shares(股), market_value, weight%]
+      // Fallback layouts handled defensively
+      const rank      = parseInt(String(row[0] ?? i + 1), 10) || (i + 1);
+      const code      = String(row[1] ?? '').trim();
+      const name      = String(row[2] ?? '').trim()
+                          .replace(/\s+/g, '')
+                          .replace(/股份有限公司|有限公司/g, '');
+      const sharesRaw = parseInt(String(row[3] ?? '').replace(/,/g, ''), 10);
+      const weightRaw = parseFloat(String(row[5] ?? row[4] ?? '').replace(/[%,\s]/g, ''));
+
+      // P60 reports shares in 股; 1 張 = 1000 股
+      const shares = isNaN(sharesRaw) ? 0 : Math.round(sharesRaw / 1000);
+      const weight = isNaN(weightRaw) ? 0 : weightRaw;
+
+      return { rank, code, name, shares, weight };
+    }).filter(h => h.code && /^\d{4,6}[A-Z]?$/.test(h.code));
+  } catch { return null; }
+}
+
+/**
+ * Compare previous and today's holdings and return buy/sell diff.
+ */
+function diffHoldings(prev, today) {
+  const prevMap  = new Map((prev  ?? []).map(h => [h.code, h]));
+  const todayMap = new Map((today ?? []).map(h => [h.code, h]));
+
+  const buys = [], sells = [];
+
+  for (const h of today) {
+    const p = prevMap.get(h.code);
+    if (!p) {
+      buys.push({ ...h, prevShares: 0, status: 'new' });
+    } else if (h.shares > p.shares) {
+      buys.push({ ...h, prevShares: p.shares,
+        weightChange: +((h.weight - p.weight).toFixed(2)), status: 'add' });
+    } else if (h.shares < p.shares) {
+      if (h.shares === 0) {
+        sells.push({ ...h, prevShares: p.shares, status: 'exit' });
+      } else {
+        sells.push({ ...h, prevShares: p.shares,
+          weightChange: +((h.weight - p.weight).toFixed(2)), status: 'reduce' });
+      }
+    }
+  }
+
+  // Stocks in prev but completely missing from today → exit
+  for (const p of (prev ?? [])) {
+    if (!todayMap.has(p.code)) {
+      sells.push({ rank: p.rank, code: p.code, name: p.name,
+        prevShares: p.shares, shares: 0, weight: 0, status: 'exit' });
+    }
+  }
+
+  // Re-rank
+  buys.forEach((h, i)  => { h.rank = i + 1; });
+  sells.forEach((h, i) => { h.rank = i + 1; });
+
+  return {
+    buys,
+    sells,
+    newCount:  buys.filter(h => h.status === 'new').length,
+    addCount:  buys.filter(h => h.status === 'add').length,
+    exitCount: sells.filter(h => h.status === 'exit').length,
+  };
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default {
@@ -457,6 +541,41 @@ export default {
         const inst   = instItems.filter(Boolean).sort((a, b) => a.time.localeCompare(b.time));
 
         return jsonResp({ margin, inst, source: 'TWSE' }, 200, MARKET_TTL);
+      } catch (e) { return jsonResp({ error: String(e) }, 502); }
+    }
+
+    // ── /etf-holdings?stockNo=00981A ────────────────────────────────────────
+    // Fetches TWSE P60 for the latest 2 trading days and returns the holdings diff.
+    if (url.pathname === '/etf-holdings') {
+      const stockNo = (url.searchParams.get('stockNo') || '').replace(/[^0-9A-Za-z]/g, '');
+      if (!stockNo) return jsonResp({ error: 'stockNo required' }, 400);
+      try {
+        const dates = lastNWeekdays(2);   // [mostRecent, dayBefore]
+        const [todayData, prevData] = await Promise.all([
+          fetchP60(dates[0], stockNo),
+          fetchP60(dates[1], stockNo),
+        ]);
+
+        if (!todayData) {
+          return jsonResp({
+            error: 'TWSE P60 returned no data',
+            stockNo,
+            triedDate: dates[0],
+            hint: '主動型ETF持股資料可能尚未更新（通常盤後約 18:00 後可用）',
+          }, 404);
+        }
+
+        const fmt = d => `${d.slice(4, 6)}/${d.slice(6, 8)}`;
+        const diff = diffHoldings(prevData, todayData);
+
+        return jsonResp({
+          date:     fmt(dates[0]),
+          prevDate: fmt(dates[1]),
+          stockNo,
+          holdings: todayData,
+          ...diff,
+          source: 'TWSE-P60',
+        }, 200, ETF_HOLD_TTL);
       } catch (e) { return jsonResp({ error: String(e) }, 502); }
     }
 

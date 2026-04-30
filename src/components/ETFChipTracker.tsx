@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { fetchChips, isAPIConfigured } from '../utils/stockAPI';
+import { fetchChips, fetchETFHoldings, isAPIConfigured } from '../utils/stockAPI';
 import { type ChipData } from '../utils/technicalIndicators';
 import './ETFChipTracker.css';
 
@@ -241,6 +241,41 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
         .map((h, i) => ({ ...h, rank: i + 1 }));
       return { ...prev, data: { ...prev.data, [side]: arr } };
     });
+
+  // ── Auto-fetch from TWSE P60 ─────────────────────────────────────────────
+  const [autoFetching, setAutoFetching] = useState(false);
+  const [autoError,    setAutoError]    = useState<string | null>(null);
+
+  const autoFetch = async () => {
+    setAutoFetching(true);
+    setAutoError(null);
+    try {
+      const result = await fetchETFHoldings(activeETF);
+      if (!result) {
+        setAutoError('無法取得資料 — TWSE P60 尚未更新，或 API 未設定。請等盤後 18:00 後再試，或手動輸入。');
+        setAutoFetching(false);
+        return;
+      }
+      // Map API result → ETFInfo draft and open edit panel for review
+      const newDraft: typeof etf = {
+        ...etf,
+        data: {
+          date:      result.date,
+          prevDate:  result.prevDate,
+          newCount:  result.newCount,
+          addCount:  result.addCount,
+          exitCount: result.exitCount,
+          buys:  result.buys.map(h => ({ ...h, weightChange: h.weightChange ?? undefined })),
+          sells: result.sells.map(h => ({ ...h, weightChange: h.weightChange ?? undefined })),
+        },
+      };
+      setDraft(newDraft);
+      setEditOpen(true);
+    } catch {
+      setAutoError('發生錯誤，請稍後再試。');
+    }
+    setAutoFetching(false);
+  };
   const instChips = instData[activeETF] ?? [];
   const latestChip = instChips.length ? instChips[instChips.length - 1] : null;
   const recent5    = instChips.slice(-5).reverse();
@@ -350,10 +385,26 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
               {isOverridden && <span className="etf-override-dot" title="已套用自訂資料" />}
               資料日期：{data.prevDate} → {data.date}
             </span>
-            <button className="etf-update-btn" onClick={openEdit}>
-              ✏️ 更新持股
-            </button>
+            <div className="etf-update-btns">
+              {apiOn && (
+                <button
+                  className={`etf-auto-btn ${autoFetching ? 'loading' : ''}`}
+                  onClick={autoFetch}
+                  disabled={autoFetching}
+                  title="從 TWSE P60 自動取得最新持股（盤後 18:00 後可用）"
+                >
+                  <span className={`etf-auto-icon ${autoFetching ? 'spinning' : ''}`}>⬇</span>
+                  {autoFetching ? '取得中…' : '自動更新'}
+                </button>
+              )}
+              <button className="etf-update-btn" onClick={openEdit}>
+                ✏️ 手動輸入
+              </button>
+            </div>
           </div>
+          {autoError && (
+            <div className="etf-auto-error">⚠ {autoError}</div>
+          )}
 
           {/* 今日調整概況 */}
           <div className="etf-adj-summary">
@@ -474,6 +525,11 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
             <span className="etf-edit-title">✏️ 更新持股異動 — {draft.id}</span>
             <button className="etf-edit-close" onClick={closeEdit}>✕</button>
           </div>
+          {!autoError && draft.data.date !== etf.data.date && (
+            <div className="etf-edit-autofill-notice">
+              ✅ 已從 TWSE P60 自動填入 {draft.data.prevDate} → {draft.data.date} 資料，請確認後點「儲存到本機」。
+            </div>
+          )}
 
           {/* Meta row: dates + NAV */}
           <div className="etf-edit-meta">

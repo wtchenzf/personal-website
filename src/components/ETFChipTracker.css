@@ -834,3 +834,60 @@
   margin-top: 0.75rem;
   line-height: 1.5;
 }
+
+/* ── Auto-update button ──────────────────────────────────────────────────── */
+.etf-update-btns {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.etf-auto-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.75rem;
+  border: 1px solid #6ee7b7;
+  border-radius: 4px;
+  background: #ecfdf5;
+  color: #065f46;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.etf-auto-btn:hover:not(:disabled) { background: #d1fae5; border-color: #34d399; }
+.etf-auto-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.etf-auto-btn.loading  { background: #d1fae5; border-color: #34d399; }
+
+.etf-auto-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  display: inline-block;
+}
+.etf-auto-icon.spinning {
+  animation: spin-once 0.9s linear infinite;
+}
+
+.etf-auto-error {
+  font-size: 0.72rem;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 0.4rem 0.65rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.etf-edit-autofill-notice {
+  font-size: 0.72rem;
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: 4px;
+  padding: 0.4rem 0.65rem;
+  margin-bottom: 0.85rem;
+}

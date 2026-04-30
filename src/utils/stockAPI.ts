@@ -163,6 +163,47 @@ export function isAPIConfigured(): boolean {
   return BASE.length > 0;
 }
 
+// ── ETF Holdings (主動型ETF持股異動) ──────────────────────────────────────────
+
+export interface ETFHoldingRow {
+  rank:          number;
+  code:          string;
+  name:          string;
+  prevShares:    number;
+  shares:        number;
+  weight:        number;
+  weightChange?: number;
+  status:        'new' | 'add' | 'reduce' | 'exit';
+}
+
+export interface ETFHoldingsResult {
+  date:      string;           // 'MM/DD'
+  prevDate:  string;           // 'MM/DD'
+  stockNo:   string;
+  holdings:  { rank: number; code: string; name: string; shares: number; weight: number }[];
+  buys:      ETFHoldingRow[];
+  sells:     ETFHoldingRow[];
+  newCount:  number;
+  addCount:  number;
+  exitCount: number;
+  source:    string;
+}
+
+/**
+ * Fetch active ETF holdings diff (今日 vs 前日) from TWSE P60 via Worker.
+ * Only works for 主動型ETF (00981A, 00991A, 00992A, …).
+ */
+export async function fetchETFHoldings(stockNo: string): Promise<ETFHoldingsResult | null> {
+  if (!BASE) return null;
+  try {
+    const res = await fetch(`${BASE}/etf-holdings?stockNo=${encodeURIComponent(stockNo)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.buys) return null;
+    return json as ETFHoldingsResult;
+  } catch { return null; }
+}
+
 // ── Market indicator types ────────────────────────────────────────────────────
 
 export interface MarketDayData {
