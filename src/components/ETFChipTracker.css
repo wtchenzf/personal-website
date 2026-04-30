@@ -604,3 +604,233 @@
   .etf-hrow-wt   { font-size: 1rem; }
   .etf-adj-summary { font-size: 0.78rem; }
 }
+
+/* ── Update bar ───────────────────────────────────────────────────────────── */
+.etf-update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  gap: 0.5rem;
+}
+
+.etf-update-date {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.etf-override-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.etf-update-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  background: #f0f4ff;
+  color: var(--accent-indigo);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.etf-update-btn:hover { background: #e0e7ff; border-color: var(--accent-indigo); }
+
+/* ── Edit panel ──────────────────────────────────────────────────────────── */
+.etf-edit-panel {
+  padding: 1rem 0 0.5rem;
+  border-top: 2px solid var(--accent-indigo);
+  margin-top: 0.5rem;
+}
+
+.etf-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.etf-edit-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-indigo);
+}
+.etf-edit-close {
+  font-size: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+.etf-edit-close:hover { background: #f3f4f6; color: var(--text-primary); }
+
+/* Meta row */
+.etf-edit-meta {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.etf-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.etf-edit-field span {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.etf-edit-field input {
+  width: 80px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: var(--text-primary);
+}
+.etf-edit-nav input { width: 90px; }
+.etf-edit-arrow {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Section header */
+.etf-edit-section-hdr {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  margin: 0.75rem 0 0.4rem;
+}
+.etf-edit-section-hdr.buy  { background: #f0fdf4; color: #15803d; }
+.etf-edit-section-hdr.sell { background: #fef2f2; color: #b91c1c; }
+
+/* Table */
+.etf-edit-table { overflow-x: auto; margin-bottom: 0.25rem; }
+
+.etf-edit-thead,
+.etf-edit-row {
+  display: grid;
+  grid-template-columns: 64px 80px 80px 80px 64px 90px 30px;
+  gap: 4px;
+  align-items: center;
+  min-width: 520px;
+}
+.etf-edit-thead {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding: 0 2px 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 4px;
+}
+.etf-edit-row input,
+.etf-edit-row select {
+  padding: 0.25rem 0.35rem;
+  font-size: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  background: #fafafa;
+  color: var(--text-primary);
+  width: 100%;
+}
+.etf-edit-row input:focus,
+.etf-edit-row select:focus {
+  outline: none;
+  border-color: var(--accent-indigo);
+  background: #fff;
+}
+.etf-edit-del {
+  font-size: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444;
+  padding: 0.2rem;
+  border-radius: 3px;
+  line-height: 1;
+}
+.etf-edit-del:hover { background: #fef2f2; }
+
+.etf-edit-add-row {
+  font-size: 0.72rem;
+  color: var(--accent-indigo);
+  background: none;
+  border: 1px dashed #c7d2fe;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  margin-top: 6px;
+  width: 100%;
+}
+.etf-edit-add-row:hover { background: #f0f4ff; }
+
+/* Action buttons */
+.etf-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+.etf-edit-save {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent-indigo);
+  color: white;
+  cursor: pointer;
+}
+.etf-edit-save:hover { opacity: 0.88; }
+.etf-edit-reset {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #b91c1c;
+  cursor: pointer;
+}
+.etf-edit-reset:hover { background: #fee2e2; }
+.etf-edit-cancel {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: white;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.etf-edit-cancel:hover { background: #f3f4f6; }
+
+.etf-edit-hint {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}

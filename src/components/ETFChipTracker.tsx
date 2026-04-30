@@ -102,16 +102,50 @@ const ETF_DATA: ETFInfo[] = [
   },
 ];
 
+// ── localStorage helpers ──────────────────────────────────────────────────────
+const LS_KEY = (id: string) => `etf_holdings_v1_${id}`;
+
+function loadOverride(id: string): ETFInfo | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY(id));
+    return raw ? (JSON.parse(raw) as ETFInfo) : null;
+  } catch { return null; }
+}
+function saveOverride(info: ETFInfo) {
+  localStorage.setItem(LS_KEY(info.id), JSON.stringify(info));
+}
+function clearOverride(id: string) {
+  localStorage.removeItem(LS_KEY(id));
+}
+function loadAllOverrides(): Record<string, ETFInfo> {
+  const out: Record<string, ETFInfo> = {};
+  ETF_DATA.forEach(e => { const v = loadOverride(e.id); if (v) out[e.id] = v; });
+  return out;
+}
+
+// Blank holding template
+const blankHolding = (rank: number, side: 'buy' | 'sell'): ETFHolding => ({
+  rank, code: '', name: '', prevShares: 0, shares: 0, weight: 0,
+  status: side === 'buy' ? 'add' : 'reduce',
+});
+
 // ── Component ─────────────────────────────────────────────────────────────────
 interface ETFChipTrackerProps {
   refreshTrigger?: number;
 }
 
 export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) {
-  const [activeETF, setActiveETF] = useState(ETF_DATA[0].id);
-  const [chipView,  setChipView]  = useState<'holdings' | 'institutional'>(
+  const [activeETF,  setActiveETF]  = useState(ETF_DATA[0].id);
+  const [chipView,   setChipView]   = useState<'holdings' | 'institutional'>(
     isAPIConfigured() ? 'institutional' : 'holdings'
   );
+  const [editOpen,   setEditOpen]   = useState(false);
+
+  // User-saved overrides (persisted in localStorage)
+  const [overrides, setOverrides] = useState<Record<string, ETFInfo>>(loadAllOverrides);
+
+  // Edit form state (draft before saving)
+  const [draft, setDraft] = useState<ETFInfo | null>(null);
 
   // Real T86 三大法人 for each ETF
   const [instData, setInstData] = useState<Record<string, ChipData[]>>({});
@@ -140,8 +174,73 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
     }).catch(() => {/* silent */});
   }, [activeETF, apiOn, instData]);
 
-  const etf       = ETF_DATA.find(e => e.id === activeETF) ?? ETF_DATA[0];
+  // Resolved data: user override > hardcoded default
+  const baseETF   = ETF_DATA.find(e => e.id === activeETF) ?? ETF_DATA[0];
+  const etf       = overrides[activeETF] ?? baseETF;
   const { data }  = etf;
+  const isOverridden = !!overrides[activeETF];
+
+  // ── Edit helpers ────────────────────────────────────────────────────────────
+  const openEdit = () => {
+    setDraft(JSON.parse(JSON.stringify(etf)));   // deep clone
+    setEditOpen(true);
+  };
+  const closeEdit = () => { setEditOpen(false); setDraft(null); };
+
+  const saveDraft = () => {
+    if (!draft) return;
+    // Recalculate counts from rows
+    const d = {
+      ...draft,
+      data: {
+        ...draft.data,
+        newCount:  draft.data.buys.filter(h => h.status === 'new').length,
+        addCount:  draft.data.buys.filter(h => h.status === 'add').length,
+        exitCount: draft.data.sells.filter(h => h.status === 'exit').length,
+      },
+    };
+    saveOverride(d);
+    setOverrides(prev => ({ ...prev, [d.id]: d }));
+    setEditOpen(false);
+    setDraft(null);
+  };
+
+  const resetToDefault = () => {
+    clearOverride(activeETF);
+    setOverrides(prev => { const n = { ...prev }; delete n[activeETF]; return n; });
+    setEditOpen(false);
+    setDraft(null);
+  };
+
+  // Draft field setters
+  const setDraftField = <K extends keyof ETFInfo>(k: K, v: ETFInfo[K]) =>
+    setDraft(prev => prev ? { ...prev, [k]: v } : prev);
+  const setDataField = <K extends keyof ETFDayData>(k: K, v: ETFDayData[K]) =>
+    setDraft(prev => prev ? { ...prev, data: { ...prev.data, [k]: v } } : prev);
+
+  const updateHolding = (side: 'buys' | 'sells', idx: number, field: keyof ETFHolding, val: string | number) =>
+    setDraft(prev => {
+      if (!prev) return prev;
+      const arr = [...prev.data[side]] as ETFHolding[];
+      arr[idx] = { ...arr[idx], [field]: val };
+      return { ...prev, data: { ...prev.data, [side]: arr } };
+    });
+
+  const addHolding = (side: 'buys' | 'sells') =>
+    setDraft(prev => {
+      if (!prev) return prev;
+      const arr = prev.data[side] as ETFHolding[];
+      const rank = arr.length + 1;
+      return { ...prev, data: { ...prev.data, [side]: [...arr, blankHolding(rank, side === 'buys' ? 'buy' : 'sell')] } };
+    });
+
+  const removeHolding = (side: 'buys' | 'sells', idx: number) =>
+    setDraft(prev => {
+      if (!prev) return prev;
+      const arr = (prev.data[side] as ETFHolding[]).filter((_, i) => i !== idx)
+        .map((h, i) => ({ ...h, rank: i + 1 }));
+      return { ...prev, data: { ...prev.data, [side]: arr } };
+    });
   const instChips = instData[activeETF] ?? [];
   const latestChip = instChips.length ? instChips[instChips.length - 1] : null;
   const recent5    = instChips.slice(-5).reverse();
@@ -242,8 +341,19 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
       )}
 
       {/* ── Holdings view ── */}
-      {chipView === 'holdings' && (
+      {chipView === 'holdings' && !editOpen && (
         <div className="etf-holdings-view">
+
+          {/* Update button row */}
+          <div className="etf-update-bar">
+            <span className="etf-update-date">
+              {isOverridden && <span className="etf-override-dot" title="已套用自訂資料" />}
+              資料日期：{data.prevDate} → {data.date}
+            </span>
+            <button className="etf-update-btn" onClick={openEdit}>
+              ✏️ 更新持股
+            </button>
+          </div>
 
           {/* 今日調整概況 */}
           <div className="etf-adj-summary">
@@ -353,6 +463,93 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
             ※ 持股異動資料以 {data.date} 人工核對為基準（主動型 ETF 每日由基金公司揭露，非即時 API）。
             如需即時三大法人進出，請切換至「🏦 法人動向」頁籤（TWSE T86 每日 17:30 後自動更新）。
           </p>
+        </div>
+      )}
+
+      {/* ── Edit panel ── */}
+      {chipView === 'holdings' && editOpen && draft && (
+        <div className="etf-edit-panel">
+
+          <div className="etf-edit-header">
+            <span className="etf-edit-title">✏️ 更新持股異動 — {draft.id}</span>
+            <button className="etf-edit-close" onClick={closeEdit}>✕</button>
+          </div>
+
+          {/* Meta row: dates + NAV */}
+          <div className="etf-edit-meta">
+            <label className="etf-edit-field">
+              <span>前一交易日</span>
+              <input type="text" value={draft.data.prevDate} maxLength={5}
+                onChange={e => setDataField('prevDate', e.target.value)} />
+            </label>
+            <span className="etf-edit-arrow">→</span>
+            <label className="etf-edit-field">
+              <span>今日</span>
+              <input type="text" value={draft.data.date} maxLength={5}
+                onChange={e => setDataField('date', e.target.value)} />
+            </label>
+            <label className="etf-edit-field etf-edit-nav">
+              <span>淨值 (NAV)</span>
+              <input type="number" step="0.01" value={draft.nav}
+                onChange={e => setDraftField('nav', parseFloat(e.target.value) || 0)} />
+            </label>
+          </div>
+
+          {/* Buys table */}
+          <div className="etf-edit-section-hdr buy">▲ 加碼 / 新增</div>
+          <div className="etf-edit-table">
+            <div className="etf-edit-thead">
+              <span>代碼</span><span>名稱</span><span>前日張數</span><span>今日張數</span>
+              <span>權重%</span><span>狀態</span><span></span>
+            </div>
+            {draft.data.buys.map((h, i) => (
+              <div key={i} className="etf-edit-row">
+                <input value={h.code}  onChange={e => updateHolding('buys', i, 'code',  e.target.value)} placeholder="2454" />
+                <input value={h.name}  onChange={e => updateHolding('buys', i, 'name',  e.target.value)} placeholder="聯發科" />
+                <input type="number" value={h.prevShares} onChange={e => updateHolding('buys', i, 'prevShares', +e.target.value)} />
+                <input type="number" value={h.shares}     onChange={e => updateHolding('buys', i, 'shares',     +e.target.value)} />
+                <input type="number" step="0.01" value={h.weight} onChange={e => updateHolding('buys', i, 'weight', +e.target.value)} />
+                <select value={h.status} onChange={e => updateHolding('buys', i, 'status', e.target.value as ETFHolding['status'])}>
+                  <option value="new">★ 新增</option>
+                  <option value="add">▲ 加碼</option>
+                </select>
+                <button className="etf-edit-del" onClick={() => removeHolding('buys', i)}>✕</button>
+              </div>
+            ))}
+            <button className="etf-edit-add-row" onClick={() => addHolding('buys')}>＋ 新增一列</button>
+          </div>
+
+          {/* Sells table */}
+          <div className="etf-edit-section-hdr sell">▼ 減碼 / 出清</div>
+          <div className="etf-edit-table">
+            <div className="etf-edit-thead">
+              <span>代碼</span><span>名稱</span><span>前日張數</span><span>今日張數</span>
+              <span>權重%</span><span>狀態</span><span></span>
+            </div>
+            {draft.data.sells.map((h, i) => (
+              <div key={i} className="etf-edit-row">
+                <input value={h.code}  onChange={e => updateHolding('sells', i, 'code',  e.target.value)} placeholder="2303" />
+                <input value={h.name}  onChange={e => updateHolding('sells', i, 'name',  e.target.value)} placeholder="聯電" />
+                <input type="number" value={h.prevShares} onChange={e => updateHolding('sells', i, 'prevShares', +e.target.value)} />
+                <input type="number" value={h.shares}     onChange={e => updateHolding('sells', i, 'shares',     +e.target.value)} />
+                <input type="number" step="0.01" value={h.weight} onChange={e => updateHolding('sells', i, 'weight', +e.target.value)} />
+                <select value={h.status} onChange={e => updateHolding('sells', i, 'status', e.target.value as ETFHolding['status'])}>
+                  <option value="reduce">▽ 減碼</option>
+                  <option value="exit">✕ 出清</option>
+                </select>
+                <button className="etf-edit-del" onClick={() => removeHolding('sells', i)}>✕</button>
+              </div>
+            ))}
+            <button className="etf-edit-add-row" onClick={() => addHolding('sells')}>＋ 新增一列</button>
+          </div>
+
+          {/* Action buttons */}
+          <div className="etf-edit-actions">
+            <button className="etf-edit-save" onClick={saveDraft}>💾 儲存到本機</button>
+            <button className="etf-edit-reset" onClick={resetToDefault}>↺ 還原預設</button>
+            <button className="etf-edit-cancel" onClick={closeEdit}>取消</button>
+          </div>
+          <p className="etf-edit-hint">※ 資料儲存於瀏覽器本機（localStorage），清除快取後需重新輸入。</p>
         </div>
       )}
     </div>
