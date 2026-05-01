@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {
   createChart,
   ColorType,
@@ -28,6 +28,13 @@ interface StockChartProps {
   lineOnly?: boolean;
 }
 
+interface HoveredBar {
+  time: string;
+  open: number; high: number; low: number; close: number;
+  volume: number;
+  ma5?: number; ma10?: number; ma20?: number; ma60?: number;
+}
+
 const COMMON_LAYOUT = {
   background: { type: ColorType.Solid, color: 'transparent' },
   textColor: '#6b7280',
@@ -40,19 +47,50 @@ const COMMON_GRID = {
 };
 
 export default function StockChart({ data, chipData, symbol, name, lineOnly = false }: StockChartProps) {
-  const mainRef   = useRef<HTMLDivElement>(null);
-  const volRef    = useRef<HTMLDivElement>(null);
-  const subRef    = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<IndicatorTab>('MACD');
+  const mainRef = useRef<HTMLDivElement>(null);
+  const volRef  = useRef<HTMLDivElement>(null);
+  const subRef  = useRef<HTMLDivElement>(null);
+  const [tab, setTab]             = useState<IndicatorTab>('MACD');
+  const [hoveredBar, setHoveredBar] = useState<HoveredBar | null>(null);
 
-  const last      = data.at(-1)?.close ?? 0;
+  // ── Pre-compute MAs (shared between chart series & legend) ────────────────
+  const ma5Data  = useMemo(() => !lineOnly ? calculateMA(data, 5)  : [], [data, lineOnly]);
+  const ma10Data = useMemo(() => !lineOnly ? calculateMA(data, 10) : [], [data, lineOnly]);
+  const ma20Data = useMemo(() => !lineOnly ? calculateMA(data, 20) : [], [data, lineOnly]);
+  const ma60Data = useMemo(() => !lineOnly ? calculateMA(data, 60) : [], [data, lineOnly]);
+
+  // ── Header: latest price + change (always last bar) ──────────────────────
+  const lastBar   = data.at(-1);
   const prev      = data.at(-2)?.close ?? 0;
+  const last      = lastBar?.close ?? 0;
   const change    = last - prev;
   const changePct = prev !== 0 ? (change / prev) * 100 : 0;
   const isUp      = change >= 0;
 
+  // ── Legend: hovered bar, or fall back to last bar ─────────────────────────
+  const displayBar: HoveredBar = hoveredBar ?? {
+    time:   lastBar?.time    ?? '',
+    open:   lastBar?.open    ?? 0,
+    high:   lastBar?.high    ?? 0,
+    low:    lastBar?.low     ?? 0,
+    close:  lastBar?.close   ?? 0,
+    volume: lastBar?.volume  ?? 0,
+    ma5:    ma5Data.at(-1)?.value,
+    ma10:   ma10Data.at(-1)?.value,
+    ma20:   ma20Data.at(-1)?.value,
+    ma60:   ma60Data.at(-1)?.value,
+  };
+  const legendUp = displayBar.close >= displayBar.open;
+
   useEffect(() => {
     if (!mainRef.current || !volRef.current || !subRef.current || !data.length) return;
+
+    // Fast lookup maps for crosshair handler
+    const ma5Map  = new Map(ma5Data.map(d  => [String(d.time),  d.value]));
+    const ma10Map = new Map(ma10Data.map(d => [String(d.time), d.value]));
+    const ma20Map = new Map(ma20Data.map(d => [String(d.time), d.value]));
+    const ma60Map = new Map(ma60Data.map(d => [String(d.time), d.value]));
+    const volMap  = new Map(data.map(d => [String(d.time), d.volume]));
 
     // ── 1. Main price chart ────────────────────────────────────────────────
     const main = createChart(mainRef.current, {
@@ -62,6 +100,11 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       height: 320,
       timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#e5e7eb' },
       rightPriceScale: { borderColor: '#e5e7eb' },
+      crosshair: {
+        // Snap horizontal line to close price of hovered candle
+        horzLine: { labelVisible: true },
+        vertLine: { labelVisible: false },
+      },
     });
 
     if (lineOnly) {
@@ -75,14 +118,37 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       });
       candle.setData(data as any);
 
-      const ma5  = main.addSeries(LineSeries, { color: '#f1c40f', lineWidth: 1 });
-      ma5.setData(calculateMA(data, 5) as any);
-      const ma10 = main.addSeries(LineSeries, { color: '#e67e22', lineWidth: 1 });
-      ma10.setData(calculateMA(data, 10) as any);
-      const ma20 = main.addSeries(LineSeries, { color: '#3498db', lineWidth: 1 });
-      ma20.setData(calculateMA(data, 20) as any);
-      const ma60 = main.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 1 });
-      ma60.setData(calculateMA(data, 60) as any);
+      const ma5Series  = main.addSeries(LineSeries, { color: '#f1c40f', lineWidth: 1, crosshairMarkerVisible: false, lastValueVisible: false, priceLineVisible: false });
+      ma5Series.setData(ma5Data as any);
+      const ma10Series = main.addSeries(LineSeries, { color: '#e67e22', lineWidth: 1, crosshairMarkerVisible: false, lastValueVisible: false, priceLineVisible: false });
+      ma10Series.setData(ma10Data as any);
+      const ma20Series = main.addSeries(LineSeries, { color: '#3498db', lineWidth: 1, crosshairMarkerVisible: false, lastValueVisible: false, priceLineVisible: false });
+      ma20Series.setData(ma20Data as any);
+      const ma60Series = main.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 1, crosshairMarkerVisible: false, lastValueVisible: false, priceLineVisible: false });
+      ma60Series.setData(ma60Data as any);
+
+      // ── Crosshair → legend ──────────────────────────────────────────────
+      main.subscribeCrosshairMove(param => {
+        if (!param.time || !param.point) {
+          setHoveredBar(null);
+          return;
+        }
+        const t  = String(param.time);
+        const cd = param.seriesData.get(candle) as any;
+        if (!cd) { setHoveredBar(null); return; }
+        setHoveredBar({
+          time:   t,
+          open:   cd.open,
+          high:   cd.high,
+          low:    cd.low,
+          close:  cd.close,
+          volume: volMap.get(t) ?? 0,
+          ma5:    ma5Map.get(t),
+          ma10:   ma10Map.get(t),
+          ma20:   ma20Map.get(t),
+          ma60:   ma60Map.get(t),
+        });
+      });
     }
 
     // ── 2. Volume chart ────────────────────────────────────────────────────
@@ -97,7 +163,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
     const volSeries = vol.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
     volSeries.setData(
       data.map(d => ({
-        time: d.time,
+        time:  d.time,
         value: d.volume,
         color: d.close >= d.open ? '#c0392b' : '#4a7c59',
       })) as any
@@ -134,7 +200,6 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       const rsi = calculateRSI(data, 14);
       const rsiLine = sub.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 2 });
       rsiLine.setData(rsi as any);
-      // Overbought / Oversold reference lines
       const ob = sub.addSeries(LineSeries, { color: '#e74c3c', lineWidth: 1 });
       ob.setData(rsi.map(d => ({ time: d.time, value: 70 })) as any);
       const os = sub.addSeries(LineSeries, { color: '#27ae60', lineWidth: 1 });
@@ -158,33 +223,25 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       window.removeEventListener('resize', onResize);
       main.remove(); vol.remove(); sub.remove();
     };
-  }, [data, tab, lineOnly]);
+  }, [data, tab, lineOnly, ma5Data, ma10Data, ma20Data, ma60Data]);
 
   return (
     <div className="chart-container">
-      {/* ── Header ── */}
+      {/* ── Header: name + latest price ── */}
       <div className="chart-header">
         <div className="chart-info-group">
           <div className="chart-title-row">
             <h2 className="chart-title">{name} ({symbol})</h2>
-            <span className="chart-date">{data.at(-1)?.time}</span>
+            <span className="chart-date">{lastBar?.time}</span>
           </div>
           <div className="price-summary-bar">
             <div className="price-main">
-              <span className={`chart-price ${isUp ? 'price-up' : 'price-down'}`}>{last.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              <span className={`chart-price ${isUp ? 'price-up' : 'price-down'}`}>
+                {last.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
               <span className={`price-diff ${isUp ? 'price-up' : 'price-down'}`}>
                 {isUp ? '▲' : '▼'} {Math.abs(change).toFixed(2)} ({Math.abs(changePct).toFixed(2)}%)
               </span>
-            </div>
-            <div className="price-details">
-              <div className="detail-row">
-                <span className="detail-item">開 <span className="detail-val">{(data.at(-1)?.open ?? 0).toFixed(1)}</span></span>
-                <span className="detail-item">高 <span className="detail-val">{(data.at(-1)?.high ?? 0).toFixed(1)}</span></span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-item">低 <span className="detail-val">{(data.at(-1)?.low ?? 0).toFixed(1)}</span></span>
-                <span className="detail-item">量 <span className="detail-val">{(data.at(-1)?.volume ?? 0).toLocaleString()}</span></span>
-              </div>
             </div>
           </div>
         </div>
@@ -195,9 +252,43 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
         </div>
       </div>
 
-      {/* ── Main chart ── */}
-      <span className="chart-label">{lineOnly ? '走勢圖' : 'K 線圖 · MA5 · MA10 · MA20 · MA60'}</span>
-      <div ref={mainRef} className="main-chart" />
+      {/* ── Main chart + OHLC legend ── */}
+      <div className="chart-section">
+        {/* Legend row — updates on crosshair hover */}
+        {!lineOnly && (
+          <div className="chart-ohlc-legend">
+            <span className="legend-date">{displayBar.time}</span>
+            <span className="legend-item">
+              開&thinsp;<span className="legend-val">{displayBar.open.toFixed(2)}</span>
+            </span>
+            <span className="legend-item">
+              高&thinsp;<span className={`legend-val ${legendUp ? 'price-up' : 'price-down'}`}>{displayBar.high.toFixed(2)}</span>
+            </span>
+            <span className="legend-item">
+              低&thinsp;<span className={`legend-val ${legendUp ? 'price-up' : 'price-down'}`}>{displayBar.low.toFixed(2)}</span>
+            </span>
+            <span className="legend-item">
+              收&thinsp;<span className={`legend-val ${legendUp ? 'price-up' : 'price-down'}`}>{displayBar.close.toFixed(2)}</span>
+            </span>
+            <span className="legend-item">
+              量&thinsp;<span className="legend-val">{displayBar.volume.toLocaleString()}</span>
+            </span>
+            {displayBar.ma5  !== undefined && (
+              <span className="legend-item"><span className="legend-ma ma5-color">MA5</span>&thinsp;<span className="legend-val">{displayBar.ma5.toFixed(2)}</span></span>
+            )}
+            {displayBar.ma10 !== undefined && (
+              <span className="legend-item"><span className="legend-ma ma10-color">MA10</span>&thinsp;<span className="legend-val">{displayBar.ma10.toFixed(2)}</span></span>
+            )}
+            {displayBar.ma20 !== undefined && (
+              <span className="legend-item"><span className="legend-ma ma20-color">MA20</span>&thinsp;<span className="legend-val">{displayBar.ma20.toFixed(2)}</span></span>
+            )}
+            {displayBar.ma60 !== undefined && (
+              <span className="legend-item"><span className="legend-ma ma60-color">MA60</span>&thinsp;<span className="legend-val">{displayBar.ma60.toFixed(2)}</span></span>
+            )}
+          </div>
+        )}
+        <div ref={mainRef} className="main-chart" />
+      </div>
 
       {/* ── Volume ── */}
       <span className="chart-label" style={{ marginTop: '0.5rem' }}>成交量</span>
