@@ -1,31 +1,64 @@
-/* ── SmartMoneyChart ───────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   SmartMoneyChart — 5-tab K 線圖
+   ══════════════════════════════════════════════════════ */
 
 .smc-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 0.5rem 0 0;
+  padding: 0.35rem 0 0;
 }
 
-/* ── OHLC legend ── */
+/* ── Tab bar ───────────────────────────────────────────── */
+.smc-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.smc-tabs::-webkit-scrollbar { display: none; }
+
+.smc-tab {
+  flex-shrink: 0;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: color 0.15s, border-color 0.15s;
+}
+.smc-tab:hover  { color: var(--text-primary); }
+.smc-tab.active {
+  color: var(--accent-indigo);
+  border-bottom-color: var(--accent-indigo);
+}
+
+/* ── OHLC + MA legend ─────────────────────────────────── */
 .smc-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 0.9rem;
-  padding: 0.28rem 0.4rem;
+  gap: 0.35rem 0.9rem;
+  padding: 0.3rem 0.25rem 0.3rem;
   font-size: 0.7rem;
   font-family: var(--font-sans);
-  line-height: 1.4;
   color: var(--text-secondary);
   border-bottom: 1px solid #f0f0f0;
-  background: transparent;
 }
 
 .smc-leg-date {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: 0.04em;
+  margin-right: 0.1rem;
 }
 
 .smc-leg-item {
@@ -33,22 +66,16 @@
   align-items: baseline;
   white-space: nowrap;
 }
+.smc-leg-val { font-weight: 700; color: var(--text-primary); }
 
-.smc-leg-val {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-/* MA colour labels */
 .smc-ma5  { font-weight: 700; color: #d4a017; }
 .smc-ma20 { font-weight: 700; color: #3498db; }
 .smc-ma60 { font-weight: 700; color: #e67e22; }
 
-/* colour helpers */
-.cl-up   { color: #c0392b; }
-.cl-down { color: #4a7c59; }
+.cl-up   { color: #c0392b !important; }
+.cl-down { color: #4a7c59 !important; }
 
-/* ── Chart panels ── */
+/* ── Chart panels ─────────────────────────────────────── */
 .smc-main {
   width: 100%;
   height: 260px;
@@ -57,36 +84,57 @@
 
 .smc-sub {
   width: 100%;
-  height: 80px;
   overflow: hidden;
   border-top: 1px solid #f3f4f6;
 }
+.smc-sub.h70  { height: 70px; }
+.smc-sub.h80  { height: 80px; }
+.smc-sub.h90  { height: 90px; }
+.smc-sub.h100 { height: 100px; }
 
-/* ── Section label ── */
-.smc-section-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 0.25rem 0.1rem 0.1rem;
+/* ── Sub-panel label ──────────────────────────────────── */
+.smc-sub-label {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-}
-
-.smc-chip-now {
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-family: 'Inter', var(--font-sans);
-  letter-spacing: 0;
-}
-
-/* ── Source note ── */
-.smc-source {
+  gap: 0.5rem;
+  flex-wrap: wrap;
   font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
   color: var(--text-secondary);
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
+  padding: 0.22rem 0.15rem 0.1rem;
+  margin-top: 0.15rem;
+}
+
+.smc-sub-stat {
+  font-family: 'Inter', var(--font-sans);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* Indicator colour overrides */
+.smc-kd-k  { color: #2962FF; }
+.smc-kd-d  { color: #FF6D00; }
+.smc-dif   { color: #2962FF; }
+.smc-dem   { color: #FF6D00; }
+.smc-rsi   { color: #8e44ad; }
+.smc-cum   { color: var(--text-secondary); font-weight: 500; }
+
+/* ── Source note ──────────────────────────────────────── */
+.smc-source {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
   border-top: 1px solid #f0f0f0;
+}
+
+/* ── Mobile: make tab text even smaller ──────────────── */
+@media (max-width: 480px) {
+  .smc-tab { padding: 0.4rem 0.6rem; font-size: 0.65rem; }
+  .smc-legend { font-size: 0.62rem; gap: 0.25rem 0.6rem; }
 }
