@@ -242,7 +242,7 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
       return { ...prev, data: { ...prev.data, [side]: arr } };
     });
 
-  // ── Auto-fetch from TWSE P60 ─────────────────────────────────────────────
+  // ── Auto-fetch from MoneyDJ ──────────────────────────────────────────────
   const [autoFetching, setAutoFetching] = useState(false);
   const [autoError,    setAutoError]    = useState<string | null>(null);
 
@@ -252,7 +252,7 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
     try {
       const result = await fetchETFHoldings(activeETF);
       if (!result) {
-        setAutoError('無法取得資料 — TWSE P60 尚未更新，或 API 未設定。請等盤後 18:00 後再試，或手動輸入。');
+        setAutoError('無法取得資料 — 持股資料可能尚未更新（通常盤後 18:00 後可用），或 API 未設定。請稍後再試，或手動輸入。');
         setAutoFetching(false);
         return;
       }
@@ -391,7 +391,7 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
                   className={`etf-auto-btn ${autoFetching ? 'loading' : ''}`}
                   onClick={autoFetch}
                   disabled={autoFetching}
-                  title="從 TWSE P60 自動取得最新持股（盤後 18:00 後可用）"
+                  title="自動取得最新持股（盤後 18:00 後可用）"
                 >
                   <span className={`etf-auto-icon ${autoFetching ? 'spinning' : ''}`}>⬇</span>
                   {autoFetching ? '取得中…' : '自動更新'}
@@ -527,7 +527,10 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
           </div>
           {!autoError && draft.data.date !== etf.data.date && (
             <div className="etf-edit-autofill-notice">
-              ✅ 已從 TWSE P60 自動填入 {draft.data.prevDate} → {draft.data.date} 資料，請確認後點「儲存到本機」。
+              {draft.data.buys.length + draft.data.sells.length > 0
+                ? `✅ 已自動填入 ${draft.data.prevDate} → ${draft.data.date} 持股異動資料，請確認後點「儲存到本機」。`
+                : `📋 已取得 ${draft.data.date} 完整持股（${draft.data.date === draft.data.prevDate ? '首次建立基準，下次執行時才會出現異動明細' : '無異動'}），請確認後點「儲存到本機」。`
+              }
             </div>
           )}
 

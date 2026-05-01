@@ -1,5 +1,5 @@
 /**
- * stock-proxy — Cloudflare Worker v1.9
+ * stock-proxy — Cloudflare Worker v2.0
  * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner + market data).
  *
  * Endpoints
@@ -9,7 +9,7 @@
  *   GET /chips?symbol=2330&days=40                 → TWSE T86 三大法人 (last N trading days)
  *   GET /scan                                      → TWSE 全市場掃描：潛力飆股 + 破底翻
  *   GET /market?days=30                            → TWSE 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
- *   GET /etf-holdings?stockNo=00981A               → 主動型ETF持股異動 (TWSE P60, 今日 vs 前日 diff)
+ *   GET /etf-holdings?stockNo=00981A               → 主動型ETF持股異動 (MoneyDJ scrape + edge-cache diff)
  *   GET /debug                                     → crumb diagnostic
  */
 
@@ -356,38 +356,104 @@ async function fetchInstDay(date) {
   } catch { return null; }
 }
 
-// ── TWSE P60 主動型ETF持股 ────────────────────────────────────────────────────
+// ── MoneyDJ 主動型ETF持股 (HTML scraper) ──────────────────────────────────────
+
+const MONEYDJ_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Referer': 'https://www.moneydj.com/',
+};
 
 /**
- * Fetch ETF holdings for one trading day from TWSE P60.
- * Returns array of { rank, code, name, shares(張), weight(%) } or null.
+ * Scrape MoneyDJ ETF holdings page for active ETFs.
+ * URL: https://www.moneydj.com/ETF/X/Basic/Basic0007.xdjhtm?etfid=00981a.tw
+ * Returns { date: 'MM/DD', holdings: [{rank,code,name,shares(張),weight}] } or null.
  */
-async function fetchP60(date, stockNo) {
-  const url = `https://www.twse.com.tw/fund/P60?response=json&date=${date}&stockNo=${stockNo}`;
+async function scrapeMoneyDJHoldings(stockNo) {
+  const etfid = stockNo.toLowerCase() + '.tw';
+  const url   = `https://www.moneydj.com/ETF/X/Basic/Basic0007.xdjhtm?etfid=${etfid}`;
+
   try {
-    const res = await fetch(url, { headers: TWSE_HEADERS });
+    const res = await fetch(url, { headers: MONEYDJ_HEADERS });
     if (!res.ok) return null;
-    const json = await res.json();
-    // Accept stat 'OK' or missing (some TWSE endpoints omit it)
-    if (!json.data || !Array.isArray(json.data) || !json.data.length) return null;
 
-    return json.data.map((row, i) => {
-      // Common P60 layout: [rank, code, name, shares(股), market_value, weight%]
-      // Fallback layouts handled defensively
-      const rank      = parseInt(String(row[0] ?? i + 1), 10) || (i + 1);
-      const code      = String(row[1] ?? '').trim();
-      const name      = String(row[2] ?? '').trim()
-                          .replace(/\s+/g, '')
-                          .replace(/股份有限公司|有限公司/g, '');
-      const sharesRaw = parseInt(String(row[3] ?? '').replace(/,/g, ''), 10);
-      const weightRaw = parseFloat(String(row[5] ?? row[4] ?? '').replace(/[%,\s]/g, ''));
+    const html = await res.text();
 
-      // P60 reports shares in 股; 1 張 = 1000 股
-      const shares = isNaN(sharesRaw) ? 0 : Math.round(sharesRaw / 1000);
-      const weight = isNaN(weightRaw) ? 0 : weightRaw;
+    // ── Extract date ──────────────────────────────────────────────────────────
+    // MoneyDJ shows the holdings date near "持股明細資料日期" or similar text.
+    // Strategy: find all YYYY/MM/DD dates, pick the most recent one that
+    // falls within the last 30 days (avoids picking up inception/IPO dates).
+    let date = '';
+    const allDates = [...html.matchAll(/(\d{4})\/(\d{2})\/(\d{2})/g)];
+    if (allDates.length) {
+      // Try to find date near 持股 text first
+      const holdingDateIdx = html.search(/持股.*?\d{4}\/\d{2}\/\d{2}/);
+      if (holdingDateIdx !== -1) {
+        const nearby = html.slice(holdingDateIdx, holdingDateIdx + 80).match(/(\d{4})\/(\d{2})\/(\d{2})/);
+        if (nearby) date = `${nearby[2]}/${nearby[3]}`;
+      }
+      // Fallback: pick the most recent date found in the page
+      if (!date) {
+        const now = Date.now();
+        const recent = allDates
+          .map(m => ({ str: `${m[2]}/${m[3]}`, ts: new Date(`${m[1]}-${m[2]}-${m[3]}`).getTime() }))
+          .filter(d => !isNaN(d.ts) && d.ts <= now && (now - d.ts) < 60 * 24 * 3600 * 1000)
+          .sort((a, b) => b.ts - a.ts);
+        if (recent.length) date = recent[0].str;
+      }
+      // Last resort: first match
+      if (!date) date = `${allDates[0][2]}/${allDates[0][3]}`;
+    }
 
-      return { rank, code, name, shares, weight };
-    }).filter(h => h.code && /^\d{4,6}[A-Z]?$/.test(h.code));
+    // ── Find holdings table ───────────────────────────────────────────────────
+    // Locate the section starting from the "個股名稱" column header
+    const holdIdx = html.indexOf('個股名稱');
+    if (holdIdx === -1) return null;
+
+    const section  = html.slice(holdIdx);
+    const holdings = [];
+    let   rank     = 1;
+
+    // Walk all <tr>…</tr> blocks in this section
+    const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let   trMatch;
+
+    while ((trMatch = trRegex.exec(section)) !== null) {
+      const rowHtml = trMatch[1];
+
+      // Extract text content of each <td>
+      const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)]
+        .map(m =>
+          m[1]
+            .replace(/<[^>]+>/g, ' ')   // strip inner tags
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/\s+/g, ' ')
+            .trim()
+        );
+
+      if (cells.length < 3) continue;
+
+      // cells[0]: "台積電 (2330.TW)" or "台積電(2330)"
+      const nameCell  = cells[0];
+      const codeMatch = nameCell.match(/\((\d{4,6}[A-Za-z]?)(?:\.TW)?\)/i);
+      if (!codeMatch) continue;
+
+      const code   = codeMatch[1].toUpperCase();
+      const name   = nameCell.replace(/\s*\([^)]*\)\s*/g, '').trim();
+      const weight = parseFloat(cells[1].replace(/[%,\s]/g, '')) || 0;
+      if (weight <= 0) continue;
+
+      // MoneyDJ shows shares in 股 (individual shares) → convert to 張 (÷1000)
+      const sharesRaw = parseFloat(cells[2].replace(/[,\s]/g, '')) || 0;
+      const shares    = Math.round(sharesRaw / 1000);
+
+      holdings.push({ rank: rank++, code, name, shares, weight });
+      if (rank > 120) break; // safety cap
+    }
+
+    return holdings.length ? { date, holdings } : null;
   } catch { return null; }
 }
 
@@ -448,7 +514,7 @@ export default {
     const url = new URL(request.url);
 
     // ── Health ──────────────────────────────────────────────────────────────
-    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '1.8' });
+    if (url.pathname === '/') return jsonResp({ status: 'ok', version: '2.0' });
 
     // ── Debug ───────────────────────────────────────────────────────────────
     if (url.pathname === '/debug') {
@@ -545,36 +611,68 @@ export default {
     }
 
     // ── /etf-holdings?stockNo=00981A ────────────────────────────────────────
-    // Fetches TWSE P60 for the latest 2 trading days and returns the holdings diff.
+    // Scrapes MoneyDJ for today's holdings; diffs vs cached previous snapshot.
     if (url.pathname === '/etf-holdings') {
       const stockNo = (url.searchParams.get('stockNo') || '').replace(/[^0-9A-Za-z]/g, '');
       if (!stockNo) return jsonResp({ error: 'stockNo required' }, 400);
       try {
-        const dates = lastNWeekdays(2);   // [mostRecent, dayBefore]
-        const [todayData, prevData] = await Promise.all([
-          fetchP60(dates[0], stockNo),
-          fetchP60(dates[1], stockNo),
-        ]);
+        // ── 1. Scrape current holdings from MoneyDJ ─────────────────────────
+        const scraped = await scrapeMoneyDJHoldings(stockNo);
 
-        if (!todayData) {
+        if (!scraped || !scraped.holdings.length) {
           return jsonResp({
-            error: 'TWSE P60 returned no data',
+            error: 'MoneyDJ 無法取得持股資料',
             stockNo,
-            triedDate: dates[0],
             hint: '主動型ETF持股資料可能尚未更新（通常盤後約 18:00 後可用）',
           }, 404);
         }
 
-        const fmt = d => `${d.slice(4, 6)}/${d.slice(6, 8)}`;
-        const diff = diffHoldings(prevData, todayData);
+        // ── 2. Retrieve previous snapshot from Cloudflare edge cache ────────
+        const cache    = caches.default;
+        const cacheReq = new Request(
+          `https://etf-holdings-cache.internal/${stockNo}`
+        );
+
+        let prevHoldings = null;
+        let prevDate     = '';
+        let hasPrev      = false;
+
+        const cached = await cache.match(cacheReq);
+        if (cached) {
+          try {
+            const body    = await cached.json();
+            // Only use the cached snapshot if it's from a different date
+            if (body.date !== scraped.date && Array.isArray(body.holdings)) {
+              prevHoldings = body.holdings;
+              prevDate     = body.date;
+              hasPrev      = true;
+            }
+          } catch { /* ignore corrupt cache */ }
+        }
+
+        // ── 3. Compute diff (empty when no prev snapshot yet) ───────────────
+        const diff = hasPrev
+          ? diffHoldings(prevHoldings, scraped.holdings)
+          : { buys: [], sells: [], newCount: 0, addCount: 0, exitCount: 0 };
+
+        // ── 4. Persist current snapshot for tomorrow's diff ─────────────────
+        ctx.waitUntil(
+          cache.put(
+            cacheReq,
+            new Response(
+              JSON.stringify({ date: scraped.date, holdings: scraped.holdings }),
+              { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=86400' } }
+            )
+          )
+        );
 
         return jsonResp({
-          date:     fmt(dates[0]),
-          prevDate: fmt(dates[1]),
+          date:     scraped.date,
+          prevDate: prevDate || scraped.date,
           stockNo,
-          holdings: todayData,
+          holdings: scraped.holdings,
           ...diff,
-          source: 'TWSE-P60',
+          source: 'MoneyDJ',
         }, 200, ETF_HOLD_TTL);
       } catch (e) { return jsonResp({ error: String(e) }, 502); }
     }
