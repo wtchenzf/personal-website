@@ -190,16 +190,26 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   }, [data, symbolSeed]);
   const margind = useMemo(() => deriveMargin(data, symbolSeed), [data, symbolSeed]);
 
-  // ── Real chip data → coloured histogram bars ──────────────────────────────────
-  const mainForceChips = useMemo(() => (chipData ?? []).map(c => ({
-    time: c.time, value: c.mainForce, color: c.mainForce >= 0 ? '#c0392b' : '#4a7c59',
-  })), [chipData]);
-  const fgnChips  = useMemo(() => (chipData ?? []).map(c => ({
-    time: c.time, value: c.foreign,   color: c.foreign   >= 0 ? '#c0392b' : '#4a7c59',
-  })), [chipData]);
-  const trstChips = useMemo(() => (chipData ?? []).map(c => ({
-    time: c.time, value: c.trust,     color: c.trust     >= 0 ? '#c0392b' : '#4a7c59',
-  })), [chipData]);
+  // ── Real chip data → coloured histogram bars, date-aligned to OHLC ───────────
+  // Key chip rows by date so every OHLC bar gets a matching entry (0 if absent).
+  // This guarantees the sub-chart series share exactly the same time axis as the
+  // main K-line, preventing the left-shift / date-mismatch the user reported.
+  const chipByDate = useMemo(
+    () => new Map((chipData ?? []).map(c => [c.time, c])),
+    [chipData],
+  );
+  const mainForceChips = useMemo(() => data.map(d => {
+    const v = chipByDate.get(d.time)?.mainForce ?? 0;
+    return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
+  }), [data, chipByDate]);
+  const fgnChips = useMemo(() => data.map(d => {
+    const v = chipByDate.get(d.time)?.foreign ?? 0;
+    return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
+  }), [data, chipByDate]);
+  const trstChips = useMemo(() => data.map(d => {
+    const v = chipByDate.get(d.time)?.trust ?? 0;
+    return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
+  }), [data, chipByDate]);
 
   // ── Lookup maps (crosshair) ────────────────────────────────────────────────────
   const ma5Map  = useMemo(() => new Map(ma5Data.map(d  => [d.time, d.value])), [ma5Data]);
@@ -335,7 +345,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       syncToMain(vol); subs.push(vol);
 
       if (chipRef.current && mainForceChips.length > 0) {
-        const chipChart = subChart(chipRef.current, 90);
+        const chipChart = subChart(chipRef.current, 110, true);
         chipChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } })
           .setData(mainForceChips as any);
         cumLine(chipChart, mainForceChips.map(c => ({ time: c.time, value: c.value })), '#1a1a2e');
@@ -361,7 +371,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
         .setData(macdd.dem as any);
       syncToMain(macdChart); subs.push(macdChart);
 
-      const rsiChart = subChart(rsiRef.current, 70);
+      const rsiChart = subChart(rsiRef.current, 90, true);
       rsiChart.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
         .setData(rsid as any);
       [[70, '#e74c3c'], [30, '#27ae60']].forEach(([v, c]) =>
@@ -379,7 +389,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       cumLine(fgnChart, fgnChips.map(d => ({ time: d.time, value: d.value })), '#c0392b');
       syncToMain(fgnChart); subs.push(fgnChart);
 
-      const trstChart = subChart(trstRef.current, 90);
+      const trstChart = subChart(trstRef.current, 110, true);
       trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(trstChips as any);
       cumLine(trstChart, trstChips.map(d => ({ time: d.time, value: d.value })), '#2980b9');
       syncToMain(trstChart); subs.push(trstChart);
@@ -397,7 +407,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       }).setData(holderd.map(d => ({ time: d.time, value: d.big })) as any);
       syncToMain(bigChart); subs.push(bigChart);
 
-      const smlChart = subChart(smlRef.current, 90);
+      const smlChart = subChart(smlRef.current, 110, true);
       smlChart.addSeries(HistogramSeries, {
         color: 'rgba(52,152,219,0.2)', priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       }).setData(holderd.map(d => ({ time: d.time, value: d.small })) as any);
@@ -420,7 +430,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       }).setData(margind.map(d => ({ time: d.time, value: d.margin })) as any);
       syncToMain(mrgnChart); subs.push(mrgnChart);
 
-      const shrtChart = subChart(shrtRef.current, 90);
+      const shrtChart = subChart(shrtRef.current, 110, true);
       shrtChart.addSeries(HistogramSeries, {
         color: 'rgba(142,68,173,0.7)', priceFormat: { type: 'volume' },
       }).setData(margind.map(d => ({ time: d.time, value: d.short, color: 'rgba(142,68,173,0.7)' })) as any);
@@ -524,7 +534,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
                 )}
                 <span className="smc-sub-stat smc-cum">累積線</span>
               </div>
-              <div ref={chipRef} className="smc-sub h90" />
+              <div ref={chipRef} className="smc-sub h110" />
             </>
           )}
         </>
@@ -561,7 +571,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
               <span className="smc-sub-stat smc-rsi">{latestRSI.toFixed(2)}</span>
             )}
           </div>
-          <div ref={rsiRef} className="smc-sub h70" />
+          <div ref={rsiRef} className="smc-sub h90" />
         </>
       )}
 
@@ -588,7 +598,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
             )}
             <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={trstRef} className="smc-sub h90" />
+          <div ref={trstRef} className="smc-sub h110" />
         </>
       )}
 
@@ -609,7 +619,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
               <span className="smc-sub-stat cl-down">{latestHolder.small.toFixed(2)}%</span>
             )}
           </div>
-          <div ref={smlRef} className="smc-sub h90" />
+          <div ref={smlRef} className="smc-sub h110" />
         </>
       )}
 
@@ -639,7 +649,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
               </>
             )}
           </div>
-          <div ref={shrtRef} className="smc-sub h90" />
+          <div ref={shrtRef} className="smc-sub h110" />
         </>
       )}
     </div>

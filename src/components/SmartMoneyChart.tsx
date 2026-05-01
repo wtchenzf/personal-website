@@ -350,7 +350,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
         })) as any);
       syncToMain(vol); subs.push(vol);
 
-      const chpChart = subChart(chipRef.current, 90);
+      const chpChart = subChart(chipRef.current, 110, true);
       chpChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(chips as any);
       cumLine(chpChart, chips.map(c => ({ time: c.time, value: c.value })), '#1a1a2e');
       syncToMain(chpChart); subs.push(chpChart);
@@ -374,7 +374,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
         .setData(macdd.map(d => ({ time: d.time, value: d.dem })) as any);
       syncToMain(macdChart); subs.push(macdChart);
 
-      const rsiChart = subChart(rsiRef.current, 70);
+      const rsiChart = subChart(rsiRef.current, 90, true);
       rsiChart.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
         .setData(rsid as any);
       [[70, '#e74c3c'], [30, '#27ae60']].forEach(([v, c]) =>
@@ -393,7 +393,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       cumLine(fgnChart, instd.foreign.map(d => ({ time: d.time, value: d.value })), '#c0392b');
       syncToMain(fgnChart); subs.push(fgnChart);
 
-      const trstChart = subChart(trstRef.current, 90);
+      const trstChart = subChart(trstRef.current, 110, true);
       trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(instd.trust as any);
       cumLine(trstChart, instd.trust.map(d => ({ time: d.time, value: d.value })), '#2980b9');
       syncToMain(trstChart); subs.push(trstChart);
@@ -412,7 +412,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       }).setData(holderd.map(d => ({ time: d.time, value: d.big })) as any);
       syncToMain(bigChart); subs.push(bigChart);
 
-      const smlChart = subChart(smlRef.current, 90);
+      const smlChart = subChart(smlRef.current, 110, true);
       smlChart.addSeries(HistogramSeries, {
         color: 'rgba(52,152,219,0.2)', priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       }).setData(holderd.map(d => ({ time: d.time, value: d.small })) as any);
@@ -434,7 +434,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       }).setData(margind.map(d => ({ time: d.time, value: d.margin })) as any);
       syncToMain(mrgnChart); subs.push(mrgnChart);
 
-      const shrtChart = subChart(shrtRef.current, 90);
+      const shrtChart = subChart(shrtRef.current, 110, true);
       shrtChart.addSeries(HistogramSeries, {
         color: 'rgba(142,68,173,0.7)', priceFormat: { type: 'volume' },
       }).setData(margind.map(d => ({ time: d.time, value: d.short, color: 'rgba(142,68,173,0.7)' })) as any);
@@ -512,7 +512,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
               {disp.chipVal >= 0 ? '+' : ''}{disp.chipVal.toLocaleString()} 張
             </span>
           </div>
-          <div ref={chipRef} className="smc-sub h90" />
+          <div ref={chipRef} className="smc-sub h110" />
         </>
       )}
 
@@ -539,7 +539,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
             RSI (14)
             {latestRSI5 !== undefined && <span className="smc-sub-stat smc-rsi">{latestRSI5.toFixed(2)}</span>}
           </div>
-          <div ref={rsiRef} className="smc-sub h70" />
+          <div ref={rsiRef} className="smc-sub h90" />
         </>
       )}
 
@@ -561,7 +561,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
             </span>}
             <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={trstRef} className="smc-sub h90" />
+          <div ref={trstRef} className="smc-sub h110" />
         </>
       )}
 
@@ -577,7 +577,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
             散戶持股比率
             {latestHolder && <span className="smc-sub-stat cl-down">{latestHolder.small.toFixed(2)}%</span>}
           </div>
-          <div ref={smlRef} className="smc-sub h90" />
+          <div ref={smlRef} className="smc-sub h110" />
         </>
       )}
 
@@ -596,7 +596,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
               <span className="smc-sub-stat" style={{ color: '#e74c3c' }}>券資比 {latestMargin.ratio.toFixed(1)}%</span>
             </>}
           </div>
-          <div ref={shrtRef} className="smc-sub h90" />
+          <div ref={shrtRef} className="smc-sub h110" />
         </>
       )}
 
