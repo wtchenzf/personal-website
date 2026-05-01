@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import StockChart from '../components/StockChart';
 import MarketPanel from '../components/MarketPanel';
 import RocketScanner from '../components/RocketScanner';
+import FlowScanner from '../components/FlowScanner';
 import ETFChipTracker from '../components/ETFChipTracker';
 import { useMarketData } from '../hooks/useMarketData';
 import {
@@ -324,6 +325,7 @@ export default function Investment() {
       </div>
 
       <RocketScanner />
+      <FlowScanner />
       <ETFChipTracker refreshTrigger={refreshTick} />
 
       <p className="data-disclaimer">
