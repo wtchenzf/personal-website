@@ -46,6 +46,10 @@ function subChart(el: HTMLDivElement, h: number, timeVisible = false) {
     width: el.clientWidth, height: h,
     timeScale: { visible: timeVisible, borderColor: '#e5e7eb' },
     rightPriceScale: { borderColor: '#e5e7eb' },
+    crosshair: {
+      horzLine: { visible: false, labelVisible: false },
+      vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
+    },
   });
 }
 
@@ -324,14 +328,8 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   useEffect(() => {
     const main = mainChartRef.current;
     const subs: ReturnType<typeof createChart>[] = [];
-
-    const syncToMain = (sub: ReturnType<typeof createChart>) => {
-      if (!main) return;
-      main.timeScale().subscribeVisibleTimeRangeChange(() => {
-        const r = main.timeScale().getVisibleLogicalRange();
-        if (r) sub.timeScale().setVisibleLogicalRange(r);
-      });
-    };
+    // [subChart, firstSeries] — used for crosshair sync
+    const syncPairs: [ReturnType<typeof createChart>, any][] = [];
 
     const cumLine = (chart: ReturnType<typeof createChart>, bars: { time: string; value: number }[], color: string) => {
       let cum = 0;
@@ -343,109 +341,135 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
     // ── Tab 1: 成交量 + 主力買賣超 ──────────────────────────────────────────
     if (chartTab === 'chip' && volRef.current && chipRef.current) {
       const vol = subChart(volRef.current, 80);
-      vol.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } })
-        .setData((data as any[]).map((d: any) => ({
-          time: d.time, value: d.volume ?? 0,
-          color: d.close >= d.open ? '#c0392b' : '#4a7c59',
-        })) as any);
-      syncToMain(vol); subs.push(vol);
+      const volS = vol.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      volS.setData((data as any[]).map((d: any) => ({
+        time: d.time, value: d.volume ?? 0,
+        color: d.close >= d.open ? '#c0392b' : '#4a7c59',
+      })) as any);
+      subs.push(vol); syncPairs.push([vol, volS]);
 
       const chpChart = subChart(chipRef.current, 110, true);
-      chpChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(chips as any);
+      const chpS = chpChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      chpS.setData(chips as any);
       cumLine(chpChart, chips.map(c => ({ time: c.time, value: c.value })), '#1a1a2e');
-      syncToMain(chpChart); subs.push(chpChart);
+      subs.push(chpChart); syncPairs.push([chpChart, chpS]);
     }
 
     // ── Tab 2: KD + MACD + RSI ──────────────────────────────────────────────
     if (chartTab === 'tech' && kdRef.current && macdRef.current && rsiRef.current) {
       const kdChart = subChart(kdRef.current, 90);
-      kdChart.addSeries(LineSeries, { color: '#2962FF', lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
-        .setData(kdd.map(d => ({ time: d.time, value: d.k })) as any);
+      const kdS = kdChart.addSeries(LineSeries, { color: '#2962FF', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      kdS.setData(kdd.map(d => ({ time: d.time, value: d.k })) as any);
       kdChart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
         .setData(kdd.map(d => ({ time: d.time, value: d.d })) as any);
-      syncToMain(kdChart); subs.push(kdChart);
+      subs.push(kdChart); syncPairs.push([kdChart, kdS]);
 
       const macdChart = subChart(macdRef.current, 80);
-      macdChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } })
-        .setData(macdd.map(d => ({ time: d.time, value: d.osc, color: d.osc >= 0 ? '#c0392b' : '#4a7c59' })) as any);
+      const macdS = macdChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      macdS.setData(macdd.map(d => ({ time: d.time, value: d.osc, color: d.osc >= 0 ? '#c0392b' : '#4a7c59' })) as any);
       macdChart.addSeries(LineSeries, { color: '#2962FF', lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
         .setData(macdd.map(d => ({ time: d.time, value: d.dif })) as any);
       macdChart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
         .setData(macdd.map(d => ({ time: d.time, value: d.dem })) as any);
-      syncToMain(macdChart); subs.push(macdChart);
+      subs.push(macdChart); syncPairs.push([macdChart, macdS]);
 
       const rsiChart = subChart(rsiRef.current, 90, true);
-      rsiChart.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
-        .setData(rsid as any);
+      const rsiS = rsiChart.addSeries(LineSeries, { color: '#8e44ad', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      rsiS.setData(rsid as any);
       [[70, '#e74c3c'], [30, '#27ae60']].forEach(([v, c]) =>
         rsiChart.addSeries(LineSeries, { color: c as string, lineWidth: 1,
-          priceLineVisible: false, lastValueVisible: false,
-          crosshairMarkerVisible: false,
+          priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
         }).setData(rsid.map(d => ({ time: d.time, value: v as number })) as any)
       );
-      syncToMain(rsiChart); subs.push(rsiChart);
+      subs.push(rsiChart); syncPairs.push([rsiChart, rsiS]);
     }
 
     // ── Tab 3: 外資 + 投信 ──────────────────────────────────────────────────
     if (chartTab === 'inst' && fgnRef.current && trstRef.current) {
       const fgnChart = subChart(fgnRef.current, 90);
-      fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(instd.foreign as any);
+      const fgnS = fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      fgnS.setData(instd.foreign as any);
       cumLine(fgnChart, instd.foreign.map(d => ({ time: d.time, value: d.value })), '#c0392b');
-      syncToMain(fgnChart); subs.push(fgnChart);
+      subs.push(fgnChart); syncPairs.push([fgnChart, fgnS]);
 
       const trstChart = subChart(trstRef.current, 110, true);
-      trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } }).setData(instd.trust as any);
+      const trstS = trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      trstS.setData(instd.trust as any);
       cumLine(trstChart, instd.trust.map(d => ({ time: d.time, value: d.value })), '#2980b9');
-      syncToMain(trstChart); subs.push(trstChart);
+      subs.push(trstChart); syncPairs.push([trstChart, trstS]);
     }
 
     // ── Tab 4: 大戶持股 + 散戶持股 ──────────────────────────────────────────
     if (chartTab === 'holder' && bigRef.current && smlRef.current) {
       const bigChart = subChart(bigRef.current, 100);
-      // Filled area via histogram (always positive values)
-      bigChart.addSeries(HistogramSeries, {
+      const bigS = bigChart.addSeries(HistogramSeries, {
         color: 'rgba(231,76,60,0.25)', priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-      }).setData(holderd.map(d => ({ time: d.time, value: d.big })) as any);
+      });
+      bigS.setData(holderd.map(d => ({ time: d.time, value: d.big })) as any);
       bigChart.addSeries(LineSeries, { color: '#c0392b', lineWidth: 2,
-        priceLineVisible: false, lastValueVisible: true,
-        crosshairMarkerVisible: false,
+        priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false,
       }).setData(holderd.map(d => ({ time: d.time, value: d.big })) as any);
-      syncToMain(bigChart); subs.push(bigChart);
+      subs.push(bigChart); syncPairs.push([bigChart, bigS]);
 
       const smlChart = subChart(smlRef.current, 110, true);
-      smlChart.addSeries(HistogramSeries, {
+      const smlS = smlChart.addSeries(HistogramSeries, {
         color: 'rgba(52,152,219,0.2)', priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-      }).setData(holderd.map(d => ({ time: d.time, value: d.small })) as any);
+      });
+      smlS.setData(holderd.map(d => ({ time: d.time, value: d.small })) as any);
       smlChart.addSeries(LineSeries, { color: '#2980b9', lineWidth: 2,
-        priceLineVisible: false, lastValueVisible: true,
-        crosshairMarkerVisible: false,
+        priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false,
       }).setData(holderd.map(d => ({ time: d.time, value: d.small })) as any);
-      syncToMain(smlChart); subs.push(smlChart);
+      subs.push(smlChart); syncPairs.push([smlChart, smlS]);
     }
 
     // ── Tab 5: 融資 + 融券 + 券資比 ─────────────────────────────────────────
     if (chartTab === 'margin' && mrgnRef.current && shrtRef.current) {
       const mrgnChart = subChart(mrgnRef.current, 90);
-      mrgnChart.addSeries(HistogramSeries, {
+      const mrgnS = mrgnChart.addSeries(HistogramSeries, {
         color: 'rgba(41,128,185,0.7)', priceFormat: { type: 'volume' },
-      }).setData(margind.map(d => ({ time: d.time, value: d.margin, color: 'rgba(41,128,185,0.7)' })) as any);
+      });
+      mrgnS.setData(margind.map(d => ({ time: d.time, value: d.margin, color: 'rgba(41,128,185,0.7)' })) as any);
       mrgnChart.addSeries(LineSeries, { color: '#1a5276', lineWidth: 2,
         priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
       }).setData(margind.map(d => ({ time: d.time, value: d.margin })) as any);
-      syncToMain(mrgnChart); subs.push(mrgnChart);
+      subs.push(mrgnChart); syncPairs.push([mrgnChart, mrgnS]);
 
       const shrtChart = subChart(shrtRef.current, 110, true);
-      shrtChart.addSeries(HistogramSeries, {
+      const shrtS = shrtChart.addSeries(HistogramSeries, {
         color: 'rgba(142,68,173,0.7)', priceFormat: { type: 'volume' },
-      }).setData(margind.map(d => ({ time: d.time, value: d.short, color: 'rgba(142,68,173,0.7)' })) as any);
-      // 券資比 as line on secondary scale
+      });
+      shrtS.setData(margind.map(d => ({ time: d.time, value: d.short, color: 'rgba(142,68,173,0.7)' })) as any);
       shrtChart.addSeries(LineSeries, { color: '#e74c3c', lineWidth: 2, priceScaleId: 'left',
         priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
       }).setData(margind.map(d => ({ time: d.time, value: d.ratio })) as any);
-      syncToMain(shrtChart); subs.push(shrtChart);
+      subs.push(shrtChart); syncPairs.push([shrtChart, shrtS]);
     }
 
-    // Resize handler for sub-charts
+    // ── Time-range sync (time-based → no index drift on scroll/zoom) ─────────
+    const scrollHandler = (range: any) => {
+      if (!range) return;
+      subs.forEach(s => { try { s.timeScale().setVisibleRange(range); } catch (_) {} });
+    };
+    if (main) {
+      main.timeScale().subscribeVisibleTimeRangeChange(scrollHandler);
+      // Immediately match current view
+      const cur = main.timeScale().getVisibleRange();
+      if (cur) subs.forEach(s => { try { s.timeScale().setVisibleRange(cur); } catch (_) {} });
+    }
+
+    // ── Crosshair sync ────────────────────────────────────────────────────────
+    const crosshairHandler = (param: any) => {
+      if (!param.time) {
+        syncPairs.forEach(([c]) => { try { c.clearCrosshairPosition(); } catch (_) {} });
+        return;
+      }
+      syncPairs.forEach(([c, s]) => {
+        try { c.setCrosshairPosition(0, param.time, s); } catch (_) {}
+      });
+    };
+    if (main) main.subscribeCrosshairMove(crosshairHandler);
+
+    // ── Resize handler ────────────────────────────────────────────────────────
     const allSubRefs = [volRef, chipRef, kdRef, macdRef, rsiRef, fgnRef, trstRef, bigRef, smlRef, mrgnRef, shrtRef];
     const onResize = () => {
       subs.forEach((ch, i) => {
@@ -457,6 +481,10 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      if (main) {
+        main.timeScale().unsubscribeVisibleTimeRangeChange(scrollHandler);
+        main.unsubscribeCrosshairMove(crosshairHandler);
+      }
       subs.forEach(c => c.remove());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
