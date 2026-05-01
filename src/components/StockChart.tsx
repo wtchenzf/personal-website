@@ -222,6 +222,17 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   const ma60Map = useMemo(() => new Map(ma60Data.map(d => [d.time, d.value])), [ma60Data]);
   const volMap  = useMemo(() => new Map(data.map(d => [d.time, d.volume])),   [data]);
 
+  // ── Hover-lookup maps for sub-panel label stats ───────────────────────────
+  const kdHovMap     = useMemo(() => new Map(kdd.map(d => [d.time, d])), [kdd]);
+  const macdDifHovMap = useMemo(() => new Map(macdd.dif.map(d => [d.time, d])), [macdd]);
+  const macdDemHovMap = useMemo(() => new Map(macdd.dem.map(d => [d.time, d])), [macdd]);
+  const rsiHovMap    = useMemo(() => new Map(rsid.map(d => [d.time, d.value])), [rsid]);
+  const chipHovMap   = useMemo(() => new Map(mainForceChips.map(d => [d.time, d])), [mainForceChips]);
+  const fgnHovMap    = useMemo(() => new Map(fgnChips.map(d => [d.time, d])), [fgnChips]);
+  const trstHovMap   = useMemo(() => new Map(trstChips.map(d => [d.time, d])), [trstChips]);
+  const holderHovMap = useMemo(() => new Map(holderd.map(d => [d.time, d])), [holderd]);
+  const marginHovMap = useMemo(() => new Map(margind.map(d => [d.time, d])), [margind]);
+
   // ── Header values ─────────────────────────────────────────────────────────────
   const lastBar   = data.at(-1);
   const prev      = data.at(-2)?.close ?? 0;
@@ -246,15 +257,17 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   const legendUp = displayBar.close >= displayBar.open;
 
   // ── Latest values for sub-panel label stats ────────────────────────────────────
-  const latestKD     = kdd.at(-1);
-  const latestDIF    = macdd.dif.at(-1);
-  const latestDEM    = macdd.dem.at(-1);
-  const latestRSI    = rsid.at(-1)?.value;
-  const latestChip   = mainForceChips.at(-1);
-  const latestFgn    = fgnChips.at(-1);
-  const latestTrst   = trstChips.at(-1);
-  const latestHolder = holderd.at(-1);
-  const latestMargin = margind.at(-1);
+  // Use hovered date when available, fall back to last bar
+  const hovT         = hoveredBar?.time;
+  const latestKD     = (hovT ? kdHovMap.get(hovT)      : undefined) ?? kdd.at(-1);
+  const latestDIF    = (hovT ? macdDifHovMap.get(hovT) : undefined) ?? macdd.dif.at(-1);
+  const latestDEM    = (hovT ? macdDemHovMap.get(hovT) : undefined) ?? macdd.dem.at(-1);
+  const latestRSI    = (hovT ? rsiHovMap.get(hovT)     : undefined) ?? rsid.at(-1)?.value;
+  const latestChip   = (hovT ? chipHovMap.get(hovT)    : undefined) ?? mainForceChips.at(-1);
+  const latestFgn    = (hovT ? fgnHovMap.get(hovT)     : undefined) ?? fgnChips.at(-1);
+  const latestTrst   = (hovT ? trstHovMap.get(hovT)    : undefined) ?? trstChips.at(-1);
+  const latestHolder = (hovT ? holderHovMap.get(hovT)  : undefined) ?? holderd.at(-1);
+  const latestMargin = (hovT ? marginHovMap.get(hovT)  : undefined) ?? margind.at(-1);
 
   // ════════════════════════════════════════════════════════════════════════
   // EFFECT 1 — Main K-line (stable, rebuilds only when data changes)

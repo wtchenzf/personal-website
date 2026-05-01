@@ -258,6 +258,15 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   const ma20m   = useMemo(() => new Map(ma20d.map(d => [d.time, d.value])), [ma20d]);
   const ma60m   = useMemo(() => new Map(ma60d.map(d => [d.time, d.value])), [ma60d]);
 
+  // ── Hover-lookup maps for sub-panel label stats ───────────────────────────
+  const kdHovMap     = useMemo(() => new Map(kdd.map(d => [d.time, d])), [kdd]);
+  const macdHovMap   = useMemo(() => new Map(macdd.map(d => [d.time, d])), [macdd]);
+  const rsiHovMap    = useMemo(() => new Map(rsid.map(d => [d.time, d.value])), [rsid]);
+  const fgnHovMap    = useMemo(() => new Map(instd.foreign.map(d => [d.time, d])), [instd]);
+  const trstHovMap   = useMemo(() => new Map(instd.trust.map(d => [d.time, d])), [instd]);
+  const holderHovMap = useMemo(() => new Map(holderd.map(d => [d.time, d])), [holderd]);
+  const marginHovMap = useMemo(() => new Map(margind.map(d => [d.time, d])), [margind]);
+
   // ── Legend data (hovered or last bar) ──────────────────────────────────────────
   const last = data.at(-1);
   const disp: HovBar = hov ?? {
@@ -491,13 +500,15 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   }, [chartTab, data, chips, kdd, macdd, rsid, instd, holderd, margind]);
 
   // ── Render ───────────────────────────────────────────────────────────────────
-  const latestKD     = kdd.at(-1);
-  const latestMACD   = macdd.at(-1);
-  const latestRSI5   = rsid.at(-1)?.value;
-  const latestFgn    = instd.foreign.at(-1);
-  const latestTrst   = instd.trust.at(-1);
-  const latestHolder = holderd.at(-1);
-  const latestMargin = margind.at(-1);
+  // Use hovered date when available, fall back to last bar
+  const hovT         = hov?.time;
+  const latestKD     = (hovT ? kdHovMap.get(hovT)     : undefined) ?? kdd.at(-1);
+  const latestMACD   = (hovT ? macdHovMap.get(hovT)   : undefined) ?? macdd.at(-1);
+  const latestRSI5   = (hovT ? rsiHovMap.get(hovT)    : undefined) ?? rsid.at(-1)?.value;
+  const latestFgn    = (hovT ? fgnHovMap.get(hovT)    : undefined) ?? instd.foreign.at(-1);
+  const latestTrst   = (hovT ? trstHovMap.get(hovT)   : undefined) ?? instd.trust.at(-1);
+  const latestHolder = (hovT ? holderHovMap.get(hovT) : undefined) ?? holderd.at(-1);
+  const latestMargin = (hovT ? marginHovMap.get(hovT) : undefined) ?? margind.at(-1);
 
   return (
     <div className="smc-wrapper">
