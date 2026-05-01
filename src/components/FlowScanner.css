@@ -514,10 +514,39 @@
   flex-shrink: 0;
 }
 
+/* ── Detail sub-tabs ── */
+.sm-detail-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.sm-dtab {
+  padding: 0.4rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sm-dtab:hover { color: var(--text-primary); }
+
+.sm-dtab.active {
+  color: var(--accent-indigo);
+  border-bottom-color: var(--accent-indigo);
+}
+
 /* ── Expanded detail ── */
 .sm-card-detail {
   border-top: 1px solid #f0f0f0;
-  padding: 1rem 1rem 0.75rem;
+  padding: 0.75rem 1rem 0.75rem;
   background: #fafafa;
 }
 

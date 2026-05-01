@@ -1,14 +1,16 @@
 import { useState } from 'react';
+import SmartMoneyChart, { type ChipBar } from './SmartMoneyChart';
+import type { OHLCBar } from './MiniKLineChart';
 import './FlowScanner.css';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface SectorRow {
-  name:       string;       // 產業名
+  name:       string;
   icon:       string;
-  netFlow:    number;       // 億元，+ = 淨買超
-  weekChg:    number;       // 相較上週變化，億元
-  topStocks:  string[];     // 代表股
+  netFlow:    number;
+  weekChg:    number;
+  topStocks:  string[];
   hot:        boolean;
 }
 
@@ -18,22 +20,187 @@ interface SmartMoneyStock {
   sector:      string;
   price:       number;
   changePct:   number;
-  foreignDays: number;   // 外資連買天數
-  trustDays:   number;   // 投信連買天數
-  dealerDays:  number;   // 自營連買天數
-  netBuyK:     number;   // 累積淨買（張）
-  volRatio:    number;   // 成交量/20日均量
-  pricePct:    number;   // 距近30日低點漲幅 %
-  signal:      number;   // 0–100 綜合訊號
+  foreignDays: number;
+  trustDays:   number;
+  dealerDays:  number;
+  netBuyK:     number;
+  volRatio:    number;
+  pricePct:    number;
+  signal:      number;
   tags:        string[];
   note:        string;
 }
+
+// ══ OHLC + Chip data generator ════════════════════════════════════════════════
+
+// 25 trading days: 03/24 → 04/30 (Taiwan market)
+const FLOW_DATES = [
+  '2026-03-24','2026-03-25','2026-03-26','2026-03-27','2026-03-28','2026-03-31',
+  '2026-04-01','2026-04-02','2026-04-03',
+  '2026-04-07','2026-04-08','2026-04-09','2026-04-10','2026-04-11',
+  '2026-04-14','2026-04-15','2026-04-16','2026-04-17',
+  '2026-04-21','2026-04-22','2026-04-23','2026-04-24',
+  '2026-04-28','2026-04-29','2026-04-30',
+];
+
+// Deterministic PRNG (mulberry32)
+function mkRng(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Build OHLC + volume + chip data for one stock.
+ *
+ * anchors    – [[dateIdx, price], …] target prices at those indices
+ * volAnchor  – peak daily volume (in 1,000 shares)
+ * buyStart   – date index from which institutional buying starts (positive chips)
+ * chipScale  – base chip size in 張 (e.g., 500 = ±500 張 max)
+ * priceVol   – daily price volatility (e.g., 0.022)
+ * seed       – seed for PRNG
+ */
+function buildFlowData(
+  anchors:   [number, number][],
+  volAnchor: number,
+  buyStart:  number,
+  chipScale: number,
+  priceVol:  number,
+  seed:      number,
+): { ohlc: (OHLCBar & { volume: number })[]; chips: ChipBar[] } {
+  const rand  = mkRng(seed);
+  const n     = FLOW_DATES.length;
+  const closes: number[] = new Array(n);
+
+  // Interpolate closes from anchors
+  for (let a = 0; a < anchors.length - 1; a++) {
+    const [i0, p0] = anchors[a];
+    const [i1, p1] = anchors[a + 1];
+    const steps = i1 - i0;
+    for (let i = i0; i <= i1; i++) {
+      const t     = steps === 0 ? 1 : (i - i0) / steps;
+      const base  = p0 + (p1 - p0) * t;
+      const noise = (i === i0 || i === i1) ? 0 : (rand() - 0.5) * priceVol * base * 1.8;
+      closes[i]   = Math.max(base + noise, 1);
+    }
+  }
+
+  const ohlc: (OHLCBar & { volume: number })[] = FLOW_DATES.map((time, i) => {
+    const close    = +closes[i].toFixed(2);
+    const prevC    = i > 0 ? closes[i - 1] : close;
+    const open     = +(prevC * (1 + (rand() - 0.5) * priceVol * 0.35)).toFixed(2);
+    const bodyH    = Math.max(open, close);
+    const bodyL    = Math.min(open, close);
+    const high     = +(bodyH * (1 + rand() * priceVol * 0.65)).toFixed(2);
+    const low      = Math.max(+(bodyL * (1 - rand() * priceVol * 0.65)).toFixed(2), 0.1);
+    // Volume: higher on rallying days, even more so in the "buying period"
+    const buyBoost = i >= buyStart ? (1 + (i - buyStart) * 0.06) : 1;
+    const priceChg = Math.abs(close - prevC) / prevC;
+    const volume   = Math.round(
+      volAnchor * (0.7 + rand() * 0.6) * (1 + priceChg * 8) * buyBoost * 1000
+    );
+    return { time, open, high, low, close, volume };
+  });
+
+  // Chip (主力買賣超)
+  const chips: ChipBar[] = FLOW_DATES.map((time, i) => {
+    let value: number;
+    if (i < buyStart) {
+      // Before institutional accumulation: mixed, slightly negative
+      value = Math.round((rand() - 0.6) * chipScale);
+    } else {
+      // During accumulation: mostly positive, increasing
+      const boost = 1 + (i - buyStart) * 0.12;
+      value = Math.round((rand() * 0.75 + 0.25) * chipScale * boost);
+      // Occasional single negative day to look realistic
+      if (rand() < 0.12) value = -Math.round(rand() * chipScale * 0.3);
+    }
+    return { time, value, color: value >= 0 ? '#c0392b' : '#4a7c59' };
+  });
+
+  return { ohlc, chips };
+}
+
+// ══ Per-stock OHLC + chip seed data ══════════════════════════════════════════
+// anchors: [dateIdx, price]
+// idx ref: 0=03/24, 5=03/31, 9=04/07, 13=04/11, 14=04/14, 17=04/17,
+//          18=04/21, 21=04/24, 22=04/28, 24=04/30
+
+const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips: ChipBar[] }> = (() => {
+  const d: Record<string, ReturnType<typeof buildFlowData>> = {};
+
+  // 3661 世芯-KY — 外資連買14日，AI ASIC 龍頭
+  d['3661'] = buildFlowData(
+    [[0,3520],[4,3380],[9,3080],[12,3280],[14,3620],[17,3920],[18,4050],[21,4180],[22,4290],[24,4420]],
+    12, 11, 1800, 0.026, 3661
+  );
+  // 3017 奇鋐 — 外資+投信連買11日，液冷散熱
+  d['3017'] = buildFlowData(
+    [[0,2680],[4,2540],[9,2340],[12,2500],[14,2720],[17,2920],[18,3010],[21,3070],[22,3090],[24,3120]],
+    45, 11, 3200, 0.022, 3017
+  );
+  // 2330 台積電 — 外資連買10日
+  d['2330'] = buildFlowData(
+    [[0,1980],[4,1910],[9,1820],[12,1900],[14,2020],[17,2075],[18,2100],[21,2130],[22,2140],[24,2150]],
+    280, 12, 22000, 0.014, 2330
+  );
+  // 6669 緯穎 — 外資連買9日，AI伺服器ODM
+  d['6669'] = buildFlowData(
+    [[0,1840],[4,1760],[9,1640],[12,1780],[14,1960],[17,2060],[18,2110],[21,2145],[22,2165],[24,2180]],
+    18, 13, 1400, 0.024, 6669
+  );
+  // 5274 信驊 — 外資+投信連買8-9日，BMC龍頭
+  d['5274'] = buildFlowData(
+    [[0,1460],[4,1390],[9,1300],[12,1400],[14,1590],[17,1740],[18,1820],[21,1860],[22,1880],[24,1890]],
+    8, 13, 800, 0.028, 5274
+  );
+  // 2382 廣達 — 外資連買8日
+  d['2382'] = buildFlowData(
+    [[0,308],[4,294],[9,274],[12,295],[14,318],[17,334],[18,340],[21,344],[22,347],[24,348]],
+    185, 14, 14000, 0.018, 2382
+  );
+  // 6442 光聖 — 投信連買10日，矽光子
+  d['6442'] = buildFlowData(
+    [[0,1460],[4,1390],[9,1260],[11,1360],[13,1680],[15,1840],[17,1940],[19,2050],[21,2100],[22,2130],[24,2150]],
+    10, 12, 900, 0.034, 6442
+  );
+  // 3222 健策 — 投信連買8日，液冷散熱
+  d['3222'] = buildFlowData(
+    [[0,682],[4,644],[9,591],[12,645],[14,722],[17,796],[18,840],[21,866],[22,882],[24,895]],
+    14, 14, 1100, 0.028, 3222
+  );
+  // 3037 欣興 — 外資連買7日，ABF載板
+  d['3037'] = buildFlowData(
+    [[0,190],[4,182],[9,170],[12,183],[14,198],[17,208],[18,212],[21,215],[22,217],[24,218]],
+    220, 15, 16000, 0.020, 3037
+  );
+  // 8996 高力 — 投信連買7日，液冷冷排
+  d['8996'] = buildFlowData(
+    [[0,104],[4,97],[9,91],[11,100],[13,112],[15,124],[17,130],[19,135],[21,138],[22,140],[24,142]],
+    22, 15, 1800, 0.030, 8996
+  );
+  // 2454 聯發科 — 外資連買5日
+  d['2454'] = buildFlowData(
+    [[0,2150],[4,2040],[9,1940],[12,2060],[14,2220],[16,2380],[18,2490],[20,2540],[22,2570],[24,2610]],
+    115, 17, 9000, 0.020, 2454
+  );
+  // 3711 日月光投控 — 外資連買5日，先進封裝
+  d['3711'] = buildFlowData(
+    [[0,158],[4,151],[9,141],[12,152],[14,162],[17,168],[18,171],[21,173],[22,175],[24,176]],
+    160, 17, 13000, 0.018, 3711
+  );
+
+  return d;
+})();
 
 // ── Seed data — 04/30 ─────────────────────────────────────────────────────────
 
 const SCAN_DATE = '04/30';
 
-// 產業資金流向（三大法人合計，最近5個交易日，億元）
 const SECTORS: SectorRow[] = [
   { name: 'AI 伺服器 / 雲端',   icon: '🤖', netFlow:  +428.5, weekChg: +112.3, topStocks: ['廣達2382','緯穎6669','鴻海2317'],   hot: true  },
   { name: '半導體製造',         icon: '⚡', netFlow:  +384.2, weekChg:  +88.4, topStocks: ['台積電2330','聯電2303'],             hot: true  },
@@ -50,13 +217,12 @@ const SECTORS: SectorRow[] = [
   { name: '傳產 / 鋼鐵',        icon: '🏭', netFlow:   -87.3, weekChg:  -34.1, topStocks: ['中鋼2002','台塑1301'],              hot: false },
 ];
 
-// 大戶連買追蹤（外資＋投信連買天數，截至 04/30）
 const SMART_MONEY: SmartMoneyStock[] = [
   {
     code: '3661', name: '世芯-KY',   sector: 'AI ASIC',
     price: 4420,  changePct: +3.42,
     foreignDays: 14, trustDays: 9,  dealerDays: 3,
-    netBuyK: 28450, volRatio: 2.1,  pricePct: 28.4,
+    netBuyK: 28450, volRatio: 2.1, pricePct: 28.4,
     signal: 96,
     tags: ['外資連買14日', '投信連買9日', 'ASIC定製', '法人重押'],
     note: '為 NVIDIA 等大廠設計 AI 推論 ASIC，訂單能見度至 2027H1，外資視為 AI ASIC 首選標的持續加碼。',
@@ -65,25 +231,25 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '3017', name: '奇鋐',      sector: '液冷散熱',
     price: 3120,  changePct: +2.88,
     foreignDays: 11, trustDays: 11, dealerDays: 5,
-    netBuyK: 19820, volRatio: 1.8,  pricePct: 19.7,
+    netBuyK: 19820, volRatio: 1.8, pricePct: 19.7,
     signal: 93,
     tags: ['外資連買11日', '投信同步11日', '液冷龍頭', '量增價漲'],
     note: 'AI 資料中心液冷散熱龍頭，Google、AWS 大單在手。投信與外資罕見同步連買 11 日，籌碼極乾淨。',
   },
   {
     code: '2330', name: '台積電',    sector: '半導體製造',
-    price: 1055,  changePct: +1.63,
+    price: 2150,  changePct: +1.63,
     foreignDays: 10, trustDays: 6,  dealerDays: 0,
-    netBuyK: 31200, volRatio: 1.4,  pricePct: 14.2,
+    netBuyK: 31200, volRatio: 1.4, pricePct: 14.2,
     signal: 90,
     tags: ['外資連買10日', 'CoWoS 滿載', 'N2 順利量產', '指標龍頭'],
-    note: '外資近 10 日累積回補超過 3.1 萬張，CoWoS 封裝需求持續炸單，N2 良率優於預期，目標價上調至 1,250。',
+    note: '外資近 10 日累積回補超過 3.1 萬張，CoWoS 封裝需求持續炸單，N2 良率優於預期，目標價上調至 2,500。',
   },
   {
     code: '6669', name: '緯穎',      sector: 'AI 伺服器',
     price: 2180,  changePct: +2.15,
     foreignDays: 9,  trustDays: 7,  dealerDays: 2,
-    netBuyK: 12340, volRatio: 1.6,  pricePct: 22.1,
+    netBuyK: 12340, volRatio: 1.6, pricePct: 22.1,
     signal: 88,
     tags: ['外資連買9日', 'AI伺服器ODM', 'GB200機架優先供應商'],
     note: '微軟、META AI 伺服器 ODM 主力，GB200 機架供應商，外資持續 9 日加碼，視為 AI 基礎建設直接受益股。',
@@ -92,7 +258,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '5274', name: '信驊',      sector: 'AI ASIC',
     price: 1890,  changePct: +3.71,
     foreignDays: 9,  trustDays: 8,  dealerDays: 4,
-    netBuyK: 5820,  volRatio: 2.3,  pricePct: 31.5,
+    netBuyK: 5820,  volRatio: 2.3, pricePct: 31.5,
     signal: 87,
     tags: ['外資連買9日', '投信連買8日', 'BMC龍頭', '量爆突破'],
     note: '全球 BMC 晶片龍頭，AI 伺服器每台必備，營收創歷史新高。外資+投信雙雙連買逾 8 日，小型股籌碼堆疊效果強。',
@@ -101,7 +267,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '2382', name: '廣達',      sector: 'AI 伺服器',
     price: 348,   changePct: +1.17,
     foreignDays: 8,  trustDays: 4,  dealerDays: 0,
-    netBuyK: 42100, volRatio: 1.3,  pricePct: 11.8,
+    netBuyK: 42100, volRatio: 1.3, pricePct: 11.8,
     signal: 82,
     tags: ['外資連買8日', 'AI伺服器ODM最大', 'GB系列大單'],
     note: 'NVIDIA GB200/GB300 最大 ODM，外資連 8 日加碼，Q1 AI 伺服器營收季增 48%，法說會展望樂觀。',
@@ -110,7 +276,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '6442', name: '光聖',      sector: '矽光子',
     price: 2150,  changePct: +5.40,
     foreignDays: 7,  trustDays: 10, dealerDays: 6,
-    netBuyK: 4210,  volRatio: 3.4,  pricePct: 44.2,
+    netBuyK: 4210,  volRatio: 3.4, pricePct: 44.2,
     signal: 81,
     tags: ['投信連買10日', '外資連買7日', '矽光子龍頭', '爆量突破'],
     note: '矽光子 / 光電整合元件唯一台廠，與 Intel、Broadcom 合作量產中。投信率先大量佈局，已連買 10 日，籌碼集中度達 15%。',
@@ -119,7 +285,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '3222', name: '健策',      sector: '液冷散熱',
     price: 895,   changePct: +3.94,
     foreignDays: 6,  trustDays: 8,  dealerDays: 3,
-    netBuyK: 6740,  volRatio: 2.0,  pricePct: 26.4,
+    netBuyK: 6740,  volRatio: 2.0, pricePct: 26.4,
     signal: 78,
     tags: ['投信連買8日', '外資連買6日', '冷板液冷', '跟進奇鋐'],
     note: '液冷散熱冷板製造，受惠奇鋐帶動整個液冷供應鏈。投信連買 8 日，股本小、外資尚未大量介入，空間可觀。',
@@ -128,7 +294,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '3037', name: '欣興',      sector: 'PCB / ABF載板',
     price: 218,   changePct: +1.86,
     foreignDays: 7,  trustDays: 5,  dealerDays: 1,
-    netBuyK: 38500, volRatio: 1.5,  pricePct: 16.7,
+    netBuyK: 38500, volRatio: 1.5, pricePct: 16.7,
     signal: 76,
     tags: ['外資連買7日', 'ABF載板', 'CoWoS受益', '量增'],
     note: 'ABF 載板龍頭，CoWoS 先進封裝帶動 ABF 需求爆發。外資連 7 日買超 3.85 萬張，主動 ETF 00981A 持續加碼。',
@@ -137,25 +303,25 @@ const SMART_MONEY: SmartMoneyStock[] = [
     code: '8996', name: '高力',      sector: '液冷散熱',
     price: 142,   changePct: +4.41,
     foreignDays: 5,  trustDays: 7,  dealerDays: 2,
-    netBuyK: 4850,  volRatio: 2.6,  pricePct: 37.8,
+    netBuyK: 4850,  volRatio: 2.6, pricePct: 37.8,
     signal: 74,
     tags: ['投信連買7日', '外資連買5日', '冷排龍頭', '小型高彈性'],
     note: '液冷散熱冷排零組件，受惠 AI 伺服器機架液冷趨勢。主動 ETF 00981A / 00992A 均持有，籌碼被鎖。小股本，彈性大。',
   },
   {
     code: '2454', name: '聯發科',    sector: 'IC 設計',
-    price: 1280,  changePct: +0.94,
+    price: 2610,  changePct: +1.36,
     foreignDays: 5,  trustDays: 3,  dealerDays: 0,
-    netBuyK: 15200, volRatio: 1.1,  pricePct: 8.4,
+    netBuyK: 15200, volRatio: 1.2, pricePct: 8.4,
     signal: 65,
-    tags: ['外資連買5日', 'AI手機', 'Dimensity旗艦', '築底完成'],
-    note: '外資回補 5 日，Dimensity 9400+ 拿下三星、vivo 旗艦，AI 手機滲透率加速，下半年訂單能見度佳。',
+    tags: ['外資連買5日', 'AI手機', 'Dimensity旗艦', '法說會催化'],
+    note: '外資回補 5 日，Dimensity 9400+ 拿下三星、vivo 旗艦，AI 手機滲透率加速。04/30 法說會帶動股價突破至 2,610。',
   },
   {
     code: '3711', name: '日月光投控', sector: '先進封裝',
     price: 176,   changePct: +1.73,
     foreignDays: 5,  trustDays: 4,  dealerDays: 1,
-    netBuyK: 24300, volRatio: 1.3,  pricePct: 12.9,
+    netBuyK: 24300, volRatio: 1.3, pricePct: 12.9,
     signal: 63,
     tags: ['外資連買5日', '先進封裝', 'SiP量產', '估值低'],
     note: '全球最大 OSAT，SiP 封裝持續受惠 AI 需求，外資逢低回補。本益比相較同業偏低，防禦性佳。',
@@ -167,9 +333,9 @@ const SMART_MONEY: SmartMoneyStock[] = [
 const MAX_FLOW = Math.max(...SECTORS.map(s => Math.abs(s.netFlow)));
 
 function signalColor(score: number) {
-  if (score >= 88) return '#c0392b';   // 強烈看多
-  if (score >= 75) return '#e07b39';   // 積極看多
-  if (score >= 60) return '#d4a017';   // 留意
+  if (score >= 88) return '#c0392b';
+  if (score >= 75) return '#e07b39';
+  if (score >= 60) return '#d4a017';
   return '#6b7280';
 }
 function signalLabel(score: number) {
@@ -181,26 +347,27 @@ function signalLabel(score: number) {
 
 function DayBadge({ days, label }: { days: number; label: string }) {
   if (!days) return null;
-  const intensity = days >= 10 ? 'hot' : days >= 6 ? 'warm' : 'cool';
+  const cls = days >= 10 ? 'hot' : days >= 6 ? 'warm' : 'cool';
   return (
-    <span className={`day-badge day-badge-${intensity}`}>
-      {label}<br/><span className="day-num">{days}日</span>
+    <span className={`day-badge day-badge-${cls}`}>
+      {label}<br /><span className="day-num">{days}日</span>
     </span>
   );
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-type FlowTab = 'sector' | 'smart';
+type FlowTab   = 'sector' | 'smart';
 type InstFilter = 'all' | 'foreign' | 'trust';
+type CardTab   = 'info' | 'chart';
 
 export default function FlowScanner() {
-  const [activeTab, setActiveTab]     = useState<FlowTab>('sector');
-  const [filter,    setFilter]        = useState<InstFilter>('all');
-  const [expanded,  setExpanded]      = useState<string | null>(null);
-  const [sortBy,    setSortBy]        = useState<'signal' | 'foreignDays' | 'trustDays'>('signal');
+  const [activeTab, setActiveTab]   = useState<FlowTab>('sector');
+  const [filter,    setFilter]      = useState<InstFilter>('all');
+  const [sortBy,    setSortBy]      = useState<'signal' | 'foreignDays' | 'trustDays'>('signal');
+  const [expanded,  setExpanded]    = useState<string | null>(null);
+  const [cardTab,   setCardTab]     = useState<CardTab>('info');
 
-  // Sort + filter smart money list
   const sorted = [...SMART_MONEY]
     .filter(s => {
       if (filter === 'foreign') return s.foreignDays >= 5;
@@ -209,10 +376,15 @@ export default function FlowScanner() {
     })
     .sort((a, b) => b[sortBy] - a[sortBy]);
 
-  // Sector totals for summary stats
   const totalInflow  = SECTORS.filter(s => s.netFlow > 0).reduce((a, s) => a + s.netFlow, 0);
   const totalOutflow = SECTORS.filter(s => s.netFlow < 0).reduce((a, s) => a + s.netFlow, 0);
   const hotCount     = SECTORS.filter(s => s.hot).length;
+
+  const toggleExpand = (code: string) => {
+    if (expanded === code) { setExpanded(null); return; }
+    setExpanded(code);
+    setCardTab('info');
+  };
 
   return (
     <div className="flow-scanner-container card">
@@ -242,39 +414,25 @@ export default function FlowScanner() {
 
       {/* ── Tabs ── */}
       <div className="flow-tabs">
-        <button
-          className={`flow-tab-btn ${activeTab === 'sector' ? 'active' : ''}`}
-          onClick={() => setActiveTab('sector')}
-        >
+        <button className={`flow-tab-btn ${activeTab === 'sector' ? 'active' : ''}`} onClick={() => setActiveTab('sector')}>
           🔥 產業資金流向
         </button>
-        <button
-          className={`flow-tab-btn ${activeTab === 'smart' ? 'active' : ''}`}
-          onClick={() => setActiveTab('smart')}
-        >
+        <button className={`flow-tab-btn ${activeTab === 'smart' ? 'active' : ''}`} onClick={() => setActiveTab('smart')}>
           💎 大戶連買追蹤
         </button>
       </div>
 
-      {/* ══ Tab: Sector Flow ══════════════════════════════════════════════════ */}
+      {/* ══ Sector Flow ══════════════════════════════════════════════════════ */}
       {activeTab === 'sector' && (
         <div className="sector-flow-panel animate-fade-in">
-
-          {/* Method note */}
           <div className="flow-method-note">
             📌 三大法人（外資＋投信＋自營商）近 5 個交易日合計買賣超，億元。正值 = 淨買超（資金流入）
           </div>
-
           {SECTORS.map((s, i) => {
-            const isIn      = s.netFlow >= 0;
-            const barWidth  = Math.abs(s.netFlow) / MAX_FLOW * 100;
-            const weekUp    = s.weekChg >= 0;
+            const isIn     = s.netFlow >= 0;
+            const barWidth = Math.abs(s.netFlow) / MAX_FLOW * 100;
             return (
-              <div
-                key={s.name}
-                className={`sector-row ${i % 2 === 0 ? 'even' : ''} ${s.hot ? 'hot-sector' : ''}`}
-              >
-                {/* Rank + Icon + Name */}
+              <div key={s.name} className={`sector-row ${i % 2 === 0 ? 'even' : ''} ${s.hot ? 'hot-sector' : ''}`}>
                 <div className="sector-left">
                   <span className="sector-rank">#{i + 1}</span>
                   <span className="sector-icon">{s.icon}</span>
@@ -286,92 +444,67 @@ export default function FlowScanner() {
                     <span className="sector-stocks">{s.topStocks.join(' · ')}</span>
                   </div>
                 </div>
-
-                {/* Bar */}
                 <div className="sector-bar-wrap">
-                  <div
-                    className={`sector-bar ${isIn ? 'bar-in' : 'bar-out'}`}
-                    style={{ width: `${barWidth}%` }}
-                  />
+                  <div className={`sector-bar ${isIn ? 'bar-in' : 'bar-out'}`} style={{ width: `${barWidth}%` }} />
                 </div>
-
-                {/* Flow value */}
                 <div className="sector-right">
                   <span className={`sector-flow-val ${isIn ? 'price-up' : 'price-down'}`}>
                     {isIn ? '+' : ''}{s.netFlow.toFixed(1)} 億
                   </span>
-                  <span className={`sector-week-chg ${weekUp ? 'price-up' : 'price-down'}`}>
-                    {weekUp ? '▲' : '▼'} {Math.abs(s.weekChg).toFixed(1)}
+                  <span className={`sector-week-chg ${s.weekChg >= 0 ? 'price-up' : 'price-down'}`}>
+                    {s.weekChg >= 0 ? '▲' : '▼'} {Math.abs(s.weekChg).toFixed(1)}
                   </span>
                 </div>
               </div>
             );
           })}
-
           <p className="flow-source-note">
-            ※ 資料來源：TWSE T86 三大法人買賣超統計；04/30 盤後計算。周變化為相較前5個交易日之差值。
+            ※ 資料來源：TWSE T86 三大法人買賣超統計；04/30 盤後計算。週變化為相較前5個交易日之差值。
           </p>
         </div>
       )}
 
-      {/* ══ Tab: Smart Money ══════════════════════════════════════════════════ */}
+      {/* ══ Smart Money ══════════════════════════════════════════════════════ */}
       {activeTab === 'smart' && (
         <div className="smart-money-panel animate-fade-in">
 
-          {/* Filter + Sort toolbar */}
+          {/* Toolbar */}
           <div className="sm-toolbar">
             <div className="sm-filter-group">
               <span className="toolbar-label">篩選：</span>
               {(['all', 'foreign', 'trust'] as InstFilter[]).map(f => (
-                <button
-                  key={f}
-                  className={`sm-filter-btn ${filter === f ? 'active' : ''}`}
-                  onClick={() => setFilter(f)}
-                >
+                <button key={f} className={`sm-filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
                   {f === 'all' ? '全部' : f === 'foreign' ? '外資連買5日↑' : '投信連買5日↑'}
                 </button>
               ))}
             </div>
             <div className="sm-sort-group">
               <span className="toolbar-label">排序：</span>
-              {([
-                ['signal',      '綜合訊號'],
-                ['foreignDays', '外資天數'],
-                ['trustDays',   '投信天數'],
-              ] as [typeof sortBy, string][]).map(([key, label]) => (
-                <button
-                  key={key}
-                  className={`sm-filter-btn ${sortBy === key ? 'active' : ''}`}
-                  onClick={() => setSortBy(key)}
-                >
-                  {label}
-                </button>
+              {([['signal', '綜合訊號'], ['foreignDays', '外資天數'], ['trustDays', '投信天數']] as [typeof sortBy, string][]).map(([k, l]) => (
+                <button key={k} className={`sm-filter-btn ${sortBy === k ? 'active' : ''}`} onClick={() => setSortBy(k)}>{l}</button>
               ))}
             </div>
           </div>
 
-          {/* Signal legend */}
+          {/* Legend */}
           <div className="sm-legend">
-            <span className="legend-dot" style={{ background: '#c0392b' }}/>強烈追蹤 (88+)
-            <span className="legend-dot" style={{ background: '#e07b39' }}/>積極佈局 (75+)
-            <span className="legend-dot" style={{ background: '#d4a017' }}/>觀察留意 (60+)
+            <span className="legend-dot" style={{ background: '#c0392b' }} />強烈追蹤 (88+)
+            <span className="legend-dot" style={{ background: '#e07b39' }} />積極佈局 (75+)
+            <span className="legend-dot" style={{ background: '#d4a017' }} />觀察留意 (60+)
           </div>
 
-          {/* Stock cards */}
+          {/* Cards */}
           <div className="sm-list">
             {sorted.map((s, idx) => {
               const isExp  = expanded === s.code;
               const isUp   = s.changePct >= 0;
               const color  = signalColor(s.signal);
+              const fd     = FLOW_DATA[s.code];
 
               return (
                 <div key={s.code} className={`sm-card ${isExp ? 'expanded' : ''}`}>
-                  {/* ── Card header ── */}
-                  <div
-                    className="sm-card-header"
-                    onClick={() => setExpanded(isExp ? null : s.code)}
-                  >
-                    {/* Left: rank + identity */}
+                  {/* Header row */}
+                  <div className="sm-card-header" onClick={() => toggleExpand(s.code)}>
                     <div className="sm-card-left">
                       <span className="sm-rank">#{idx + 1}</span>
                       <div className="sm-identity">
@@ -381,21 +514,17 @@ export default function FlowScanner() {
                           <span className="sm-sector-tag">{s.sector}</span>
                         </div>
                         <div className="sm-tags">
-                          {s.tags.slice(0, 3).map(t => (
-                            <span key={t} className="sm-tag">{t}</span>
-                          ))}
+                          {s.tags.slice(0, 3).map(t => <span key={t} className="sm-tag">{t}</span>)}
                         </div>
                       </div>
                     </div>
 
-                    {/* Middle: consecutive days */}
                     <div className="sm-days-group">
                       <DayBadge days={s.foreignDays} label="外資" />
                       <DayBadge days={s.trustDays}   label="投信" />
                       <DayBadge days={s.dealerDays}  label="自營" />
                     </div>
 
-                    {/* Right: price + signal */}
                     <div className="sm-card-right">
                       <div className="sm-price-group">
                         <span className="sm-price">{s.price.toLocaleString()}</span>
@@ -404,51 +533,75 @@ export default function FlowScanner() {
                         </span>
                       </div>
                       <div className="sm-signal-box" style={{ borderColor: color }}>
-                        <span className="sm-signal-num" style={{ color }}>{s.signal}</span>
+                        <span className="sm-signal-num"  style={{ color }}>{s.signal}</span>
                         <span className="sm-signal-label" style={{ color }}>{signalLabel(s.signal)}</span>
                       </div>
                       <span className="sm-expand-arrow">{isExp ? '▼' : '▶'}</span>
                     </div>
                   </div>
 
-                  {/* ── Expanded detail ── */}
+                  {/* Expanded detail */}
                   {isExp && (
                     <div className="sm-card-detail animate-fade-in">
-                      <div className="detail-grid">
-                        <div className="detail-stat">
-                          <span className="ds-label">累積淨買（張）</span>
-                          <span className="ds-val price-up">+{s.netBuyK.toLocaleString()}</span>
-                        </div>
-                        <div className="detail-stat">
-                          <span className="ds-label">量能倍率</span>
-                          <span className="ds-val">{s.volRatio.toFixed(1)}x</span>
-                        </div>
-                        <div className="detail-stat">
-                          <span className="ds-label">距近30日低點</span>
-                          <span className="ds-val price-up">+{s.pricePct.toFixed(1)}%</span>
-                        </div>
-                        <div className="detail-stat">
-                          <span className="ds-label">訊號強度</span>
-                          <div className="ds-signal-bar-wrap">
-                            <div
-                              className="ds-signal-bar"
-                              style={{ width: `${s.signal}%`, background: color }}
-                            />
-                            <span className="ds-signal-num">{s.signal}/100</span>
+                      {/* Detail sub-tabs */}
+                      <div className="sm-detail-tabs">
+                        <button
+                          className={`sm-dtab ${cardTab === 'info' ? 'active' : ''}`}
+                          onClick={() => setCardTab('info')}
+                        >
+                          📊 分析
+                        </button>
+                        <button
+                          className={`sm-dtab ${cardTab === 'chart' ? 'active' : ''}`}
+                          onClick={() => setCardTab('chart')}
+                        >
+                          📈 K線圖
+                        </button>
+                      </div>
+
+                      {/* ── Info tab ── */}
+                      {cardTab === 'info' && (
+                        <>
+                          <div className="detail-grid">
+                            <div className="detail-stat">
+                              <span className="ds-label">累積淨買（張）</span>
+                              <span className="ds-val price-up">+{s.netBuyK.toLocaleString()}</span>
+                            </div>
+                            <div className="detail-stat">
+                              <span className="ds-label">量能倍率</span>
+                              <span className="ds-val">{s.volRatio.toFixed(1)}x</span>
+                            </div>
+                            <div className="detail-stat">
+                              <span className="ds-label">距近30日低點</span>
+                              <span className="ds-val price-up">+{s.pricePct.toFixed(1)}%</span>
+                            </div>
+                            <div className="detail-stat">
+                              <span className="ds-label">訊號強度</span>
+                              <div className="ds-signal-bar-wrap">
+                                <div className="ds-signal-bar" style={{ width: `${s.signal}%`, background: color }} />
+                                <span className="ds-signal-num">{s.signal}/100</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                          <div className="sm-note">
+                            <span className="note-icon">📋</span>
+                            <p>{s.note}</p>
+                          </div>
+                          <div className="sm-warning">
+                            ⚠ 以上分析僅供參考，股市有風險，買賣決策請自行判斷。法人連買不保證股價持續上漲。
+                          </div>
+                        </>
+                      )}
 
-                      {/* Analysis note */}
-                      <div className="sm-note">
-                        <span className="note-icon">📋</span>
-                        <p>{s.note}</p>
-                      </div>
-
-                      {/* Warning */}
-                      <div className="sm-warning">
-                        ⚠ 以上分析僅供參考，股市有風險，買賣決策請自行判斷。法人連買不保證股價持續上漲。
-                      </div>
+                      {/* ── Chart tab ── */}
+                      {cardTab === 'chart' && fd && (
+                        <SmartMoneyChart
+                          code={s.code}
+                          name={s.name}
+                          data={fd.ohlc}
+                          chips={fd.chips}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -457,7 +610,7 @@ export default function FlowScanner() {
           </div>
 
           <p className="flow-source-note">
-            ※ 連買天數統計至 {SCAN_DATE}；累積淨買量以 TWSE T86 法人買賣超計算；訊號分數綜合連買天數、量能、價格動能等因素。
+            ※ 連買天數統計至 {SCAN_DATE}；K 線為高擬真模擬數據（錨點來自公開市場資料）；訊號分數綜合連買天數、量能、價格動能等因素。
           </p>
         </div>
       )}
