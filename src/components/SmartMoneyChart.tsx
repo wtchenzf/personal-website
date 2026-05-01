@@ -111,45 +111,85 @@ function mkRng(seed: number) {
   };
 }
 
-/** Split chips into foreign / trust streams */
+/** Split chips into foreign / trust streams with independent daily noise */
 function deriveInst(chips: ChipBar[], seed: number) {
-  const r = mkRng(seed);
+  const rf = mkRng(seed);
+  const rt = mkRng(seed ^ 0x7777);
   const foreign = chips.map(c => {
-    const v = Math.round(c.value * (0.55 + r() * 0.22));
+    // Foreign: 50-72% of chip signal + slight independent noise
+    const base = c.value * (0.52 + rf() * 0.20);
+    const noise = (rf() - 0.5) * Math.abs(c.value) * 0.15;
+    const v = Math.round(base + noise);
     return { time: c.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
   });
   const trust = chips.map(c => {
-    const v = Math.round(c.value * (0.18 + r() * 0.14));
+    // Trust: 12-28% of chip signal + independent noise (can lag/diverge)
+    const base = c.value * (0.12 + rt() * 0.16);
+    const noise = (rt() - 0.5) * Math.abs(c.value) * 0.20;
+    const v = Math.round(base + noise);
     return { time: c.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
   });
   return { foreign, trust };
 }
 
-/** 大戶/散戶持股比率 — slow step-function tied to accumulation period */
+/**
+ * 大戶/散戶持股比率 — TDCC weekly-cadence simulation
+ * Every 5 bars: ±2–5 % swing driven by net chip signal
+ * Daily: small noise ±0.3 % to avoid flat look
+ */
 function deriveHolder(chips: ChipBar[], baseBig: number, seed: number) {
   const r = mkRng(seed ^ 0x1234);
   let bigPct = baseBig;
-  return chips.map(c => {
-    // big accumulation → 大戶 pct drifts up
-    if (c.value > 0) bigPct = Math.min(bigPct + r() * 0.18, 82);
-    else             bigPct = Math.max(bigPct - r() * 0.08, baseBig - 4);
-    const smallPct = Math.max(100 - bigPct - 22 - r() * 3, 8);
-    return { time: c.time, big: +bigPct.toFixed(2), small: +smallPct.toFixed(2) };
+
+  return chips.map((c, i) => {
+    if (i % 5 === 4) {
+      // Weekly update: look at net buying over past 5 days
+      const slice  = chips.slice(Math.max(0, i - 4), i + 1);
+      const netBuy = slice.reduce((s, b) => s + (b.value > 0 ? 1 : -1), 0);
+      const trend  = netBuy / 5;                          // –1 … +1
+      const delta  = trend * (2 + r() * 3) + (r() - 0.5) * 1.5;
+      bigPct = Math.min(Math.max(bigPct + delta, baseBig - 10), Math.min(baseBig + 22, 88));
+    } else {
+      // Daily micro-drift
+      bigPct += (r() - 0.48) * 0.6;   // slight upward bias for accumulation stocks
+      bigPct = Math.min(Math.max(bigPct, baseBig - 10), Math.min(baseBig + 22, 88));
+    }
+    const small = Math.max(100 - bigPct - 16 - r() * 6, 4);
+    return { time: c.time, big: +bigPct.toFixed(2), small: +small.toFixed(2) };
   });
 }
 
-/** 融資/融券/券資比 */
+/**
+ * 融資/融券/券資比 — realistic daily swings
+ * Margin follows price trend; short inverse; 券資比 reflects squeeze dynamics
+ */
 function deriveMargin(data: OHLCBar[], seed: number) {
-  const r    = mkRng(seed ^ 0xabcd);
-  const base = 800 + r() * 1800;
-  const sBase = 150 + r() * 400;
+  const r     = mkRng(seed ^ 0xabcd);
+  // Scale base to data length so chart fills ~25–60% of y-range
+  const base  = 2000 + r() * 5000;
+  const sBase = 300  + r() * 900;
   let margin = base, short = sBase;
+
   return data.map(d => {
-    const pchg = (d.close - d.open) / d.open;
-    margin = Math.max(margin * (1 + pchg * 0.4 + (r() - 0.5) * 0.025), 200);
-    short  = Math.max(short  * (1 - pchg * 0.2 + (r() - 0.5) * 0.02),   50);
+    const open  = d.open  || d.close;
+    const pchg  = (d.close - open) / open;          // today's candle return
+    const noise = (r() - 0.5) * 0.07;               // ±3.5 % daily noise
+
+    // Margin increases on up days (retail piles in), falls on down days
+    const mDelta = pchg * 1.2 + noise;
+    margin = Math.max(margin * (1 + mDelta), base * 0.25);
+
+    // Short shrinks on up days (short squeeze), grows on down days
+    const sDelta = -pchg * 0.7 + (r() - 0.5) * 0.06;
+    short  = Math.max(short  * (1 + sDelta), sBase * 0.15);
+
     const ratio = short / margin * 100;
-    return { time: d.time, margin: Math.round(margin), short: Math.round(short), ratio: +ratio.toFixed(2) };
+    return {
+      time:   d.time,
+      margin: Math.round(margin),
+      short:  Math.round(short),
+      ratio:  +ratio.toFixed(2),
+    };
   });
 }
 

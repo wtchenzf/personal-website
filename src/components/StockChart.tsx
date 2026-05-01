@@ -80,29 +80,60 @@ function mkRng(seed: number) {
   };
 }
 
+/**
+ * 大戶/散戶持股比率 — TDCC weekly-cadence simulation
+ * Every 5 bars: ±2–5 % swing driven by weekly price trend
+ * Daily: small noise ±0.3 % to avoid flat look
+ */
 function deriveHolder(data: OHLCData[], baseBig: number, seed: number) {
   const r = mkRng(seed ^ 0x1234);
   let bigPct = baseBig;
-  return data.map(d => {
-    const pchg = d.open !== 0 ? (d.close - d.open) / d.open : 0;
-    if (pchg > 0) bigPct = Math.min(bigPct + r() * 0.18, 82);
-    else          bigPct = Math.max(bigPct - r() * 0.08, baseBig - 4);
-    const smallPct = Math.max(100 - bigPct - 22 - r() * 3, 8);
-    return { time: d.time, big: +bigPct.toFixed(2), small: +smallPct.toFixed(2) };
+
+  return data.map((d, i) => {
+    if (i % 5 === 4) {
+      // Weekly update: net price return over past 5 bars
+      const weekOpen  = data[Math.max(0, i - 4)].open || data[Math.max(0, i - 4)].close;
+      const weekClose = d.close;
+      const weekRet   = (weekClose - weekOpen) / (weekOpen || weekClose);
+      const delta     = weekRet * 5 + (r() - 0.5) * 2.5;
+      bigPct = Math.min(Math.max(bigPct + delta, baseBig - 12), Math.min(baseBig + 20, 88));
+    } else {
+      // Daily micro-drift ±0.3 %
+      bigPct += (r() - 0.5) * 0.6;
+      bigPct = Math.min(Math.max(bigPct, baseBig - 12), Math.min(baseBig + 20, 88));
+    }
+    const small = Math.max(100 - bigPct - 18 - r() * 5, 4);
+    return { time: d.time, big: +bigPct.toFixed(2), small: +small.toFixed(2) };
   });
 }
 
+/**
+ * 融資/融券/券資比 — realistic daily swings
+ * Margin rises on up days (retail piles in); short shrinks on up days (squeeze)
+ */
 function deriveMargin(data: OHLCData[], seed: number) {
   const r     = mkRng(seed ^ 0xabcd);
-  const base  = 800  + r() * 1800;
-  const sBase = 150  + r() * 400;
+  const base  = 3000 + r() * 6000;
+  const sBase = 400  + r() * 1000;
   let margin = base, short = sBase;
+
   return data.map(d => {
-    const pchg = d.open !== 0 ? (d.close - d.open) / d.open : 0;
-    margin = Math.max(margin * (1 + pchg * 0.4 + (r() - 0.5) * 0.025), 200);
-    short  = Math.max(short  * (1 - pchg * 0.2 + (r() - 0.5) * 0.02),   50);
+    const open  = d.open || d.close;
+    const pchg  = (d.close - open) / open;
+    const noise = (r() - 0.5) * 0.07;
+
+    // Margin follows price with amplification + noise
+    margin = Math.max(margin * (1 + pchg * 1.2 + noise), base * 0.25);
+    // Short inversely follows (short squeeze on up days)
+    short  = Math.max(short  * (1 - pchg * 0.7 + (r() - 0.5) * 0.06), sBase * 0.15);
+
     const ratio = short / margin * 100;
-    return { time: d.time, margin: Math.round(margin), short: Math.round(short), ratio: +ratio.toFixed(2) };
+    return {
+      time:   d.time,
+      margin: Math.round(margin),
+      short:  Math.round(short),
+      ratio:  +ratio.toFixed(2),
+    };
   });
 }
 
