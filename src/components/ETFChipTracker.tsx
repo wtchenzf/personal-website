@@ -32,75 +32,132 @@ interface ETFInfo {
   data:     ETFDayData;
 }
 
-// ── 持股異動資料 — 最後更新：2026/04/29 ─────────────────────────────────────────
-// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/29 估算數據為基準。
+// ── 持股異動資料 — 最後更新：2026/04/30 ─────────────────────────────────────────
+// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/30 最新資料為基準。
 // 三大法人動向（法人動向頁籤）由 TWSE T86 即時提供，每日 17:30 後自動更新。
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 17.75,   // 估算（04/29 盤後）
+    nav: 18.12,   // 估算（04/30 盤後）
     data: {
-      date: '04/29', prevDate: '04/28',
-      newCount: 0, addCount: 5, exitCount: 0,
+      date: '04/30', prevDate: '04/29',
+      newCount: 1, addCount: 6, exitCount: 2,
       buys: [
-        { rank: 1, code: '2454', name: '聯發科',     prevShares:  4363, shares:  4580, weight: 5.12, weightChange: 0.28, status: 'add' },
-        { rank: 2, code: '2327', name: '國巨',       prevShares: 16954, shares: 17820, weight: 2.48, weightChange: 0.13, status: 'add' },
-        { rank: 3, code: '3711', name: '日月光投控', prevShares:  9536, shares: 10200, weight: 2.15, weightChange: 0.15, status: 'add' },
-        { rank: 4, code: '1590', name: '亞德客-KY', prevShares:   500, shares:   880, weight: 0.53, weightChange: 0.23, status: 'add' },
-        { rank: 5, code: '2337', name: '旺宏',       prevShares:  2910, shares:  3450, weight: 0.24, weightChange: 0.04, status: 'add' },
+        { rank: 1, code: '6187', name: '萬潤',       prevShares:     0, shares:   684, weight: 0.35, weightChange: undefined, status: 'new' },
+        { rank: 2, code: '2330', name: '台積電',     prevShares:  9693, shares: 10039, weight: 8.97, weightChange: 0.05,      status: 'add' },
+        { rank: 3, code: '3037', name: '欣興',       prevShares:  9287, shares: 10226, weight: 3.78, weightChange: 0.63,      status: 'add' },
+        { rank: 4, code: '5274', name: '信驊',       prevShares:   406, shares:   458, weight: 3.16, weightChange: 0.32,      status: 'add' },
+        { rank: 5, code: '3711', name: '日月光投控', prevShares:  9536, shares: 10859, weight: 2.17, weightChange: 0.20,      status: 'add' },
+        { rank: 6, code: '8996', name: '高力',       prevShares:   535, shares:   914, weight: 0.48, weightChange: 0.22,      status: 'add' },
+        { rank: 7, code: '2313', name: '華通',       prevShares:  1343, shares:  2543, weight: 0.26, weightChange: 0.13,      status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '2303', name: '聯電', prevShares: 40054, shares: 37500, weight: 1.12, weightChange: -0.16, status: 'reduce' },
+        { rank: 1, code: '7769', name: '鴻勁', prevShares:   98, shares: 0, weight: 0, weightChange: undefined, status: 'exit' },
+        { rank: 2, code: '1303', name: '南亞', prevShares: 1374, shares: 0, weight: 0, weightChange: undefined, status: 'exit' },
       ],
     },
   },
   {
     id: '00991A',
-    fullName: '國泰台灣半導體領航ETF',
-    nav: 13.38,   // 估算（04/29 盤後）
+    fullName: '復華未來50主動ETF',
+    nav: 11.52,   // 估算（04/30 盤後）
     data: {
-      date: '04/29', prevDate: '04/28',
-      newCount: 0, addCount: 6, exitCount: 1,
+      date: '04/30', prevDate: '04/29',
+      newCount: 0, addCount: 3, exitCount: 1,
       buys: [
-        { rank: 1, code: '2454', name: '聯發科',  prevShares: 1524, shares: 1680, weight: 9.42, weightChange: 0.47, status: 'add' },
-        { rank: 2, code: '6415', name: '矽力-KY', prevShares: 1040, shares: 1120, weight: 7.58, weightChange: 0.35, status: 'add' },
-        { rank: 3, code: '3533', name: '嘉澤',    prevShares:  148, shares:  220, weight: 6.12, weightChange: 0.28, status: 'add' },
-        { rank: 4, code: '8299', name: '群聯',    prevShares:  387, shares:  430, weight: 5.84, weightChange: 0.22, status: 'add' },
-        { rank: 5, code: '3034', name: '聯詠',    prevShares:  710, shares:  745, weight: 6.28, weightChange: 0.13, status: 'add' },
-        { rank: 6, code: '2379', name: '瑞昱',    prevShares:  620, shares:  655, weight: 5.55, weightChange: 0.14, status: 'add' },
+        { rank: 1, code: '2330', name: '台積電', prevShares: 3200, shares: 3600, weight: 20.34, weightChange: 1.82, status: 'add' },
+        { rank: 2, code: '3037', name: '欣興',   prevShares: 2800, shares: 3200, weight:  7.48, weightChange: 0.63, status: 'add' },
+        { rank: 3, code: '8299', name: '群聯',   prevShares: 1100, shares: 1300, weight:  6.54, weightChange: 0.55, status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '3037', name: '欣興', prevShares:  200, shares:    0, weight: 0.00, status: 'exit'   },
-        { rank: 2, code: '2337', name: '旺宏', prevShares:  800, shares:  400, weight: 0.04, status: 'reduce' },
-        { rank: 3, code: '3529', name: '力旺', prevShares:  255, shares:  180, weight: 4.72, weightChange: -0.21, status: 'reduce' },
+        { rank: 1, code: '2345', name: '智邦', prevShares: 850, shares: 730, weight: 4.41, weightChange: -0.42, status: 'reduce' },
       ],
     },
   },
   {
     id: '00992A',
-    fullName: '元大台灣AI科技旗艦ETF',
-    nav: 13.55,   // 估算（04/29 盤後，鴻海法說會利多）
+    fullName: '群益科技創新主動ETF',
+    nav: 10.88,   // 估算（04/30 盤後）
     data: {
-      date: '04/29', prevDate: '04/28',
-      newCount: 1, addCount: 6, exitCount: 1,
+      date: '04/30', prevDate: '04/29',
+      newCount: 0, addCount: 3, exitCount: 1,
       buys: [
-        { rank: 1, code: '2317', name: '鴻海',   prevShares: 4178, shares: 5200, weight:  9.85, weightChange: 0.80, status: 'add' },
-        { rank: 2, code: '2382', name: '廣達',   prevShares: 2121, shares: 2380, weight:  8.05, weightChange: 0.43, status: 'add' },
-        { rank: 3, code: '3231', name: '緯創',   prevShares: 2163, shares: 2450, weight:  6.72, weightChange: 0.37, status: 'add' },
-        { rank: 4, code: '2308', name: '台達電', prevShares:  208, shares:  380, weight:  6.15, weightChange: 0.70, status: 'add' },
-        { rank: 5, code: '2356', name: '英業達', prevShares: 3116, shares: 3350, weight:  6.03, weightChange: 0.18, status: 'add' },
-        { rank: 6, code: '3017', name: '奇鋐',   prevShares:  145, shares:  190, weight:  5.24, weightChange: 0.19, status: 'add' },
-        { rank: 7, code: '6669', name: '緯穎',   prevShares:    0, shares:  350, weight:  3.85,                    status: 'new' },
+        { rank: 1, code: '8996', name: '高力',   prevShares: 1350, shares: 1689, weight: 4.24, weightChange: 0.55, status: 'add' },
+        { rank: 2, code: '3105', name: '穩懋',   prevShares: 2900, shares: 3433, weight: 3.70, weightChange: 0.28, status: 'add' },
+        { rank: 3, code: '6442', name: '光聖',   prevShares:  620, shares:  785, weight: 3.33, weightChange: 0.31, status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '2330', name: '台積電', prevShares:  116, shares:    0, weight:  0.00, status: 'exit'   },
-        { rank: 2, code: '3653', name: '健策',   prevShares:   54, shares:   30, weight:  4.58, weightChange: -0.17, status: 'reduce' },
-        { rank: 3, code: '2357', name: '華碩',   prevShares:  120, shares:   60, weight:  0.12, weightChange: -0.04, status: 'reduce' },
+        { rank: 1, code: '2454', name: '聯發科', prevShares: 480, shares: 380, weight: 2.95, weightChange: -0.42, status: 'reduce' },
       ],
     },
   },
 ];
+
+// ── Portfolio snapshot — full holdings for diff computation ────────────────────
+interface PortfolioItem {
+  rank:   number;
+  code:   string;
+  name:   string;
+  shares: number;
+  weight: number;
+}
+interface PortfolioSnapshot {
+  date:     string;
+  holdings: PortfolioItem[];
+}
+const PORTFOLIO_KEY = (id: string) => `etf_portfolio_v2_${id}`;
+
+function loadPortfolio(id: string): PortfolioSnapshot | null {
+  try {
+    const raw = localStorage.getItem(PORTFOLIO_KEY(id));
+    return raw ? (JSON.parse(raw) as PortfolioSnapshot) : null;
+  } catch { return null; }
+}
+function savePortfolio(id: string, snap: PortfolioSnapshot) {
+  localStorage.setItem(PORTFOLIO_KEY(id), JSON.stringify(snap));
+}
+
+/** Compute buy/sell diff between two full portfolio snapshots. */
+function computeLocalDiff(
+  prev: PortfolioItem[],
+  today: PortfolioItem[],
+): Pick<ETFDayData, 'buys' | 'sells' | 'newCount' | 'addCount' | 'exitCount'> {
+  const prevMap  = new Map(prev.map(h  => [h.code, h]));
+  const todayMap = new Map(today.map(h => [h.code, h]));
+  const buys:  ETFHolding[] = [];
+  const sells: ETFHolding[] = [];
+
+  for (const h of today) {
+    const p = prevMap.get(h.code);
+    if (!p) {
+      buys.push({ ...h, prevShares: 0, status: 'new' });
+    } else if (h.shares > p.shares) {
+      buys.push({ ...h, prevShares: p.shares, status: 'add',
+        weightChange: +((h.weight - p.weight).toFixed(2)) });
+    } else if (h.shares < p.shares) {
+      sells.push({ ...h, prevShares: p.shares,
+        status: h.shares === 0 ? 'exit' : 'reduce',
+        weightChange: h.shares === 0 ? undefined : +((h.weight - p.weight).toFixed(2)) });
+    }
+  }
+  // Stocks fully removed from today
+  for (const p of prev) {
+    if (!todayMap.has(p.code)) {
+      sells.push({ rank: p.rank, code: p.code, name: p.name,
+        prevShares: p.shares, shares: 0, weight: 0, status: 'exit' });
+    }
+  }
+  buys.forEach((h, i)  => { h.rank = i + 1; });
+  sells.forEach((h, i) => { h.rank = i + 1; });
+
+  return {
+    buys, sells,
+    newCount:  buys.filter(h => h.status === 'new').length,
+    addCount:  buys.filter(h => h.status === 'add').length,
+    exitCount: sells.filter(h => h.status === 'exit').length,
+  };
+}
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
 const LS_KEY = (id: string) => `etf_holdings_v1_${id}`;
@@ -242,31 +299,62 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
       return { ...prev, data: { ...prev.data, [side]: arr } };
     });
 
-  // ── Auto-fetch from MoneyDJ ──────────────────────────────────────────────
+  // ── Auto-fetch from MoneyDJ (client-side diff via localStorage) ────────────
   const [autoFetching, setAutoFetching] = useState(false);
   const [autoError,    setAutoError]    = useState<string | null>(null);
+  const [autoInfo,     setAutoInfo]     = useState<string | null>(null);
 
   const autoFetch = async () => {
     setAutoFetching(true);
     setAutoError(null);
+    setAutoInfo(null);
     try {
+      // 1. Fetch current portfolio from Worker (MoneyDJ scrape)
       const result = await fetchETFHoldings(activeETF);
-      if (!result) {
+      if (!result || !result.holdings?.length) {
         setAutoError('無法取得資料 — 持股資料可能尚未更新（通常盤後 18:00 後可用），或 API 未設定。請稍後再試，或手動輸入。');
         setAutoFetching(false);
         return;
       }
-      // Map API result → ETFInfo draft and open edit panel for review
+
+      // 2. Load previous portfolio snapshot from localStorage
+      const prevSnap = loadPortfolio(activeETF);
+
+      // 3. Check if new data is available
+      const sameDate = prevSnap && prevSnap.date === result.date;
+
+      // 4. Compute diff using localStorage prev snapshot
+      let diff: Pick<ETFDayData, 'buys' | 'sells' | 'newCount' | 'addCount' | 'exitCount'>;
+      let prevDate: string;
+
+      if (prevSnap && !sameDate) {
+        // Have prev data from a different date → compute real diff
+        diff = computeLocalDiff(prevSnap.holdings, result.holdings);
+        prevDate = prevSnap.date;
+      } else if (!prevSnap) {
+        // First run: no prev data → empty diff, just establish baseline
+        diff = { buys: [], sells: [], newCount: 0, addCount: 0, exitCount: 0 };
+        prevDate = result.date;
+        setAutoInfo(`📋 已儲存 ${result.date} 持股基準（${result.holdings.length} 檔）。下一個交易日點擊即可查看異動明細。`);
+      } else {
+        // Same date as stored → no new trading data yet
+        setAutoInfo(`✅ 資料已是最新（${result.date}）。下一個交易日開盤後再點擊以查看最新異動。`);
+        setAutoFetching(false);
+        // Still save/refresh the portfolio in localStorage
+        savePortfolio(activeETF, { date: result.date, holdings: result.holdings });
+        return;
+      }
+
+      // 5. Persist current portfolio as the new "prev" baseline for next call
+      savePortfolio(activeETF, { date: result.date, holdings: result.holdings });
+
+      // 6. Build draft for edit panel
       const newDraft: typeof etf = {
         ...etf,
         data: {
-          date:      result.date,
-          prevDate:  result.prevDate,
-          newCount:  result.newCount,
-          addCount:  result.addCount,
-          exitCount: result.exitCount,
-          buys:  result.buys.map(h => ({ ...h, weightChange: h.weightChange ?? undefined })),
-          sells: result.sells.map(h => ({ ...h, weightChange: h.weightChange ?? undefined })),
+          date:     result.date,
+          prevDate,
+          ...diff,
         },
       };
       setDraft(newDraft);
@@ -302,7 +390,7 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
           <button
             key={e.id}
             className={`etf-tab ${activeETF === e.id ? 'active' : ''}`}
-            onClick={() => setActiveETF(e.id)}
+            onClick={() => { setActiveETF(e.id); setAutoError(null); setAutoInfo(null); }}
           >
             {e.id}
           </button>
@@ -402,9 +490,8 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
               </button>
             </div>
           </div>
-          {autoError && (
-            <div className="etf-auto-error">⚠ {autoError}</div>
-          )}
+          {autoError && <div className="etf-auto-error">⚠ {autoError}</div>}
+          {autoInfo  && !autoError && <div className="etf-auto-info">{autoInfo}</div>}
 
           {/* 今日調整概況 */}
           <div className="etf-adj-summary">
@@ -525,11 +612,11 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
             <span className="etf-edit-title">✏️ 更新持股異動 — {draft.id}</span>
             <button className="etf-edit-close" onClick={closeEdit}>✕</button>
           </div>
-          {!autoError && draft.data.date !== etf.data.date && (
+          {!autoError && (
             <div className="etf-edit-autofill-notice">
               {draft.data.buys.length + draft.data.sells.length > 0
-                ? `✅ 已自動填入 ${draft.data.prevDate} → ${draft.data.date} 持股異動資料，請確認後點「儲存到本機」。`
-                : `📋 已取得 ${draft.data.date} 完整持股（${draft.data.date === draft.data.prevDate ? '首次建立基準，下次執行時才會出現異動明細' : '無異動'}），請確認後點「儲存到本機」。`
+                ? `✅ 已自動取得 ${draft.data.prevDate} → ${draft.data.date} 持股異動，請確認後點「儲存到本機」。`
+                : `📋 已取得 ${draft.data.date} 最新持股（首次建立基準），儲存後下一個交易日可查看異動明細。`
               }
             </div>
           )}

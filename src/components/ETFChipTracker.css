@@ -882,6 +882,17 @@
   line-height: 1.5;
 }
 
+.etf-auto-info {
+  font-size: 0.72rem;
+  color: #1e40af;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 0.4rem 0.65rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
 .etf-edit-autofill-notice {
   font-size: 0.72rem;
   color: #065f46;
