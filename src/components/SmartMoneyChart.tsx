@@ -166,12 +166,16 @@ function deriveHolder(chips: ChipBar[], baseBig: number, seed: number) {
 /**
  * 融資/融券/券資比 — realistic daily swings
  * Margin follows price trend; short inverse; 券資比 reflects squeeze dynamics
+ * Scale is inversely proportional to stock price: expensive stocks have fewer
+ * margin lots (√(500/price) scaling keeps values in realistic range).
  */
 function deriveMargin(data: OHLCBar[], seed: number) {
   const r     = mkRng(seed ^ 0xabcd);
-  // Scale base to data length so chart fills ~25–60% of y-range
-  const base  = 2000 + r() * 5000;
-  const sBase = 300  + r() * 900;
+  // Price-adjusted scale: high-priced stocks → fewer 張 in margin
+  const avgClose   = data.length ? data.reduce((s, d) => s + d.close, 0) / data.length : 500;
+  const priceScale = Math.sqrt(500 / Math.max(avgClose, 50));   // e.g. P=4420→0.34, P=330→1.23
+  const base  = (800 + r() * 1200) * priceScale;   // lots of 融資
+  const sBase = (80  + r() * 120)  * priceScale;   // lots of 融券
   let margin = base, short = sBase;
 
   return data.map(d => {
