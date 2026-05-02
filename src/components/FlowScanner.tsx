@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SmartMoneyChart, { type ChipBar } from './SmartMoneyChart';
+import StockReportPanel from './StockReportPanel';
 import type { OHLCBar } from './MiniKLineChart';
 import './FlowScanner.css';
 
@@ -386,7 +387,7 @@ function DayBadge({ days, label }: { days: number; label: string }) {
 
 type FlowTab   = 'sector' | 'smart';
 type InstFilter = 'all' | 'foreign' | 'trust';
-type CardTab   = 'info' | 'chart';
+type CardTab   = 'info' | 'chart' | 'report';
 
 export default function FlowScanner() {
   const [activeTab, setActiveTab]   = useState<FlowTab>('sector');
@@ -584,6 +585,12 @@ export default function FlowScanner() {
                         >
                           📈 K線圖
                         </button>
+                        <button
+                          className={`sm-dtab ${cardTab === 'report' ? 'active' : ''}`}
+                          onClick={() => setCardTab('report')}
+                        >
+                          📋 個股報告
+                        </button>
                       </div>
 
                       {/* ── Info tab ── */}
@@ -625,6 +632,20 @@ export default function FlowScanner() {
                         <SmartMoneyChart
                           code={s.code}
                           name={s.name}
+                          data={fd.ohlc}
+                          chips={fd.chips}
+                        />
+                      )}
+
+                      {/* ── Report tab ── */}
+                      {cardTab === 'report' && fd && (
+                        <StockReportPanel
+                          code={s.code}
+                          name={s.name}
+                          price={s.price}
+                          changePct={s.changePct}
+                          signal={s.signal}
+                          sector={s.sector}
                           data={fd.ohlc}
                           chips={fd.chips}
                         />

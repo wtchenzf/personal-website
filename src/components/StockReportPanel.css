@@ -1,0 +1,476 @@
+/* ── StockReportPanel ── */
+
+.srp-wrap {
+  padding: 0;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
+}
+
+/* ── Title bar ── */
+.srp-title-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 8px 8px 0 0;
+  color: #f8fafc;
+  font-size: 13px;
+}
+.srp-title-code {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+}
+.srp-title-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+.srp-title-sector {
+  font-size: 11px;
+  background: rgba(255,255,255,.12);
+  color: #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.srp-title-price {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.srp-title-chg.up { color: #f87171; }
+.srp-title-chg.dn { color: #4ade80; }
+.srp-title-date {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* ── 3-column grid ── */
+.srp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.srp-col {
+  padding: 12px 13px 14px;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+}
+.srp-col:last-child {
+  border-right: none;
+}
+
+.srp-col-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.4px;
+  padding: 4px 0 8px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 10px;
+}
+
+/* ── Section ── */
+.srp-section {
+  margin-bottom: 10px;
+}
+.srp-section-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+/* ── MA Table ── */
+.srp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.srp-table tr + tr td { border-top: 1px solid #f3f4f6; }
+.srp-table td { padding: 4px 3px; }
+.srt-lbl {
+  color: #6b7280;
+  font-weight: 600;
+  width: 35px;
+}
+.srt-val {
+  font-weight: 600;
+  color: #1f2937;
+  text-align: right;
+  padding-right: 6px !important;
+}
+.srt-status {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+.srt-status.pos     { color: #c0392b; background: #fee2e2; }
+.srt-status.neg     { color: #16a34a; background: #dcfce7; }
+.srt-status.neutral { color: #6b7280; background: #f3f4f6; }
+
+/* ── RSI gauge ── */
+.srp-rsi-wrap {
+  margin: 4px 0 2px;
+}
+.srp-rsi-track {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  overflow: visible;
+  display: flex;
+}
+.srp-rsi-seg {
+  height: 100%;
+  flex: 1;
+}
+.seg-oversold   { background: #bbf7d0; border-radius: 5px 0 0 5px; }
+.seg-neutral    { background: #e5e7eb; }
+.seg-bullish    { background: #fed7aa; }
+.seg-overbought { background: #fecaca; border-radius: 0 5px 5px 0; }
+
+.srp-rsi-needle {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 16px;
+  background: #1e293b;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  z-index: 2;
+}
+.srp-rsi-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+.srp-rsi-zone-badge {
+  font-size: 9px;
+  font-weight: 600;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 8px;
+}
+.srp-rsi-zone-badge[data-zone="overbought"] { background: #fecaca; color: #b91c1c; }
+.srp-rsi-zone-badge[data-zone="bullish"]    { background: #fed7aa; color: #9a3412; }
+.srp-rsi-zone-badge[data-zone="neutral"]    { background: #e5e7eb; color: #374151; }
+.srp-rsi-zone-badge[data-zone="oversold"]   { background: #bbf7d0; color: #15803d; }
+
+/* ── KD / MACD row ── */
+.srp-kd-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.srp-ind-pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 3px 7px;
+}
+.srp-ind-key {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+}
+.srp-ind-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f2937;
+}
+.srp-ind-val.pos { color: #c0392b; }
+.srp-ind-val.neg { color: #16a34a; }
+
+.srp-cross-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.srp-cross-badge.gold { background: #fef3c7; color: #92400e; }
+.srp-cross-badge.dead { background: #dcfce7; color: #15803d; }
+
+.srp-warn-badge {
+  font-size: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+.srp-info-badge {
+  font-size: 10px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* ── Conclusion block ── */
+.srp-conclusion {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+.srp-concl-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.srp-concl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.srp-stars { display: inline-flex; gap: 1px; }
+.srp-star-desc {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ── Chip bar chart ── */
+.srp-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.srp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 14px;
+}
+.srp-bar-date {
+  width: 34px;
+  font-size: 9.5px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  text-align: right;
+}
+.srp-bar-neg-half {
+  flex: 1;
+  height: 8px;
+  display: flex;
+  flex-direction: row-reverse;  /* bar grows from right (center) to left */
+  background: #f9fafb;
+  border-radius: 2px 0 0 2px;
+  overflow: hidden;
+}
+.srp-bar-pos-half {
+  flex: 1;
+  height: 8px;
+  display: flex;
+  flex-direction: row;          /* bar grows from left (center) to right */
+  background: #f9fafb;
+  border-radius: 0 2px 2px 0;
+  overflow: hidden;
+}
+.srp-bar-axis {
+  width: 1px;
+  height: 12px;
+  background: #9ca3af;
+  flex-shrink: 0;
+}
+.srp-bar-fill {
+  height: 100%;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+.srp-bar-fill.pos { background: #c0392b; }
+.srp-bar-fill.neg { background: #16a34a; }
+.srp-bar-val {
+  width: 38px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+.srp-bar-val.pos { color: #c0392b; }
+.srp-bar-val.neg { color: #16a34a; }
+
+/* ── Chip table ── */
+.srp-chip-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.srp-chip-table th {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #6b7280;
+  text-align: center;
+  padding: 4px 3px 3px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.srp-chip-table td {
+  text-align: center;
+  padding: 4px 3px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.srp-chip-table .srp-inst-lbl {
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+}
+.srp-chip-table .pos { color: #c0392b; font-weight: 600; }
+.srp-chip-table .neg { color: #16a34a; font-weight: 600; }
+.srp-chip-table .srp-neutral { color: #9ca3af; }
+.srp-chip-table .srp-days {
+  color: #1f2937;
+  font-weight: 600;
+}
+.srp-chip-table .srp-days span { color: #9ca3af; font-weight: 400; }
+.srp-total-row td {
+  font-weight: 700;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ── Signal badge ── */
+.srp-sig-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 10px;
+}
+.srp-sig-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  text-align: center;
+  line-height: 1.2;
+  gap: 1px;
+}
+.srp-sig-score {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.srp-sig-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+.srp-sig-sub {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+/* ── Advice text ── */
+.srp-advice {
+  font-size: 11.5px;
+  color: #374151;
+  line-height: 1.6;
+  background: #f9fafb;
+  border-left: 3px solid #e07b39;
+  padding: 7px 10px;
+  border-radius: 0 5px 5px 0;
+  margin-bottom: 10px;
+}
+
+/* ── Key price levels ── */
+.srp-levels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.srp-level-item {
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.srp-level-item.support  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.srp-level-item.support2 { background: #f0fdf4; border: 1px solid #86efac; }
+.srp-level-item.resist   { background: #fff1f2; border: 1px solid #fecaca; }
+.srp-level-item.resist2  { background: #fff1f2; border: 1px solid #fca5a5; }
+.srp-level-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  display: block;
+  margin-bottom: 2px;
+}
+.srp-level-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  display: block;
+}
+.srp-level-sub {
+  font-size: 9px;
+  color: #9ca3af;
+  display: block;
+  margin-top: 1px;
+}
+
+/* ── Star ratings ── */
+.srp-ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.srp-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.srp-rating-lbl {
+  font-size: 11px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* ── Risk disclaimer ── */
+.srp-risk {
+  font-size: 10px;
+  color: #9ca3af;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 6px 8px;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* ── pos/neg color utilities ── */
+.pos { color: #c0392b; }
+.neg { color: #16a34a; }
+
+/* ── Responsive: stack columns on narrow screens ── */
+@media (max-width: 700px) {
+  .srp-grid {
+    grid-template-columns: 1fr;
+  }
+  .srp-col {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .srp-col:last-child {
+    border-bottom: none;
+  }
+}
