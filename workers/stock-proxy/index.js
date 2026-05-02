@@ -1,5 +1,5 @@
 /**
- * stock-proxy — Cloudflare Worker v2.0
+ * stock-proxy — Cloudflare Worker v2.1
  * Proxies Yahoo Finance (quotes + OHLC) and TWSE (chip data + stock scanner + market data).
  *
  * Endpoints
@@ -10,6 +10,7 @@
  *   GET /scan                                      → TWSE 全市場掃描：潛力飆股 + 破底翻
  *   GET /market?days=30                            → TWSE 融資餘額 (MI_MARGN) + 三大法人大盤買賣超 (BFI82U)
  *   GET /etf-holdings?stockNo=00981A               → 主動型ETF持股異動 (MoneyDJ scrape + edge-cache diff)
+ *   GET /news?category=US|TW&count=25              → 美股/台股 RSS 財經新聞 (30 min edge cache)
  *   GET /debug                                     → crumb diagnostic
  */
 
@@ -24,6 +25,7 @@ const CHIP_TTL     = 3600;   // TWSE updates at ~17:30 daily
 const SCAN_TTL     = 1800;   // 30 min cache for scan results
 const MARKET_TTL   = 3600;   // 1 hour cache for market indicators
 const ETF_HOLD_TTL = 1800;   // 30 min cache for ETF holdings diff
+const NEWS_TTL     = 1800;   // 30 min cache for news feeds
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -675,6 +677,124 @@ export default {
           source: 'MoneyDJ',
         }, 200, ETF_HOLD_TTL);
       } catch (e) { return jsonResp({ error: String(e) }, 502); }
+    }
+
+    // ── /news?category=US|TW&count=25 ───────────────────────────────────────
+    // Fetches multiple RSS feeds, parses, deduplicates, and returns JSON.
+    // Edge-cached for 30 minutes so the morning fetch (08:00 TPE) is always fresh.
+    if (url.pathname === '/news') {
+      const category = (url.searchParams.get('category') || 'US').toUpperCase() === 'TW' ? 'TW' : 'US';
+      const count    = Math.min(parseInt(url.searchParams.get('count') || '25', 10), 50);
+
+      // RSS feed definitions ─────────────────────────────────────────────────
+      const US_FEEDS = [
+        { name: 'MarketWatch',  url: 'https://feeds.marketwatch.com/marketwatch/topstories/' },
+        { name: 'CNBC Markets', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
+        { name: 'Reuters',      url: 'https://feeds.reuters.com/reuters/businessNews' },
+        { name: 'Investopedia', url: 'https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline' },
+      ];
+      const TW_FEEDS = [
+        { name: '鉅亨網',   url: 'https://news.cnyes.com/rss/tw/market' },
+        { name: '鉅亨頭條', url: 'https://news.cnyes.com/rss/aidgptb/headline' },
+        { name: 'MoneyDJ', url: 'https://www.moneydj.com/KMDJ/News/NewsRSS.aspx' },
+        { name: '經濟日報', url: 'https://money.udn.com/rssfeed/news/1001/5591?ch=money' },
+      ];
+
+      // RSS XML parser (regex-based; no DOMParser in Workers) ───────────────
+      function stripHTML(s) {
+        return s
+          .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+          .replace(/\s+/g, ' ').trim();
+      }
+
+      function getField(block, tag) {
+        // CDATA variant
+        const cd = block.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, 'i'));
+        if (cd) return cd[1].trim();
+        // Plain text variant
+        const pl = block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+        return pl ? pl[1].trim() : '';
+      }
+
+      function parseRSS(xml, sourceName) {
+        const items = [];
+        const re = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+        let m;
+        while ((m = re.exec(xml)) !== null) {
+          const block = m[1];
+          const title = stripHTML(getField(block, 'title'));
+          if (!title) continue;
+
+          // <link> can be between tags OR as a sibling text node
+          let link = getField(block, 'link');
+          if (!link) {
+            const lm = block.match(/<link>([^<]+)<\/link>/i);
+            link = lm ? lm[1].trim() : '';
+          }
+          // Google News redirect links → prefer <guid>
+          if (!link || link.includes('news.google.com')) {
+            const gm = block.match(/<guid[^>]*>([^<]+)<\/guid>/i);
+            if (gm) link = gm[1].trim();
+          }
+
+          const raw    = getField(block, 'description') || getField(block, 'summary');
+          const desc   = stripHTML(raw).slice(0, 280);
+          const pubRaw = getField(block, 'pubDate') || getField(block, 'dc:date') || getField(block, 'updated');
+          const src    = stripHTML(getField(block, 'source')) || sourceName;
+
+          items.push({ title, link, description: desc, pubDate: pubRaw, source: src });
+        }
+        return items;
+      }
+
+      // Fetch all feeds in parallel ──────────────────────────────────────────
+      const RSS_HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (compatible; Feedfetcher-Google)',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      };
+
+      const feeds = category === 'TW' ? TW_FEEDS : US_FEEDS;
+
+      const results = await Promise.allSettled(
+        feeds.map(async ({ name, url: feedUrl }) => {
+          try {
+            const res = await fetch(feedUrl, { headers: RSS_HEADERS, cf: { cacheTtl: NEWS_TTL } });
+            if (!res.ok) return [];
+            const text = await res.text();
+            return parseRSS(text, name);
+          } catch { return []; }
+        })
+      );
+
+      // Merge, deduplicate by title prefix, sort newest-first ───────────────
+      const allItems = results
+        .filter(r => r.status === 'fulfilled')
+        .flatMap(r => r.value);
+
+      // Sort: valid dates first (newest), items without dates at end
+      allItems.sort((a, b) => {
+        const ta = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        const tb = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        if (!ta && !tb) return 0;
+        if (!ta) return 1;
+        if (!tb) return -1;
+        return tb - ta;
+      });
+
+      const seen = new Set();
+      const items = allItems
+        .filter(item => {
+          const key = item.title.toLowerCase().replace(/[^a-z0-9一-鿿]/g, '').slice(0, 30);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, count);
+
+      return jsonResp({ items, category, fetchedAt: new Date().toISOString() }, 200, NEWS_TTL);
     }
 
     return jsonResp({ error: 'Not found' }, 404);

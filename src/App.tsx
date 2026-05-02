@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Tools from './pages/Tools';
 import Investment from './pages/Investment';
 import MarketCalendar from './pages/MarketCalendar';
+import News from './pages/News';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
             <Route path="/tools" element={<Tools />} />
             <Route path="/investment" element={<Investment />} />
             <Route path="/calendar" element={<MarketCalendar />} />
+            <Route path="/news" element={<News />} />
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

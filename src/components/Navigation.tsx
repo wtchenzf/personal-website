@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Wrench, TrendingUp, CalendarDays } from 'lucide-react';
+import { Home, Wrench, TrendingUp, CalendarDays, Newspaper } from 'lucide-react';
 import './Navigation.css';
 
 export default function Navigation() {
@@ -10,7 +10,7 @@ export default function Navigation() {
           <span className="nav-logo">William Chen</span>
           <span className="nav-subtitle">AI & Tech Sharing</span>
         </div>
-        
+
         <div className="nav-links">
           <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <Home size={18} />
@@ -27,6 +27,10 @@ export default function Navigation() {
           <NavLink to="/calendar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <CalendarDays size={18} />
             <span>行事曆</span>
+          </NavLink>
+          <NavLink to="/news" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Newspaper size={18} />
+            <span>財經新聞</span>
           </NavLink>
         </div>
       </div>

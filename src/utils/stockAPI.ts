@@ -204,6 +204,41 @@ export async function fetchETFHoldings(stockNo: string): Promise<ETFHoldingsResu
   } catch { return null; }
 }
 
+// ── News types + fetch ────────────────────────────────────────────────────────
+
+export interface NewsItem {
+  title:       string;
+  link:        string;
+  description: string;
+  pubDate:     string;   // raw string from RSS (may be empty)
+  source:      string;
+}
+
+export interface NewsResult {
+  items:     NewsItem[];
+  category:  'US' | 'TW';
+  fetchedAt: string;     // ISO timestamp from Worker
+}
+
+/**
+ * Fetch financial news for the given category via Worker.
+ * Returns up to `count` items, sorted newest-first.
+ * Worker caches RSS for 30 min on edge.
+ */
+export async function fetchNews(
+  category: 'US' | 'TW',
+  count = 25,
+): Promise<NewsResult | null> {
+  if (!BASE) return null;
+  try {
+    const res = await fetch(`${BASE}/news?category=${category}&count=${count}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!Array.isArray(json?.items)) return null;
+    return json as NewsResult;
+  } catch { return null; }
+}
+
 // ── Market indicator types ────────────────────────────────────────────────────
 
 export interface MarketDayData {
