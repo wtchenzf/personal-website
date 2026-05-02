@@ -147,31 +147,6 @@
 .tab-change.up   { color: #c0392b; }
 .tab-change.down { color: #4a7c59; }
 
-/* ── View toggle (K線圖 / 個股報告) ── */
-.inv-view-toggle {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.inv-view-btn {
-  padding: 6px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #f9fafb;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all .15s;
-}
-.inv-view-btn:hover { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
-.inv-view-btn.active {
-  background: #1e293b;
-  border-color: #1e293b;
-  color: #fff;
-  font-weight: 600;
-}
-
 /* Chart panel */
 .tab-content {
   background-color: var(--bg-card);

@@ -17,12 +17,14 @@ import {
   calculateKD,
   calculateRSI,
 } from '../utils/technicalIndicators';
+import StockReportPanel from './StockReportPanel';
+import type { ChipBar } from './SmartMoneyChart';
 import './StockChart.css';
 import './SmartMoneyChart.css';
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 
-type ChartTab = 'chip' | 'tech' | 'inst' | 'holder' | 'margin';
+type ChartTab = 'chip' | 'tech' | 'inst' | 'holder' | 'margin' | 'report';
 
 const ALL_TABS: { key: ChartTab; label: string }[] = [
   { key: 'chip',   label: '成交量・主力' },
@@ -30,6 +32,7 @@ const ALL_TABS: { key: ChartTab; label: string }[] = [
   { key: 'inst',   label: '外資・投信' },
   { key: 'holder', label: '大戶・散戶' },
   { key: 'margin', label: '融資・融券' },
+  { key: 'report', label: '📋 個股報告' },
 ];
 
 // ── Props ──────────────────────────────────────────────────────────────────────
@@ -41,6 +44,9 @@ interface StockChartProps {
   name: string;
   /** Pass true for VIXTWN or any line-only series */
   lineOnly?: boolean;
+  /** For 個股報告 tab */
+  reportSignal?: number;
+  reportSector?: string;
 }
 
 interface HoveredBar {
@@ -143,7 +149,7 @@ function deriveMargin(data: OHLCData[], seed: number) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function StockChart({ data, chipData, symbol, name, lineOnly = false }: StockChartProps) {
+export default function StockChart({ data, chipData, symbol, name, lineOnly = false, reportSignal = 60, reportSector = '—' }: StockChartProps) {
   // ── Refs ─────────────────────────────────────────────────────────────────────
   const mainRef      = useRef<HTMLDivElement>(null);
   const mainChartRef = useRef<ReturnType<typeof createChart> | null>(null);
@@ -168,6 +174,16 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   // lineOnly (VIXTWN) only gets vol + tech tabs
   const tabs = lineOnly ? ALL_TABS.slice(0, 2) : ALL_TABS;
   const [chartTab, setChartTab] = useState<ChartTab>('chip');
+
+  // ── Convert ChipData → ChipBar for StockReportPanel ──────────────────────
+  const chipBars = useMemo((): ChipBar[] => {
+    if (!chipData?.length) return [];
+    return chipData.map(d => ({
+      time:  d.time,
+      value: d.mainForce,
+      color: d.mainForce >= 0 ? '#c0392b' : '#4a7c59',
+    }));
+  }, [chipData]);
   const [hoveredBar, setHoveredBar] = useState<HoveredBar | null>(null);
 
   // ── Pre-computed MAs ──────────────────────────────────────────────────────────
@@ -668,6 +684,27 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
           <div ref={smlRef} className="smc-sub h110" />
         </>
       )}
+
+      {/* ══ Tab 6: 個股報告 ══ */}
+      {chartTab === 'report' && data.length > 0 && (() => {
+        const last    = data[data.length - 1];
+        const prev    = data[data.length - 2];
+        const rptPx   = last.close;
+        const rptChg  = prev ? +((last.close - prev.close) / prev.close * 100).toFixed(2) : 0;
+        const rptCode = symbol.replace(/\.(TW|TWO)$/i, '');
+        return (
+          <StockReportPanel
+            code={rptCode}
+            name={name}
+            price={rptPx}
+            changePct={rptChg}
+            signal={reportSignal}
+            sector={reportSector}
+            data={data}
+            chips={chipBars}
+          />
+        );
+      })()}
 
       {/* ══ Tab 5: 融資 + 融券 + 券資比 ══ */}
       {chartTab === 'margin' && (
