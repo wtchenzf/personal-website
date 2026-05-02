@@ -644,7 +644,9 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       )}
 
       <p className="smc-source">
-        {code} {name} · 近25個交易日 (03/24–04/30) · 資料為高擬真模擬，僅供參考
+        {code} {name} · 近{data.length}個交易日
+        ({data[0]?.time.slice(5).replace('-','/')}–{data.at(-1)?.time.slice(5).replace('-','/')}) ·
+        截至 {data.at(-1)?.time.replace(/-/g,'/')} · 資料為高擬真模擬，僅供參考
       </p>
     </div>
   );

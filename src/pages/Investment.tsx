@@ -14,6 +14,7 @@ import { fetchMarket, isAPIConfigured, type MarketDayData } from '../utils/stock
 import {
   SEED_DATA_2330, CHIP_DATA_2330,
   SEED_DATA_2454, CHIP_DATA_2454,
+  SEED_DATA_2345, CHIP_DATA_2345,
   SEED_DATA_GOLD, SEED_DATA_SILVER, SEED_DATA_VIX
 } from '../constants/historicalData';
 import './Investment.css';
@@ -131,6 +132,7 @@ const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
 const SYMBOL_TABS = [
   { id: '2330', symbol: '2330.TW', yahooSymbol: '2330.TW', name: 'TSMC',     label: 'TSMC (2330)',     basePrice: 1900,  vol: 0.018, target: 2185,  lineOnly: false },
   { id: '2454', symbol: '2454.TW', yahooSymbol: '2454.TW', name: 'MediaTek', label: 'MediaTek (2454)', basePrice: 1650,  vol: 0.028, target: 2435,  lineOnly: false },
+  { id: '2345', symbol: '2345.TW', yahooSymbol: '2345.TW', name: '智邦',      label: '智邦 (2345)',      basePrice: 430,   vol: 0.025, target: 595,   lineOnly: false },
   { id: 'gold', symbol: 'GC=F',   yahooSymbol: 'GC=F',    name: 'Gold',      label: 'Gold (USD/oz)',   basePrice: 4100,  vol: 0.012, target: 4709,  lineOnly: false },
   { id: 'silv', symbol: 'SI=F',   yahooSymbol: 'SI=F',    name: 'Silver',    label: 'Silver (USD/oz)', basePrice: 58.0,  vol: 0.022, target: 75.63, lineOnly: false },
   { id: 'vix',  symbol: 'VIXTWN', yahooSymbol: '^VIX',    name: 'VIXTWN',   label: 'VIXTWN',          basePrice: 32.0,  vol: 0.05,  target: 18.8,  lineOnly: true  },
@@ -179,6 +181,7 @@ export default function Investment() {
       let seed: any = undefined;
       if      (t.id === '2330') seed = SEED_DATA_2330;
       else if (t.id === '2454') seed = SEED_DATA_2454;
+      else if (t.id === '2345') seed = SEED_DATA_2345;
       else if (t.id === 'gold') seed = SEED_DATA_GOLD;
       else if (t.id === 'silv') seed = SEED_DATA_SILVER;
       else if (t.id === 'vix')  seed = SEED_DATA_VIX;
@@ -194,7 +197,9 @@ export default function Investment() {
         let seed: any = undefined;
         if      (t.id === '2330') seed = CHIP_DATA_2330;
         else if (t.id === '2454') seed = CHIP_DATA_2454;
-        const generated = generateChipData(60, t.id === '2454' ? 500 : 300, seed);
+        else if (t.id === '2345') seed = CHIP_DATA_2345;
+        const chipScale = t.id === '2454' ? 500 : t.id === '2345' ? 300 : 300;
+        const generated = generateChipData(60, chipScale, seed);
         c[t.id] = generated.filter((d: any) => d.time >= '2026-04-01');
       }
     });

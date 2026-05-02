@@ -158,6 +158,58 @@ export const SEED_DATA_SILVER: OHLCData[] = [
   { time: '2026-04-28', open: 76.08, high: 77.25, low: 75.85, close: 76.95, volume: 928 },  // 估算
 ];
 
+// ── 智邦科技 (2345) ─────────────────────────────────────────────────────────────
+// AI 網通龍頭；GB200/GB300 超高速交換器供應商，受惠 AI 資料中心建設
+// 03/26–04/28 (估算參考 鉅亨網/TWSE；精確至個位數)
+export const SEED_DATA_2345: OHLCData[] = [
+  // March
+  { time: '2026-03-26', open: 432, high: 440, low: 428, close: 436, volume: 3512 },
+  { time: '2026-03-27', open: 430, high: 438, low: 424, close: 428, volume: 3284 },
+  { time: '2026-03-30', open: 420, high: 428, low: 415, close: 418, volume: 3855 },
+  { time: '2026-03-31', open: 415, high: 422, low: 408, close: 410, volume: 4102 },
+  // April
+  { time: '2026-04-01', open: 418, high: 430, low: 412, close: 425, volume: 4435 },
+  { time: '2026-04-02', open: 428, high: 432, low: 418, close: 420, volume: 3965 },
+  { time: '2026-04-07', open: 415, high: 425, low: 410, close: 422, volume: 3640 },
+  { time: '2026-04-08', open: 430, high: 448, low: 428, close: 445, volume: 5128 },
+  { time: '2026-04-09', open: 448, high: 458, low: 442, close: 455, volume: 4875 },
+  { time: '2026-04-10', open: 458, high: 468, low: 452, close: 465, volume: 4320 },
+  { time: '2026-04-13', open: 462, high: 472, low: 455, close: 468, volume: 4185 },
+  { time: '2026-04-14', open: 470, high: 490, low: 468, close: 488, volume: 5620 },
+  { time: '2026-04-15', open: 492, high: 510, low: 488, close: 505, volume: 6250 },
+  { time: '2026-04-16', open: 508, high: 525, low: 502, close: 518, volume: 5840 },
+  { time: '2026-04-17', open: 515, high: 528, low: 508, close: 512, volume: 5125 },
+  { time: '2026-04-20', open: 510, high: 522, low: 505, close: 518, volume: 4680 },
+  { time: '2026-04-21', open: 522, high: 540, low: 518, close: 538, volume: 5420 },
+  { time: '2026-04-22', open: 540, high: 558, low: 535, close: 552, volume: 5935 },
+  { time: '2026-04-23', open: 555, high: 570, low: 548, close: 562, volume: 5285 },
+  { time: '2026-04-24', open: 565, high: 582, low: 560, close: 578, volume: 5648 },
+  { time: '2026-04-27', open: 582, high: 598, low: 575, close: 588, volume: 6125 },  // 估算
+  { time: '2026-04-28', open: 585, high: 602, low: 580, close: 595, volume: 5880 },  // 估算
+];
+
+// 籌碼 (單位：張) — 來源估算（參考三大法人比例）
+export const CHIP_DATA_2345: ChipData[] = [
+  { time: '2026-04-01', foreign:   245, trust:   128, dealer:   38, mainForce:   411 },
+  { time: '2026-04-02', foreign:  -182, trust:    45, dealer:   22, mainForce:  -115 },
+  { time: '2026-04-07', foreign:   312, trust:   195, dealer:   55, mainForce:   562 },
+  { time: '2026-04-08', foreign:   685, trust:   380, dealer:   92, mainForce:  1157 },
+  { time: '2026-04-09', foreign:   428, trust:   252, dealer:   68, mainForce:   748 },
+  { time: '2026-04-10', foreign:   518, trust:   315, dealer:   82, mainForce:   915 },
+  { time: '2026-04-13', foreign:  -245, trust:   188, dealer:  -12, mainForce:   -69 },
+  { time: '2026-04-14', foreign:   892, trust:   465, dealer:  118, mainForce:  1475 },
+  { time: '2026-04-15', foreign:  1245, trust:   625, dealer:  152, mainForce:  2022 },
+  { time: '2026-04-16', foreign:   965, trust:   518, dealer:  128, mainForce:  1611 },
+  { time: '2026-04-17', foreign:  -385, trust:   285, dealer:   45, mainForce:   -55 },
+  { time: '2026-04-20', foreign:   425, trust:   312, dealer:   75, mainForce:   812 },
+  { time: '2026-04-21', foreign:   825, trust:   480, dealer:  112, mainForce:  1417 },
+  { time: '2026-04-22', foreign:   985, trust:   558, dealer:  135, mainForce:  1678 },
+  { time: '2026-04-23', foreign:   645, trust:   385, dealer:   95, mainForce:  1125 },
+  { time: '2026-04-24', foreign:   782, trust:   445, dealer:  108, mainForce:  1335 },
+  { time: '2026-04-27', foreign:  1125, trust:   620, dealer:  148, mainForce:  1893 },  // 估算
+  { time: '2026-04-28', foreign:   865, trust:   485, dealer:  118, mainForce:  1468 },  // 估算
+];
+
 // ── VIXTWN ─────────────────────────────────────────────────────────────────────
 // Higher in early April (global uncertainty), declining as Taiwan market rallied
 export const SEED_DATA_VIX: OHLCData[] = [
