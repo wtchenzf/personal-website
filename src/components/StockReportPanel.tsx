@@ -169,7 +169,8 @@ export default function StockReportPanel({
 }: Props) {
 
   const A = useMemo(() => {
-    if (!data.length || !chips.length) return null;
+    if (!data.length) return null;
+    const hasChips = chips.length > 0;
 
     // ── Technical indicators ──
     const n = data.length;
@@ -217,42 +218,33 @@ export default function StockReportPanel({
       (rsi >= 50 && rsi < 70 ? 1 : 0);
     const techStars = Math.min(5, Math.max(1, Math.round(techScore * 5 / 8)));
 
-    // ── Chip analysis ──
-    const seed = parseInt(code);
-    const { foreign, trust, dealer } = deriveInstSplit(chips, seed);
-    const window10 = Math.min(10, chips.length);
+    // ── Chip analysis (only when chip data is available) ──
+    const seed = parseInt(code) || 1234;
+    const emptyChip  = { chipLast10: [] as ChipBar[], foreignLast10: [] as number[], trustLast10: [] as number[], dealerLast10: [] as number[],
+      chip5: 0, for5: 0, tru5: 0, deal5: 0, chipTotal: 0, forTotal: 0, truTotal: 0,
+      chipBuyDays: 0, forBuyDays: 0, truBuyDays: 0, chipStars: 3, barMax: 1 };
 
-    const chipLast10    = chips.slice(-window10);
-    const foreignLast10 = foreign.slice(-window10);
-    const trustLast10   = trust.slice(-window10);
-    const dealerLast10  = dealer.slice(-window10);
-
-    // 5-day sums
-    const chip5 = chips.slice(-5).reduce((s, c) => s + c.value, 0);
-    const for5  = foreign.slice(-5).reduce((s, v) => s + v, 0);
-    const tru5  = trust.slice(-5).reduce((s, v) => s + v, 0);
-    const deal5 = dealer.slice(-5).reduce((s, v) => s + v, 0);
-
-    // Cumulative
-    const chipTotal = chips.reduce((s, c) => s + c.value, 0);
-    const forTotal  = foreign.reduce((s, v) => s + v, 0);
-    const truTotal  = trust.reduce((s, v) => s + v, 0);
-
-    // Buy-day counts (last 10)
-    const chipBuyDays = chipLast10.filter(c => c.value > 0).length;
-    const forBuyDays  = foreignLast10.filter(v => v > 0).length;
-    const truBuyDays  = trustLast10.filter(v => v > 0).length;
-
-    // Chip stars
-    const chipStars = Math.min(5, Math.max(1,
-      chipBuyDays >= 8 ? 5 :
-      chipBuyDays >= 6 ? 4 :
-      chipBuyDays >= 4 ? 3 :
-      chipBuyDays >= 2 ? 2 : 1
-    ));
-
-    // Bar chart scale
-    const barMax = Math.max(...chipLast10.map(c => Math.abs(c.value)), 1);
+    const chipFields = hasChips ? (() => {
+      const { foreign, trust, dealer } = deriveInstSplit(chips, seed);
+      const window10 = Math.min(10, chips.length);
+      const chipLast10    = chips.slice(-window10);
+      const foreignLast10 = foreign.slice(-window10);
+      const trustLast10   = trust.slice(-window10);
+      const dealerLast10  = dealer.slice(-window10);
+      const chip5    = chips.slice(-5).reduce((s, c) => s + c.value, 0);
+      const for5     = foreign.slice(-5).reduce((s, v) => s + v, 0);
+      const tru5     = trust.slice(-5).reduce((s, v) => s + v, 0);
+      const deal5    = dealer.slice(-5).reduce((s, v) => s + v, 0);
+      const chipTotal = chips.reduce((s, c) => s + c.value, 0);
+      const forTotal  = foreign.reduce((s, v) => s + v, 0);
+      const truTotal  = trust.reduce((s, v) => s + v, 0);
+      const chipBuyDays = chipLast10.filter(c => c.value > 0).length;
+      const forBuyDays  = foreignLast10.filter(v => v > 0).length;
+      const truBuyDays  = trustLast10.filter(v => v > 0).length;
+      const chipStars = Math.min(5, Math.max(1, chipBuyDays >= 8 ? 5 : chipBuyDays >= 6 ? 4 : chipBuyDays >= 4 ? 3 : chipBuyDays >= 2 ? 2 : 1));
+      const barMax = Math.max(...chipLast10.map(c => Math.abs(c.value)), 1);
+      return { chipLast10, foreignLast10, trustLast10, dealerLast10, chip5, for5, tru5, deal5, chipTotal, forTotal, truTotal, chipBuyDays, forBuyDays, truBuyDays, chipStars, barMax };
+    })() : emptyChip;
 
     // ── Key price levels ──
     const support1 = +ma5.toFixed(1);
@@ -266,17 +258,14 @@ export default function StockReportPanel({
     const diffStars  = price > 2000 ? 5 : price > 1000 ? 4 : price > 300 ? 3 : 2;
 
     return {
+      hasChips,
       ma5, ma20, ma60,
       aboveMA5, aboveMA20, aboveMA60,
       rsi, rsiZone,
       kd, kdCross, kdOverbought, kdOversold,
       macd, macdBull, macdAbove0,
       techStars,
-      chipLast10, foreignLast10, trustLast10, dealerLast10,
-      chip5, for5, tru5, deal5,
-      chipTotal, forTotal, truTotal,
-      chipBuyDays, forBuyDays, truBuyDays,
-      chipStars, barMax,
+      ...chipFields,
       support1, support2, resist1, resist2,
       trendStars, diffStars,
     };
@@ -420,74 +409,74 @@ export default function StockReportPanel({
         <div className="srp-col">
           <div className="srp-col-head">💰 籌碼面分析</div>
 
-          {/* 10-day diverging bar chart */}
-          <div className="srp-section">
-            <div className="srp-section-lbl">近10日主力買賣超（張）</div>
-            <div className="srp-chart">
-              {A.chipLast10.map((c) => {
-                const pct  = (Math.abs(c.value) / A.barMax) * 100;
-                const isPos = c.value >= 0;
-                return (
-                  <div key={c.time} className="srp-bar-row">
-                    <span className="srp-bar-date">{c.time.slice(5).replace('-', '/')}</span>
-                    <div className="srp-bar-neg-half">
-                      {!isPos && (
-                        <div className="srp-bar-fill neg" style={{ width: `${pct}%` }} />
-                      )}
-                    </div>
-                    <div className="srp-bar-axis" />
-                    <div className="srp-bar-pos-half">
-                      {isPos && (
-                        <div className="srp-bar-fill pos" style={{ width: `${pct}%` }} />
-                      )}
-                    </div>
-                    <span className={`srp-bar-val ${isPos ? 'pos' : 'neg'}`}>{fmtChip(c.value)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {A.hasChips ? (
+            <>
+              {/* 10-day diverging bar chart */}
+              <div className="srp-section">
+                <div className="srp-section-lbl">近10日主力買賣超（張）</div>
+                <div className="srp-chart">
+                  {A.chipLast10.map((c) => {
+                    const pct   = (Math.abs(c.value) / A.barMax) * 100;
+                    const isPos = c.value >= 0;
+                    return (
+                      <div key={c.time} className="srp-bar-row">
+                        <span className="srp-bar-date">{c.time.slice(5).replace('-', '/')}</span>
+                        <div className="srp-bar-neg-half">
+                          {!isPos && <div className="srp-bar-fill neg" style={{ width: `${pct}%` }} />}
+                        </div>
+                        <div className="srp-bar-axis" />
+                        <div className="srp-bar-pos-half">
+                          {isPos && <div className="srp-bar-fill pos" style={{ width: `${pct}%` }} />}
+                        </div>
+                        <span className={`srp-bar-val ${isPos ? 'pos' : 'neg'}`}>{fmtChip(c.value)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* 三大法人 table */}
-          <div className="srp-section">
-            <div className="srp-section-lbl">三大法人買賣超（張）</div>
-            <table className="srp-chip-table">
-              <thead>
-                <tr>
-                  <th>法人</th>
-                  <th>近5日</th>
-                  <th>累計</th>
-                  <th>買超日/10</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="srp-inst-lbl">🌐 外資</td>
-                  <td className={A.for5  >= 0 ? 'pos' : 'neg'}>{fmtChip(A.for5)}</td>
-                  <td className={A.forTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.forTotal)}</td>
-                  <td className="srp-days">{A.forBuyDays}<span>/10</span></td>
-                </tr>
-                <tr>
-                  <td className="srp-inst-lbl">🏛 投信</td>
-                  <td className={A.tru5  >= 0 ? 'pos' : 'neg'}>{fmtChip(A.tru5)}</td>
-                  <td className={A.truTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.truTotal)}</td>
-                  <td className="srp-days">{A.truBuyDays}<span>/10</span></td>
-                </tr>
-                <tr>
-                  <td className="srp-inst-lbl">🏢 自營商</td>
-                  <td className={A.deal5 >= 0 ? 'pos' : 'neg'}>{fmtChip(A.deal5)}</td>
-                  <td className="srp-neutral">—</td>
-                  <td className="srp-neutral">—</td>
-                </tr>
-                <tr className="srp-total-row">
-                  <td>合計</td>
-                  <td className={A.chip5 >= 0 ? 'pos' : 'neg'}>{fmtChip(A.chip5)}</td>
-                  <td className={A.chipTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.chipTotal)}</td>
-                  <td className="srp-days">{A.chipBuyDays}<span>/10</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              {/* 三大法人 table */}
+              <div className="srp-section">
+                <div className="srp-section-lbl">三大法人買賣超（張）</div>
+                <table className="srp-chip-table">
+                  <thead>
+                    <tr><th>法人</th><th>近5日</th><th>累計</th><th>買超日/10</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="srp-inst-lbl">🌐 外資</td>
+                      <td className={A.for5  >= 0 ? 'pos' : 'neg'}>{fmtChip(A.for5)}</td>
+                      <td className={A.forTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.forTotal)}</td>
+                      <td className="srp-days">{A.forBuyDays}<span>/10</span></td>
+                    </tr>
+                    <tr>
+                      <td className="srp-inst-lbl">🏛 投信</td>
+                      <td className={A.tru5  >= 0 ? 'pos' : 'neg'}>{fmtChip(A.tru5)}</td>
+                      <td className={A.truTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.truTotal)}</td>
+                      <td className="srp-days">{A.truBuyDays}<span>/10</span></td>
+                    </tr>
+                    <tr>
+                      <td className="srp-inst-lbl">🏢 自營商</td>
+                      <td className={A.deal5 >= 0 ? 'pos' : 'neg'}>{fmtChip(A.deal5)}</td>
+                      <td className="srp-neutral">—</td>
+                      <td className="srp-neutral">—</td>
+                    </tr>
+                    <tr className="srp-total-row">
+                      <td>合計</td>
+                      <td className={A.chip5 >= 0 ? 'pos' : 'neg'}>{fmtChip(A.chip5)}</td>
+                      <td className={A.chipTotal >= 0 ? 'pos' : 'neg'}>{fmtChip(A.chipTotal)}</td>
+                      <td className="srp-days">{A.chipBuyDays}<span>/10</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="srp-no-chip-msg">
+              <div className="srp-no-chip-icon">📊</div>
+              <div>本標的為指數或商品，<br />不提供三大法人籌碼資料</div>
+            </div>
+          )}
 
           {/* Chip conclusion */}
           <div className="srp-conclusion">
@@ -495,8 +484,9 @@ export default function StockReportPanel({
             <div className="srp-concl-row">
               <Stars n={A.chipStars} color="#3b82f6" />
               <span className="srp-star-desc">
-                {(['', '籌碼鬆散', '略有集中', '籌碼穩定', '集中偏高', '高度集中'] as const)[A.chipStars]}
-              </span>
+                {A.hasChips
+                  ? (['', '籌碼鬆散', '略有集中', '籌碼穩定', '集中偏高', '高度集中'] as const)[A.chipStars]
+                  : '無法取得'}</span>
             </div>
           </div>
         </div>

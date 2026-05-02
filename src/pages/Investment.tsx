@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import StockChart from '../components/StockChart';
+import StockReportPanel from '../components/StockReportPanel';
 import MarketPanel from '../components/MarketPanel';
 import RocketScanner from '../components/RocketScanner';
 import FlowScanner from '../components/FlowScanner';
 import ETFChipTracker from '../components/ETFChipTracker';
 import { useMarketData } from '../hooks/useMarketData';
+import type { ChipBar } from '../components/SmartMoneyChart';
 import {
   generateMockStockData,
   generateLineData,
@@ -140,6 +142,16 @@ const SYMBOL_TABS = [
 
 const SYMBOL_DEFS = SYMBOL_TABS.map(t => ({ id: t.id, yahooSymbol: t.yahooSymbol, lineOnly: t.lineOnly }));
 
+// ── Per-symbol report metadata ────────────────────────────────────────────────
+const REPORT_CONFIG: Record<string, { signal: number; sector: string }> = {
+  '2330': { signal: 82, sector: '半導體製造' },
+  '2454': { signal: 72, sector: 'IC 設計' },
+  '2345': { signal: 76, sector: '網通 / 交換器' },
+  'gold': { signal: 70, sector: '貴金屬' },
+  'silv': { signal: 65, sector: '貴金屬' },
+  'vix':  { signal: 30, sector: '市場指標' },
+};
+
 // ── Status display helpers ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   mock:    { dot: 'dot-mock',    label: '模擬資料' },
@@ -150,6 +162,7 @@ const STATUS_CONFIG = {
 
 export default function Investment() {
   const [activeTab,    setActiveTab]    = useState(SYMBOL_TABS[0].id);
+  const [activeView,   setActiveView]   = useState<'chart' | 'report'>('chart');
   const [marketData,   setMarketData]   = useState<{ margin: MarketDayData[]; inst: MarketDayData[] } | null>(null);
   const [refreshTick,  setRefreshTick]  = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -205,6 +218,17 @@ export default function Investment() {
     });
     return c;
   }, []);
+
+  // ── Convert ChipData → ChipBar for StockReportPanel ─────────────────────
+  const chipBarsForReport = useMemo((): ChipBar[] => {
+    const cd = liveChipData[activeTab] ?? chipData[activeTab];
+    if (!cd?.length) return [];
+    return cd.map((d: any) => ({
+      time:  d.time,
+      value: d.mainForce ?? 0,
+      color: (d.mainForce ?? 0) >= 0 ? '#c0392b' : '#4a7c59',
+    }));
+  }, [activeTab, liveChipData, chipData]);
 
   const vixTarget = SYMBOL_TABS.find(t => t.id === 'vix')?.target ?? 18.8;
   const vixLineData = useMemo(() =>
@@ -297,7 +321,7 @@ export default function Investment() {
             <button
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); setActiveView('chart'); }}
             >
               <span className="tab-label">{tab.label}</span>
               {q && (
@@ -317,17 +341,62 @@ export default function Investment() {
         })}
       </div>
 
-      {/* ── Chart panel ── */}
-      <div className="tab-content animate-delay-200 animate-fade-in">
-        <StockChart
-          key={active.id}
-          symbol={active.symbol}
-          name={active.name}
-          data={activeData}
-          chipData={liveChipData[activeTab] ?? chipData[activeTab]}
-          lineOnly={active.lineOnly}
-        />
+      {/* ── View toggle ── */}
+      <div className="inv-view-toggle">
+        <button
+          className={`inv-view-btn ${activeView === 'chart' ? 'active' : ''}`}
+          onClick={() => setActiveView('chart')}
+        >
+          📈 K線圖
+        </button>
+        <button
+          className={`inv-view-btn ${activeView === 'report' ? 'active' : ''}`}
+          onClick={() => setActiveView('report')}
+        >
+          📋 個股報告
+        </button>
       </div>
+
+      {/* ── Chart panel ── */}
+      {activeView === 'chart' && (
+        <div className="tab-content animate-delay-200 animate-fade-in">
+          <StockChart
+            key={active.id}
+            symbol={active.symbol}
+            name={active.name}
+            data={activeData}
+            chipData={liveChipData[activeTab] ?? chipData[activeTab]}
+            lineOnly={active.lineOnly}
+          />
+        </div>
+      )}
+
+      {/* ── Report panel ── */}
+      {activeView === 'report' && activeData?.length > 0 && (() => {
+        const cfg = REPORT_CONFIG[activeTab] ?? { signal: 60, sector: '—' };
+        const q   = quotes[activeTab];
+        const lastBar = activeData[activeData.length - 1];
+        const prevBar = activeData[activeData.length - 2];
+        const rptPrice    = q?.price    ?? lastBar?.close ?? active.basePrice;
+        const rptChangePct = q?.changePct ?? (prevBar
+          ? +((lastBar.close - prevBar.close) / prevBar.close * 100).toFixed(2)
+          : 0);
+        return (
+          <div className="tab-content animate-fade-in">
+            <StockReportPanel
+              key={active.id + '-report'}
+              code={active.symbol}
+              name={active.name}
+              price={rptPrice}
+              changePct={rptChangePct}
+              signal={cfg.signal}
+              sector={cfg.sector}
+              data={activeData}
+              chips={chipBarsForReport}
+            />
+          </div>
+        );
+      })()}
 
       <RocketScanner />
       <FlowScanner />
