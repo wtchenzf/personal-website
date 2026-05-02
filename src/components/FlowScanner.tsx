@@ -161,8 +161,9 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   );
   // 2330 台積電 — 外資連買10日
   // Real avg vol ~25,000 張/日；機構每日買超 ~1,000-4,000 張
+  // 04/30: 2,135 ▼2.06% (Yahoo Finance 即時)
   d['2330'] = buildFlowData(
-    [[0,1980],[4,1910],[9,1820],[12,1900],[14,2020],[17,2075],[19,2100],[22,2130],[24,2140],[26,2150]],
+    [[0,1980],[4,1910],[9,1820],[12,1900],[14,2020],[17,2075],[19,2100],[22,2130],[24,2178],[26,2135]],
     25, 12, 2000, 0.014, 2330
   );
   // 6669 緯穎 — 外資連買9日，AI伺服器ODM
@@ -174,31 +175,31 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   // 5274 信驊 — 外資+投信連買8-9日，BMC龍頭
   // Real avg vol ~2,500 張/日；機構每日買超 ~80-250 張
   d['5274'] = buildFlowData(
-    [[0,1460],[4,1390],[9,1300],[12,1400],[14,1590],[17,1740],[19,1820],[22,1860],[24,1880],[26,1890]],
+    [[0,1460],[4,1390],[9,1300],[12,1400],[14,1590],[17,1740],[19,1820],[22,1860],[24,1880],[26,1895]],
     2, 13, 200, 0.028, 5274
   );
   // 2382 廣達 — 外資連買8日
   // Real avg vol ~45,000 張/日；機構每日買超 ~2,000-6,000 張
   d['2382'] = buildFlowData(
-    [[0,308],[4,294],[9,274],[12,295],[14,318],[17,334],[19,340],[22,344],[24,347],[26,348]],
+    [[0,308],[4,294],[9,274],[12,295],[14,318],[17,334],[19,340],[22,344],[24,348],[26,346]],
     45, 14, 3000, 0.018, 2382
   );
   // 6442 光聖 — 投信連買10日，矽光子
   // Real avg vol ~3,000 張/日；機構每日買超 ~100-350 張
   d['6442'] = buildFlowData(
-    [[0,1460],[4,1390],[9,1260],[11,1360],[13,1680],[15,1840],[17,1940],[20,2050],[22,2100],[24,2130],[26,2150]],
+    [[0,1460],[4,1390],[9,1260],[11,1360],[13,1680],[15,1840],[17,1940],[20,2050],[22,2100],[24,2130],[26,2160]],
     3, 12, 300, 0.034, 6442
   );
   // 3222 健策 — 投信連買8日，液冷散熱
   // Real avg vol ~6,000 張/日；機構每日買超 ~200-600 張
   d['3222'] = buildFlowData(
-    [[0,682],[4,644],[9,591],[12,645],[14,722],[17,796],[19,840],[22,866],[24,882],[26,895]],
+    [[0,682],[4,644],[9,591],[12,645],[14,722],[17,796],[19,840],[22,866],[24,882],[26,898]],
     6, 14, 400, 0.028, 3222
   );
   // 3037 欣興 — 外資連買7日，ABF載板
   // Real avg vol ~50,000 張/日；機構每日買超 ~2,000-7,000 張
   d['3037'] = buildFlowData(
-    [[0,190],[4,182],[9,170],[12,183],[14,198],[17,208],[19,212],[22,215],[24,217],[26,218]],
+    [[0,190],[4,182],[9,170],[12,183],[14,198],[17,208],[19,212],[22,215],[24,217],[26,219]],
     50, 15, 3500, 0.020, 3037
   );
   // 8996 高力 — 投信連買7日，液冷冷排
@@ -216,7 +217,7 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   // 3711 日月光投控 — 外資連買5日，先進封裝
   // Real avg vol ~45,000 張/日；機構每日買超 ~2,000-6,000 張
   d['3711'] = buildFlowData(
-    [[0,158],[4,151],[9,141],[12,152],[14,162],[17,168],[19,171],[22,173],[24,175],[26,176]],
+    [[0,158],[4,151],[9,141],[12,152],[14,162],[17,168],[19,171],[22,173],[24,176],[26,175]],
     45, 17, 3000, 0.018, 3711
   );
 
@@ -248,7 +249,7 @@ const SECTORS: SectorRow[] = [
 const SMART_MONEY: SmartMoneyStock[] = [
   {
     code: '3661', name: '世芯-KY',   sector: 'AI ASIC',
-    price: 4420,  changePct: +3.42,
+    price: 4420,  changePct: +2.41,
     foreignDays: 14, trustDays: 9,  dealerDays: 3,
     netBuyK: 28450, volRatio: 2.1, pricePct: 28.4,
     signal: 96,
@@ -257,7 +258,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '3017', name: '奇鋐',      sector: '液冷散熱',
-    price: 3120,  changePct: +2.88,
+    price: 3120,  changePct: +1.96,
     foreignDays: 11, trustDays: 11, dealerDays: 5,
     netBuyK: 19820, volRatio: 1.8, pricePct: 19.7,
     signal: 93,
@@ -266,16 +267,16 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '2330', name: '台積電',    sector: '半導體製造',
-    price: 2150,  changePct: +1.63,
+    price: 2135,  changePct: -2.06,
     foreignDays: 10, trustDays: 6,  dealerDays: 0,
-    netBuyK: 31200, volRatio: 1.4, pricePct: 14.2,
+    netBuyK: 31200, volRatio: 1.4, pricePct: 17.3,
     signal: 90,
     tags: ['外資連買10日', 'CoWoS 滿載', 'N2 順利量產', '指標龍頭'],
-    note: '外資近 10 日累積回補超過 3.1 萬張，CoWoS 封裝需求持續炸單，N2 良率優於預期，目標價上調至 2,500。',
+    note: '外資近 10 日累積回補超過 3.1 萬張，CoWoS 封裝需求持續炸單，N2 良率優於預期，目標價上調至 2,500。04/30 勞動節前獲利了結，短線小幅回落。',
   },
   {
     code: '6669', name: '緯穎',      sector: 'AI 伺服器',
-    price: 2180,  changePct: +2.15,
+    price: 2180,  changePct: +1.77,
     foreignDays: 9,  trustDays: 7,  dealerDays: 2,
     netBuyK: 12340, volRatio: 1.6, pricePct: 22.1,
     signal: 88,
@@ -284,7 +285,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '5274', name: '信驊',      sector: 'AI ASIC',
-    price: 1890,  changePct: +3.71,
+    price: 1895,  changePct: +3.01,
     foreignDays: 9,  trustDays: 8,  dealerDays: 4,
     netBuyK: 5820,  volRatio: 2.3, pricePct: 31.5,
     signal: 87,
@@ -293,7 +294,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '2382', name: '廣達',      sector: 'AI 伺服器',
-    price: 348,   changePct: +1.17,
+    price: 346,   changePct: -0.57,
     foreignDays: 8,  trustDays: 4,  dealerDays: 0,
     netBuyK: 42100, volRatio: 1.3, pricePct: 11.8,
     signal: 82,
@@ -302,7 +303,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '6442', name: '光聖',      sector: '矽光子',
-    price: 2150,  changePct: +5.40,
+    price: 2160,  changePct: +5.37,
     foreignDays: 7,  trustDays: 10, dealerDays: 6,
     netBuyK: 4210,  volRatio: 3.4, pricePct: 44.2,
     signal: 81,
@@ -311,7 +312,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '3222', name: '健策',      sector: '液冷散熱',
-    price: 895,   changePct: +3.94,
+    price: 898,   changePct: +2.42,
     foreignDays: 6,  trustDays: 8,  dealerDays: 3,
     netBuyK: 6740,  volRatio: 2.0, pricePct: 26.4,
     signal: 78,
@@ -320,7 +321,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '3037', name: '欣興',      sector: 'PCB / ABF載板',
-    price: 218,   changePct: +1.86,
+    price: 219,   changePct: +1.39,
     foreignDays: 7,  trustDays: 5,  dealerDays: 1,
     netBuyK: 38500, volRatio: 1.5, pricePct: 16.7,
     signal: 76,
@@ -329,7 +330,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '8996', name: '高力',      sector: '液冷散熱',
-    price: 142,   changePct: +4.41,
+    price: 142,   changePct: +3.65,
     foreignDays: 5,  trustDays: 7,  dealerDays: 2,
     netBuyK: 4850,  volRatio: 2.6, pricePct: 37.8,
     signal: 74,
@@ -347,7 +348,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
   {
     code: '3711', name: '日月光投控', sector: '先進封裝',
-    price: 176,   changePct: +1.73,
+    price: 175,   changePct: -0.57,
     foreignDays: 5,  trustDays: 4,  dealerDays: 1,
     netBuyK: 24300, volRatio: 1.3, pricePct: 12.9,
     signal: 63,
