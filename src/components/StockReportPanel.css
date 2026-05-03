@@ -1,30 +1,41 @@
-/* ── StockReportPanel ── */
+/* ══════════════════════════════════════════════════════════════════
+   StockReportPanel v2 — 個股綜合分析報告
+   ══════════════════════════════════════════════════════════════════ */
 
 .srp-wrap {
-  padding: 0;
   font-family: 'Inter', 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  color: #1f2937;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* ── Title bar ── */
+/* ── Shared colour utilities ─────────────────────────────────────── */
+.pos          { color: #c0392b; }
+.neg          { color: #16a34a; }
+.srp-neutral  { color: #9ca3af; }
+
+/* ════════════════════════════════════════════════════════════════════
+   HEADER
+   ════════════════════════════════════════════════════════════════════ */
 .srp-title-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  padding: 10px 14px;
+  gap: 6px 12px;
+  padding: 10px 16px;
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 8px 8px 0 0;
   color: #f8fafc;
-  font-size: 13px;
 }
 .srp-title-code {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   color: #fbbf24;
   letter-spacing: 0.5px;
 }
 .srp-title-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #f1f5f9;
 }
@@ -32,464 +43,486 @@
   font-size: 11px;
   background: rgba(255,255,255,.12);
   color: #cbd5e1;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 10px;
 }
-.srp-title-price {
+.srp-title-price-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   margin-left: auto;
-  font-size: 16px;
-  font-weight: 700;
+}
+.srp-title-price {
+  font-size: 22px;
+  font-weight: 800;
   color: #f8fafc;
+  letter-spacing: -0.5px;
+}
+.srp-title-chg {
+  font-size: 13px;
+  font-weight: 700;
 }
 .srp-title-chg.up { color: #f87171; }
 .srp-title-chg.dn { color: #4ade80; }
-.srp-title-date {
+.srp-title-meta {
+  display: flex;
+  gap: 10px;
   font-size: 11px;
   color: #94a3b8;
 }
-
-/* ── 3-column grid ── */
-.srp-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
-  border: 1px solid #e5e7eb;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
+.srp-title-date {
+  font-size: 11px;
+  color: #64748b;
 }
 
-.srp-col {
-  padding: 12px 13px 14px;
+/* ════════════════════════════════════════════════════════════════════
+   SHARED BOX
+   ════════════════════════════════════════════════════════════════════ */
+.srp-box {
   background: #fff;
-  border-right: 1px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px 12px 12px;
 }
-.srp-col:last-child {
-  border-right: none;
-}
-
-.srp-col-head {
-  font-size: 12px;
+.srp-box-head {
+  font-size: 11px;
   font-weight: 700;
   color: #374151;
   letter-spacing: 0.4px;
-  padding: 4px 0 8px;
+  padding-bottom: 7px;
   border-bottom: 2px solid #e5e7eb;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-/* ── Section ── */
-.srp-section {
-  margin-bottom: 10px;
-}
-.srp-section-lbl {
-  font-size: 10px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 5px;
+/* ════════════════════════════════════════════════════════════════════
+   ROW 1: 技術分析總覽 | 籌碼分析
+   ════════════════════════════════════════════════════════════════════ */
+.srp-r1 {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 8px;
+  padding: 8px 8px 0;
 }
 
-/* ── MA Table ── */
-.srp-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
+/* 技術分析總覽 */
+.srp-tech-overview { }
+.srp-tech-list { display: flex; flex-direction: column; gap: 3px; }
+.srp-tech-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
 }
-.srp-table tr + tr td { border-top: 1px solid #f3f4f6; }
-.srp-table td { padding: 4px 3px; }
-.srt-lbl {
-  color: #6b7280;
-  font-weight: 600;
-  width: 35px;
+.srp-tech-row:last-child {
+  background: #fff7ed;
+  border-color: #fed7aa;
 }
-.srt-val {
-  font-weight: 600;
-  color: #1f2937;
-  text-align: right;
-  padding-right: 6px !important;
+.srp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
-.srt-status {
+.dot-red   { background: #c0392b; box-shadow: 0 0 5px rgba(192,57,43,.45); }
+.dot-amber { background: #e07b39; box-shadow: 0 0 5px rgba(224,123,57,.4); }
+.dot-green { background: #16a34a; box-shadow: 0 0 5px rgba(22,163,74,.4); }
+.dot-gray  { background: #9ca3af; }
+.srp-tech-label {
   font-size: 11px;
   font-weight: 600;
-  border-radius: 4px;
-  padding: 1px 5px;
-  white-space: nowrap;
-}
-.srt-status.pos     { color: #c0392b; background: #fee2e2; }
-.srt-status.neg     { color: #16a34a; background: #dcfce7; }
-.srt-status.neutral { color: #6b7280; background: #f3f4f6; }
-
-/* ── RSI gauge ── */
-.srp-rsi-wrap {
-  margin: 4px 0 2px;
-}
-.srp-rsi-track {
-  position: relative;
-  height: 10px;
-  border-radius: 5px;
-  overflow: visible;
-  display: flex;
-}
-.srp-rsi-seg {
-  height: 100%;
-  flex: 1;
-}
-.seg-oversold   { background: #bbf7d0; border-radius: 5px 0 0 5px; }
-.seg-neutral    { background: #e5e7eb; }
-.seg-bullish    { background: #fed7aa; }
-.seg-overbought { background: #fecaca; border-radius: 0 5px 5px 0; }
-
-.srp-rsi-needle {
-  position: absolute;
-  top: -3px;
-  width: 3px;
-  height: 16px;
-  background: #1e293b;
-  border-radius: 2px;
-  transform: translateX(-50%);
-  box-shadow: 0 1px 3px rgba(0,0,0,.3);
-  z-index: 2;
-}
-.srp-rsi-axis {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  color: #9ca3af;
-  margin-top: 3px;
-}
-.srp-rsi-zone-badge {
-  font-size: 9px;
-  font-weight: 600;
-  margin-left: 6px;
-  padding: 1px 5px;
-  border-radius: 8px;
-}
-.srp-rsi-zone-badge[data-zone="overbought"] { background: #fecaca; color: #b91c1c; }
-.srp-rsi-zone-badge[data-zone="bullish"]    { background: #fed7aa; color: #9a3412; }
-.srp-rsi-zone-badge[data-zone="neutral"]    { background: #e5e7eb; color: #374151; }
-.srp-rsi-zone-badge[data-zone="oversold"]   { background: #bbf7d0; color: #15803d; }
-
-/* ── KD / MACD row ── */
-.srp-kd-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.srp-ind-pill {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 5px;
-  padding: 3px 7px;
-}
-.srp-ind-key {
-  font-size: 10px;
-  font-weight: 700;
   color: #6b7280;
+  width: 56px;
+  flex-shrink: 0;
 }
-.srp-ind-val {
-  font-size: 12px;
-  font-weight: 700;
+.srp-tech-value {
+  font-size: 11.5px;
+  font-weight: 600;
   color: #1f2937;
 }
-.srp-ind-val.pos { color: #c0392b; }
-.srp-ind-val.neg { color: #16a34a; }
 
-.srp-cross-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 10px;
+/* 籌碼分析 */
+.srp-chip-overview { }
+.srp-day-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
 }
-.srp-cross-badge.gold { background: #fef3c7; color: #92400e; }
-.srp-cross-badge.dead { background: #dcfce7; color: #15803d; }
-
-.srp-warn-badge {
-  font-size: 10px;
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-.srp-info-badge {
-  font-size: 10px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-
-/* ── Conclusion block ── */
-.srp-conclusion {
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-}
-.srp-concl-lbl {
-  font-size: 10px;
-  font-weight: 600;
+.srp-day-table th {
+  font-size: 9.5px;
+  font-weight: 700;
   color: #6b7280;
-  margin-bottom: 4px;
+  text-align: center;
+  padding: 3px 2px;
+  border-bottom: 1px solid #e5e7eb;
 }
-.srp-concl-row {
+.srp-day-table td {
+  text-align: center;
+  padding: 4px 2px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.srp-day-table .dt {
+  color: #6b7280;
+  font-weight: 600;
+  text-align: left;
+}
+.srp-day-table .total-col {
+  font-weight: 700;
+  border-left: 1px solid #e5e7eb;
+}
+.srp-day-table .pos { color: #c0392b; font-weight: 600; }
+.srp-day-table .neg { color: #16a34a; font-weight: 600; }
+
+.srp-no-chip-msg {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 14px 10px;
+  color: #9ca3af;
+  font-size: 11px;
+  background: #f9fafb;
+  border-radius: 5px;
+  border: 1px dashed #e5e7eb;
 }
-.srp-stars { display: inline-flex; gap: 1px; }
-.srp-star-desc {
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
+.srp-no-chip-icon { font-size: 20px; opacity: 0.5; }
+
+/* ════════════════════════════════════════════════════════════════════
+   ROW 2: 多週期 | 關鍵價位 | 主力燈號+勝率
+   ════════════════════════════════════════════════════════════════════ */
+.srp-r2 {
+  display: grid;
+  grid-template-columns: 1fr 0.7fr 0.7fr;
+  gap: 8px;
+  padding: 8px 8px 0;
 }
 
-/* ── Chip bar chart ── */
-.srp-chart {
+/* 多週期趨勢分析 */
+.srp-multi-tf { }
+.srp-tf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.srp-tf-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 6px 7px;
+}
+.srp-tf-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.srp-tf-sub { font-weight: 400; color: #9ca3af; }
+.srp-tf-chart {
+  margin: 2px 0 5px;
+  display: flex;
+  justify-content: center;
+}
+.srp-tf-rows {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.srp-bar-row {
+.srp-tf-rows div {
   display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 14px;
+  justify-content: space-between;
+  font-size: 10px;
 }
-.srp-bar-date {
-  width: 34px;
-  font-size: 9.5px;
-  color: #9ca3af;
-  flex-shrink: 0;
-  text-align: right;
+.srp-tf-rows div span:first-child { color: #9ca3af; }
+.srp-tf-rows div span:last-child  { color: #374151; font-weight: 600; }
+.srp-tf-badge {
+  margin-top: 5px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 10px;
 }
-.srp-bar-neg-half {
-  flex: 1;
-  height: 8px;
-  display: flex;
-  flex-direction: row-reverse;  /* bar grows from right (center) to left */
-  background: #f9fafb;
-  border-radius: 2px 0 0 2px;
-  overflow: hidden;
-}
-.srp-bar-pos-half {
-  flex: 1;
-  height: 8px;
-  display: flex;
-  flex-direction: row;          /* bar grows from left (center) to right */
-  background: #f9fafb;
-  border-radius: 0 2px 2px 0;
-  overflow: hidden;
-}
-.srp-bar-axis {
-  width: 1px;
-  height: 12px;
-  background: #9ca3af;
-  flex-shrink: 0;
-}
-.srp-bar-fill {
-  height: 100%;
-  flex-shrink: 0;
-  border-radius: 2px;
-}
-.srp-bar-fill.pos { background: #c0392b; }
-.srp-bar-fill.neg { background: #16a34a; }
-.srp-bar-val {
-  width: 38px;
-  font-size: 9.5px;
-  font-weight: 600;
-  text-align: right;
-  flex-shrink: 0;
-}
-.srp-bar-val.pos { color: #c0392b; }
-.srp-bar-val.neg { color: #16a34a; }
+.srp-tf-badge.bull    { background: #fee2e2; color: #c0392b; }
+.srp-tf-badge.warn    { background: #fff3cd; color: #856404; }
+.srp-tf-badge.neutral { background: #f3f4f6; color: #6b7280; }
 
-/* ── Chip table ── */
-.srp-chip-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
+/* 關鍵價位 */
+.srp-levels-box { }
+.srp-level-zone {
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin-bottom: 5px;
 }
-.srp-chip-table th {
-  font-size: 9.5px;
+.srp-level-zone.resist   { background: #fff1f2; border: 1px solid #fecaca; }
+.srp-level-zone.pullback { background: #fff7ed; border: 1px solid #fed7aa; }
+.srp-level-zone.support  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.srp-lz-label {
+  font-size: 10px;
   font-weight: 700;
   color: #6b7280;
-  text-align: center;
-  padding: 4px 3px 3px;
-  border-bottom: 1px solid #e5e7eb;
-}
-.srp-chip-table td {
-  text-align: center;
-  padding: 4px 3px;
-  border-bottom: 1px solid #f3f4f6;
-}
-.srp-chip-table .srp-inst-lbl {
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-}
-.srp-chip-table .pos { color: #c0392b; font-weight: 600; }
-.srp-chip-table .neg { color: #16a34a; font-weight: 600; }
-.srp-chip-table .srp-neutral { color: #9ca3af; }
-.srp-chip-table .srp-days {
-  color: #1f2937;
-  font-weight: 600;
-}
-.srp-chip-table .srp-days span { color: #9ca3af; font-weight: 400; }
-.srp-total-row td {
-  font-weight: 700;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* ── Signal badge ── */
-.srp-sig-wrap {
-  display: flex;
-  justify-content: center;
-  margin: 2px 0 10px;
-}
-.srp-sig-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0,0,0,.18);
-  text-align: center;
-  line-height: 1.2;
-  gap: 1px;
-}
-.srp-sig-score {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-.srp-sig-label {
-  font-size: 11px;
-  font-weight: 700;
-}
-.srp-sig-sub {
-  font-size: 9px;
-  opacity: 0.8;
-}
-
-/* ── Advice text ── */
-.srp-advice {
-  font-size: 11.5px;
-  color: #374151;
-  line-height: 1.6;
-  background: #f9fafb;
-  border-left: 3px solid #e07b39;
-  padding: 7px 10px;
-  border-radius: 0 5px 5px 0;
-  margin-bottom: 10px;
-}
-
-/* ── Key price levels ── */
-.srp-levels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-}
-.srp-level-item {
-  border-radius: 6px;
-  padding: 6px 8px;
-  text-align: center;
-}
-.srp-level-item.support  { background: #f0fdf4; border: 1px solid #bbf7d0; }
-.srp-level-item.support2 { background: #f0fdf4; border: 1px solid #86efac; }
-.srp-level-item.resist   { background: #fff1f2; border: 1px solid #fecaca; }
-.srp-level-item.resist2  { background: #fff1f2; border: 1px solid #fca5a5; }
-.srp-level-tag {
-  font-size: 10px;
-  font-weight: 600;
-  color: #374151;
+  letter-spacing: 0.3px;
   display: block;
   margin-bottom: 2px;
 }
-.srp-level-val {
-  font-size: 14px;
-  font-weight: 700;
+.srp-lz-range {
+  font-size: 13px;
+  font-weight: 800;
   color: #1f2937;
-  display: block;
 }
-.srp-level-sub {
+.srp-level-tips {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10.5px;
+  color: #374151;
+}
+.srp-level-tips div { display: flex; gap: 4px; }
+.srp-level-tips .pos { font-weight: 700; }
+.srp-level-tips .neg { font-weight: 700; }
+
+/* 主力燈號 + 勝率 */
+.srp-signals-box { }
+.srp-main-signal {
+  border-radius: 6px;
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(0,0,0,.06);
+}
+.srp-msig-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+.srp-msig-label {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+.srp-msig-sub {
+  font-size: 10px;
+  color: #374151;
+  text-align: center;
+  line-height: 1.4;
+}
+.srp-winrate-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.srp-windir {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ROW 3: 型態 | 指標表 | 操作建議 | AI預測
+   ════════════════════════════════════════════════════════════════════ */
+.srp-r3 {
+  display: grid;
+  grid-template-columns: 0.85fr 1.05fr 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* 型態分析 */
+.srp-pattern-box { }
+.srp-pattern-item { margin-bottom: 4px; }
+.srp-pat-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 3px;
+}
+.srp-pat-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9px;
+  margin-bottom: 4px;
+}
+.srp-pat-status.bull    { background: #fee2e2; color: #c0392b; }
+.srp-pat-status.bear    { background: #dcfce7; color: #15803d; }
+.srp-pat-status.amber   { background: #fff3cd; color: #856404; }
+.srp-pat-status.none    { background: #f3f4f6; color: #6b7280; }
+.srp-pat-stick { margin: 2px 0 3px; }
+.stick-pts {
+  display: flex;
+  justify-content: space-between;
   font-size: 9px;
   color: #9ca3af;
-  display: block;
-  margin-top: 1px;
+  margin-bottom: 1px;
+  width: 90px;
+}
+.srp-pat-reason {
+  font-size: 9.5px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-top: 2px;
 }
 
-/* ── Star ratings ── */
-.srp-ratings {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+/* 技術指標總覽 */
+.srp-ind-table-box { }
+.srp-ind-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
 }
-.srp-rating-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.srp-ind-tbl th {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #6b7280;
+  text-align: left;
+  padding: 3px 4px;
+  border-bottom: 1px solid #e5e7eb;
 }
-.srp-rating-lbl {
-  font-size: 11px;
-  color: #374151;
-  font-weight: 500;
+.srp-ind-tbl td {
+  padding: 4px 4px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+  vertical-align: middle;
 }
-
-/* ── No chip message ── */
-.srp-no-chip-msg {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 28px 12px;
-  color: #9ca3af;
-  font-size: 12px;
+.srp-ind-tbl td:nth-child(3) {
   text-align: center;
-  line-height: 1.6;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px dashed #e5e7eb;
-  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 13px;
 }
-.srp-no-chip-icon { font-size: 28px; opacity: 0.4; }
-
-/* ── Risk disclaimer ── */
-.srp-risk {
+.srp-ind-tbl td:nth-child(4) {
+  color: #6b7280;
   font-size: 10px;
+}
+.srp-ind-tbl .pos { color: #c0392b; }
+.srp-ind-tbl .neg { color: #16a34a; }
+
+/* 操作建議 */
+.srp-reco-box { }
+.srp-reco-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.srp-reco-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.srp-reco-icon {
+  font-size: 10px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  color: #6b7280;
+}
+.srp-reco-icon.pos { color: #c0392b; }
+.srp-reco-icon.neg { color: #16a34a; }
+.srp-reco-key {
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+}
+.srp-reco-val {
+  font-size: 10.5px;
+  color: #1f2937;
+  line-height: 1.45;
+}
+.srp-risk {
+  font-size: 9.5px;
   color: #9ca3af;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 5px;
-  padding: 6px 8px;
+  border-radius: 4px;
+  padding: 5px 7px;
   line-height: 1.5;
-  margin-top: 10px;
+  margin-top: auto;
 }
 
-/* ── pos/neg color utilities ── */
-.pos { color: #c0392b; }
-.neg { color: #16a34a; }
+/* AI 預測 */
+.srp-ai-box { display: flex; flex-direction: column; }
+.srp-ai-head {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #c0392b, #9b2226);
+  border-radius: 4px 4px 0 0;
+  padding: 5px 10px;
+  margin: -10px -12px 10px;
+}
+.srp-ai-bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 8px; }
+.srp-ai-bar-row { display: flex; align-items: center; gap: 5px; }
+.srp-ai-bar-label {
+  font-size: 10px;
+  font-weight: 600;
+  width: 44px;
+  flex-shrink: 0;
+}
+.srp-ai-bar-label.up { color: #c0392b; }
+.srp-ai-bar-label.dn { color: #16a34a; }
+.srp-ai-bar-label.sw { color: #6b7280; }
+.srp-ai-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #f3f4f6;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.srp-ai-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+.srp-ai-bar-fill.up { background: linear-gradient(90deg, #f87171, #c0392b); }
+.srp-ai-bar-fill.dn { background: linear-gradient(90deg, #4ade80, #16a34a); }
+.srp-ai-bar-fill.sw { background: linear-gradient(90deg, #d1d5db, #9ca3af); }
+.srp-ai-bar-pct {
+  font-size: 11px;
+  font-weight: 800;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.srp-ai-bar-pct.up { color: #c0392b; }
+.srp-ai-bar-pct.dn { color: #16a34a; }
+.srp-ai-bar-pct.sw { color: #6b7280; }
+.srp-ai-concl {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #374151;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 5px 8px;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.5;
+  margin-bottom: 5px;
+}
+.srp-ai-note {
+  font-size: 10px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.srp-ai-footer {
+  margin-top: auto;
+  font-size: 9px;
+  color: #9ca3af;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 5px;
+}
 
-/* ── Responsive: stack columns on narrow screens ── */
-@media (max-width: 700px) {
-  .srp-grid {
-    grid-template-columns: 1fr;
-  }
-  .srp-col {
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-  }
-  .srp-col:last-child {
-    border-bottom: none;
-  }
+/* ════════════════════════════════════════════════════════════════════
+   RESPONSIVE — stack on narrow screens
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .srp-r1 { grid-template-columns: 1fr; }
+  .srp-r2 { grid-template-columns: 1fr 1fr; }
+  .srp-r3 { grid-template-columns: 1fr 1fr; }
+  .srp-multi-tf { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .srp-r2 { grid-template-columns: 1fr; }
+  .srp-r3 { grid-template-columns: 1fr; }
+  .srp-tf-grid { grid-template-columns: 1fr; }
+  .srp-title-price { font-size: 18px; }
 }
