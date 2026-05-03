@@ -264,13 +264,17 @@
 }
 
 .news-title a {
-  color: inherit;
+  color: var(--accent-indigo);
   text-decoration: none;
-  transition: color 0.2s;
+  cursor: pointer;
+  transition: color 0.18s, text-decoration-color 0.18s;
+  text-underline-offset: 3px;
 }
 
 .news-title a:hover {
-  color: var(--accent-indigo);
+  color: var(--accent-gold);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-gold);
 }
 
 /* Card description */
@@ -290,15 +294,22 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--accent-gold);
+  font-weight: 600;
+  color: var(--accent-indigo);
   text-decoration: none;
   margin-top: 0.15rem;
-  transition: opacity 0.2s;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 3px;
+  background: #f5f7ff;
+  align-self: flex-start;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
 }
 
 .news-read-more:hover {
-  opacity: 0.75;
+  background: #e0e7ff;
+  border-color: var(--accent-indigo);
+  color: var(--accent-indigo);
 }
 
 /* ── Skeleton ─────────────────────────────────────────────────────────────── */
