@@ -86,9 +86,21 @@ function calcMACD(data: OHLCBar[]): { dif: number; dem: number; osc: number }[] 
 
 function deriveInstSplit(chips: ChipBar[], seed: number) {
   const rf = mkRng(seed), rt = mkRng(seed ^ 0x7777);
-  const foreign = chips.map(c => Math.round(c.value * (0.52 + rf() * 0.20) + (rf() - 0.5) * Math.abs(c.value) * 0.15));
-  const trust   = chips.map(c => Math.round(c.value * (0.12 + rt() * 0.16) + (rt() - 0.5) * Math.abs(c.value) * 0.20));
-  const dealer  = chips.map((c, i) => Math.round((c.value - foreign[i] - trust[i]) * 0.38));
+  // Foreign: 50–72% of aggregate, with slight noise
+  const foreign = chips.map(c => {
+    const pct = 0.52 + rf() * 0.20;
+    const noise = (rf() - 0.5) * Math.abs(c.value) * 0.12;
+    return Math.round(c.value * pct + noise);
+  });
+  // Trust: 12–24% of aggregate, with slight noise
+  const trust = chips.map(c => {
+    const pct = 0.12 + rt() * 0.12;
+    const noise = (rt() - 0.5) * Math.abs(c.value) * 0.10;
+    const raw = Math.round(c.value * pct + noise);
+    return raw;
+  });
+  // Dealer: exact residual so foreign + trust + dealer = chip.value
+  const dealer = chips.map((c, i) => c.value - foreign[i] - trust[i]);
   return { foreign, trust, dealer };
 }
 
@@ -328,17 +340,17 @@ export default function StockReportPanel({ code, name, price, changePct, signal,
       return chipVals.slice(start, i + 1).reduce((s, v) => s + v, 0);
     });
 
-    // Last 5 days: align chips with OHLC
-    const chipLen = chips.length;
-    const ohlcLen = data.length;
+    // Time-based OHLC lookup (robust: works even when chipLen ≠ ohlcLen)
+    const ohlcByTime = new Map<string, { bar: typeof data[0]; prevBar: typeof data[0] | null }>();
+    data.forEach((d, i) => ohlcByTime.set(d.time, { bar: d, prevBar: i > 0 ? data[i - 1] : null }));
+
     const last5MainForce = chip5.map((c, localIdx) => {
-      const chipGlobalIdx = chipLen - 5 + localIdx;
-      const ohlcGlobalIdx = ohlcLen - chipLen + chipGlobalIdx;
-      const ohlcBar = ohlcGlobalIdx >= 0 && ohlcGlobalIdx < ohlcLen ? data[ohlcGlobalIdx] : null;
-      const prevBar = ohlcGlobalIdx > 0 && ohlcGlobalIdx < ohlcLen ? data[ohlcGlobalIdx - 1] : null;
-      const closePrice = ohlcBar?.close ?? 0;
-      const dayChg = (ohlcBar && prevBar)
-        ? +((ohlcBar.close - prevBar.close) / prevBar.close * 100).toFixed(2)
+      const chipGlobalIdx = chips.length - 5 + localIdx;
+      const entry = ohlcByTime.get(c.time);
+      const closePrice = entry?.bar.close ?? 0;
+      const prevClose  = entry?.prevBar?.close ?? 0;
+      const dayChg = (closePrice && prevClose)
+        ? +((closePrice - prevClose) / prevClose * 100).toFixed(2)
         : 0;
       return { date: c.time.slice(5).replace('-', '/'), value: c.value, cum10: cum10[chipGlobalIdx] ?? 0, closePrice, dayChg };
     });
@@ -554,18 +566,15 @@ export default function StockReportPanel({ code, name, price, changePct, signal,
                 <tr><th>日期</th><th>外資</th><th>投信</th><th>自營</th><th>合計</th></tr>
               </thead>
               <tbody>
-                {A.chip5.map((c, i) => {
-                  const total = A.for5[i] + A.tru5[i] + A.deal5[i];
-                  return (
-                    <tr key={c.time}>
-                      <td className="dt">{c.time.slice(5).replace('-', '/')}</td>
-                      <td className={chipCls(A.for5[i])}>{fmtChip(A.for5[i])}</td>
-                      <td className={chipCls(A.tru5[i])}>{fmtChip(A.tru5[i])}</td>
-                      <td className={chipCls(A.deal5[i])}>{fmtChip(A.deal5[i])}</td>
-                      <td className={`total-col ${chipCls(total)}`}>{fmtChip(total)}</td>
-                    </tr>
-                  );
-                })}
+                {A.chip5.map((c, i) => (
+                  <tr key={c.time}>
+                    <td className="dt">{c.time.slice(5).replace('-', '/')}</td>
+                    <td className={chipCls(A.for5[i])}>{fmtChip(A.for5[i])}</td>
+                    <td className={chipCls(A.tru5[i])}>{fmtChip(A.tru5[i])}</td>
+                    <td className={chipCls(A.deal5[i])}>{fmtChip(A.deal5[i])}</td>
+                    <td className={`total-col ${chipCls(c.value)}`}>{fmtChip(c.value)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           ) : (

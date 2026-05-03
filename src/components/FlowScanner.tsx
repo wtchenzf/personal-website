@@ -73,12 +73,13 @@ function mkRng(seed: number) {
  * seed       – seed for PRNG
  */
 function buildFlowData(
-  anchors:   [number, number][],
-  volAnchor: number,
-  buyStart:  number,
-  chipScale: number,
-  priceVol:  number,
-  seed:      number,
+  anchors:      [number, number][],
+  volAnchor:    number,
+  buyStart:     number,
+  chipScale:    number,
+  priceVol:     number,
+  seed:         number,
+  chipOverride: Partial<Record<number, number>> = {},
 ): { ohlc: (OHLCBar & { volume: number })[]; chips: ChipBar[] } {
   const rand  = mkRng(seed);
   const n     = FLOW_DATES.length;
@@ -117,7 +118,10 @@ function buildFlowData(
   // Chip (主力買賣超)
   const chips: ChipBar[] = FLOW_DATES.map((time, i) => {
     let value: number;
-    if (i < buyStart) {
+    if (chipOverride[i] !== undefined) {
+      // Caller-supplied override for this date index (e.g. down-day sell-off)
+      value = chipOverride[i]!;
+    } else if (i < buyStart) {
       // Before institutional accumulation: mixed, slightly negative
       value = Math.round((rand() - 0.6) * chipScale);
     } else {
@@ -164,7 +168,8 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   // 04/30: 2,135 ▼2.06% (Yahoo Finance 即時)
   d['2330'] = buildFlowData(
     [[0,1980],[4,1910],[9,1820],[12,1900],[14,2020],[17,2075],[19,2100],[22,2130],[24,2178],[26,2135]],
-    25, 12, 2000, 0.014, 2330
+    25, 12, 2000, 0.014, 2330,
+    { 26: -1840 }   // 04/30 ▼2.06%：勞動節前獲利了結，法人賣超
   );
   // 6669 緯穎 — 外資連買9日，AI伺服器ODM
   // Real avg vol ~6,000 張/日；機構每日買超 ~200-600 張
@@ -182,7 +187,8 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   // Real avg vol ~45,000 張/日；機構每日買超 ~2,000-6,000 張
   d['2382'] = buildFlowData(
     [[0,308],[4,294],[9,274],[12,295],[14,318],[17,334],[19,340],[22,344],[24,348],[26,346]],
-    45, 14, 3000, 0.018, 2382
+    45, 14, 3000, 0.018, 2382,
+    { 26: -520 }    // 04/30 ▼0.57%：短線獲利了結，法人小幅賣超
   );
   // 6442 光聖 — 投信連買10日，矽光子
   // Real avg vol ~3,000 張/日；機構每日買超 ~100-350 張
@@ -218,7 +224,8 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   // Real avg vol ~45,000 張/日；機構每日買超 ~2,000-6,000 張
   d['3711'] = buildFlowData(
     [[0,158],[4,151],[9,141],[12,152],[14,162],[17,168],[19,171],[22,173],[24,176],[26,175]],
-    45, 17, 3000, 0.018, 3711
+    45, 17, 3000, 0.018, 3711,
+    { 26: -380 }    // 04/30 ▼0.57%：外資小幅減碼，先進封裝短線回檔
   );
 
   return d;
