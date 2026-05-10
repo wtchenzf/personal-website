@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SmartMoneyChart, { type ChipBar } from './SmartMoneyChart';
 import StockReportPanel from './StockReportPanel';
 import type { OHLCBar } from './MiniKLineChart';
+import { fetchOHLC, fetchChips, isAPIConfigured } from '../utils/stockAPI';
 import './FlowScanner.css';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -216,12 +217,12 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
     [[0,1460],[3,1290],[5,1150],[8,1070],[9,1040],[11,1170],[13,1390],[16,1660],[19,1890],[22,2060],[24,2100],[26,2160],[28,2240],[31,2330]],
     2, 9, 300, 0.038, 6442
   );
-  // 3222 健策 — 投信連買13日，液冷散熱精密機構
+  // 3653 健策 — 投信連買13日，液冷散熱精密機構
   // 玩股網實測：05/08 開3775 高4010 低3490 收3650 量5338 (-5.81%)
   // 03/24 高位約4,900 → 04/07清明後跳空至3,500（-28%）→ 04/24高點5,350 → 05/08收3,650大跌
   // 走勢：高位起跌 V底回升創高 再急回落，不是單純V底
   // volAnchor=3 → 日均量約3,000~6,000張（高價小型股）
-  d['3222'] = buildFlowData(
+  d['3653'] = buildFlowData(
     [[0,4900],[3,4750],[5,4600],[8,4300],[9,3500],[11,3800],[13,4200],[16,4700],[19,5100],[22,5350],[23,5200],[24,4950],[26,4650],[27,4350],[28,4050],[31,3650]],
     3, 9, 450, 0.028, 3222,
     { 31: -750 }   // 05/08 ▼5.81%：大幅賣超，法人由買轉賣
@@ -269,7 +270,7 @@ const SECTORS: SectorRow[] = [
   { name: 'AI 伺服器 / 雲端',   icon: '🤖', netFlow:  +428.5, weekChg: +112.3, topStocks: ['廣達2382','緯穎6669','鴻海2317'],   hot: true  },
   { name: '半導體製造',         icon: '⚡', netFlow:  +384.2, weekChg:  +88.4, topStocks: ['台積電2330','聯電2303'],             hot: true  },
   { name: 'AI 晶片 / ASIC',    icon: '🧠', netFlow:  +316.7, weekChg:  +95.1, topStocks: ['世芯-KY3661','信驊5274'],            hot: true  },
-  { name: '液冷散熱 / 散熱',    icon: '🌊', netFlow:  +278.4, weekChg:  +64.2, topStocks: ['奇鋐3017','健策3222','高力8996'],   hot: true  },
+  { name: '液冷散熱 / 散熱',    icon: '🌊', netFlow:  +278.4, weekChg:  +64.2, topStocks: ['奇鋐3017','健策3653','高力8996'],   hot: true  },
   { name: '矽光子 / 光纖',      icon: '💡', netFlow:  +198.3, weekChg:  +71.5, topStocks: ['光聖6442','仲琦2419'],              hot: true  },
   { name: 'IC 設計',            icon: '🔧', netFlow:  +143.6, weekChg:  +22.8, topStocks: ['聯發科2454','聯詠3034','群聯8299'],  hot: false },
   { name: 'PCB / 載板',        icon: '📋', netFlow:  +112.0, weekChg:  +31.6, topStocks: ['欣興3037','南電8046','華通2313'],   hot: false },
@@ -346,7 +347,7 @@ const SMART_MONEY: SmartMoneyStock[] = [
     note: '矽光子 / 光電整合元件唯一台廠，與 Intel、Broadcom 合作量產中。投信率先大量佈局，已連買 15 日，05/08 收 2,330，籌碼集中度達 18%，持續創新高。',
   },
   {
-    code: '3222', name: '健策',      sector: '液冷散熱',
+    code: '3653', name: '健策',      sector: '液冷散熱',
     price: 3650,  changePct: -5.81,
     foreignDays: 11, trustDays: 13, dealerDays: 5,
     netBuyK: 8300,  volRatio: 2.0, pricePct: 4.3,
@@ -392,6 +393,25 @@ const SMART_MONEY: SmartMoneyStock[] = [
   },
 ];
 
+// ── Live-data config ──────────────────────────────────────────────────────────
+// Maps our internal code → Yahoo Finance symbol (TWSE=.TW, TPEX=.TWO)
+const YAHOO_SYMBOLS: Record<string, string> = {
+  '3661': '3661.TW',
+  '3017': '3017.TW',
+  '2330': '2330.TW',
+  '6669': '6669.TW',
+  '5274': '5274.TW',
+  '2382': '2382.TW',
+  '6442': '6442.TWO',
+  '3653': '3653.TW',
+  '3037': '3037.TW',
+  '8996': '8996.TWO',
+  '2454': '2454.TW',
+  '3711': '3711.TW',
+};
+
+type FlowEntry = { ohlc: (OHLCBar & { volume: number })[]; chips: ChipBar[] };
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const MAX_FLOW = Math.max(...SECTORS.map(s => Math.abs(s.netFlow)));
@@ -431,6 +451,49 @@ export default function FlowScanner() {
   const [sortBy,    setSortBy]      = useState<'signal' | 'foreignDays' | 'trustDays'>('signal');
   const [expanded,  setExpanded]    = useState<string | null>(null);
   const [cardTab,   setCardTab]     = useState<CardTab>('info');
+
+  // ── Live market data ────────────────────────────────────────────────────────
+  const [liveData,    setLiveData]    = useState<Partial<Record<string, FlowEntry>>>({});
+  const [liveLoading, setLiveLoading] = useState(isAPIConfigured());
+
+  useEffect(() => {
+    if (!isAPIConfigured()) return;
+    let cancelled = false;
+
+    (async () => {
+      await Promise.allSettled(
+        SMART_MONEY.map(async ({ code }) => {
+          const sym = YAHOO_SYMBOLS[code];
+          if (!sym) return;
+          try {
+            const [ohlcRaw, chipsRaw] = await Promise.all([
+              fetchOHLC(sym, '3mo'),
+              fetchChips(code),
+            ]);
+            if (cancelled) return;
+
+            const ohlc: (OHLCBar & { volume: number })[] = ohlcRaw.map(d => ({
+              time: d.time, open: d.open, high: d.high, low: d.low,
+              close: d.close, volume: d.volume,
+            }));
+
+            const chips: ChipBar[] = chipsRaw.map(c => {
+              // mainForce = total net institutional buy/sell (張)
+              const val = c.mainForce || (c.foreign + c.trust + c.dealer);
+              return { time: c.time, value: val, color: val >= 0 ? '#c0392b' : '#4a7c59' };
+            });
+
+            if (!cancelled) setLiveData(prev => ({ ...prev, [code]: { ohlc, chips } }));
+          } catch {
+            // silently fall back to mock data for this stock
+          }
+        })
+      );
+      if (!cancelled) setLiveLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
 
   const sorted = [...SMART_MONEY]
     .filter(s => {
@@ -563,7 +626,8 @@ export default function FlowScanner() {
               const isExp  = expanded === s.code;
               const isUp   = s.changePct >= 0;
               const color  = signalColor(s.signal);
-              const fd     = FLOW_DATA[s.code];
+              // Prefer live market data; fall back to seed mock data
+              const fd = liveData[s.code] ?? FLOW_DATA[s.code];
 
               return (
                 <div key={s.code} className={`sm-card ${isExp ? 'expanded' : ''}`}>
@@ -694,7 +758,12 @@ export default function FlowScanner() {
           </div>
 
           <p className="flow-source-note">
-            ※ 連買天數統計至 {SCAN_DATE}；K 線為高擬真模擬數據（錨點來自公開市場資料）；訊號分數綜合連買天數、量能、價格動能等因素。
+            {liveLoading
+              ? '⏳ 正在載入即時 K 線與籌碼數據…'
+              : Object.keys(liveData).length > 0
+                ? `📡 K 線與籌碼已載入即時數據（Yahoo Finance / TWSE）· ${Object.keys(liveData).length}/12 檔`
+                : '※ K 線為高擬真模擬數據（API 未設定，錨點來自公開市場資料）'}
+            ；訊號分數綜合連買天數、量能、價格動能等因素。連買天數統計至 {SCAN_DATE}。
           </p>
         </div>
       )}
