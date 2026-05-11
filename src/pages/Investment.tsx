@@ -346,7 +346,26 @@ export default function Investment() {
         })()}
       </div>
 
-      <RocketScanner />
+      {/* ── 掃描工具 一鍵更新列 ── */}
+      <div className="scanner-refresh-bar">
+        <div className="scanner-refresh-info">
+          <span className="scanner-refresh-dot" />
+          <span className="scanner-refresh-label">
+            掃描工具資料 · 潛力飆股 / 大戶連買 / ETF 進出
+          </span>
+        </div>
+        <button
+          className={`scanner-refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          title="一鍵更新：重新掃描飆股、ETF 法人動向、籌碼資料"
+        >
+          <span className={`scanner-refresh-icon ${isRefreshing ? 'spinning' : ''}`}>🔄</span>
+          {isRefreshing ? '更新中…' : '一鍵更新至今日'}
+        </button>
+      </div>
+
+      <RocketScanner refreshTrigger={refreshTick} />
       <FlowScanner />
       <ETFChipTracker refreshTrigger={refreshTick} />
 

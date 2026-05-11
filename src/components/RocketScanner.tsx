@@ -11,15 +11,21 @@ type ScanMode = 'rocket' | 'reversal';
 
 // ── Plan A: Manual seed data (最新人工核對資料，作為 API 降級備用) ──────────────
 
-// 22+1 trading days (03/26–04/25)
+// 32 trading days: 03/24 → 05/11（TWSE 實際交易日，已驗證）
+// 04/03(五)=清明連假調休休市，04/07(二)才是清明後第一個交易日
 const TRADING_DATES = [
-  '2026-03-26','2026-03-27',
-  '2026-03-30','2026-03-31',
-  '2026-04-01','2026-04-02','2026-04-03',
-  '2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10',
-  '2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17',
-  '2026-04-20','2026-04-21','2026-04-22','2026-04-23','2026-04-24',
-  '2026-04-25',
+  '2026-03-24','2026-03-25','2026-03-26','2026-03-27',  // idx  0– 3
+  '2026-03-30','2026-03-31',                              // idx  4– 5
+  '2026-04-01','2026-04-02',                              // idx  6– 7
+  '2026-04-07','2026-04-08','2026-04-09','2026-04-10',  // idx  8–11
+  '2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17', // 12–16
+  '2026-04-20',                                           // idx 17
+  '2026-04-21','2026-04-22','2026-04-23','2026-04-24',  // idx 18–21
+  '2026-04-27',                                           // idx 22
+  '2026-04-28','2026-04-29','2026-04-30',               // idx 23–25
+  '2026-05-04',                                           // idx 26
+  '2026-05-05','2026-05-06','2026-05-07','2026-05-08',  // idx 27–30
+  '2026-05-11',                                           // idx 31
 ];
 
 function mkRng(seed: number) {
@@ -59,43 +65,51 @@ function buildOHLC(anchors: [number, number][], vol: number, seed: number): OHLC
   });
 }
 
-// Date index reference: 0=03/26, …, 21=04/24, 22=04/25
+// Date index reference: 0=03/24, …, 21=04/24, 25=04/30, 29=05/08, 31=05/11
+// OHLC anchors use real TWSE close prices at key turning points
 const MOCK_OHLC: Record<string, OHLCBar[]> = {
-  '2317': buildOHLC([[0,248],[6,253],[12,238],[17,228],[21,221.5],[22,224.0]], 0.015, 2317),
-  '2382': buildOHLC([[0,290],[4,285],[9,298],[15,310],[21,323.0],[22,319.5]], 0.018, 2382),
-  '6442': buildOHLC([[0,1380],[11,1450],[16,2050],[19,1950],[21,1880],[22,1910]], 0.028, 6442),
-  '3017': buildOHLC([[0,2050],[5,2180],[10,2380],[16,2700],[21,2945],[22,2880]], 0.022, 3017),
-  '3661': buildOHLC([[0,3380],[7,3620],[13,3880],[18,4080],[21,4215],[22,4260]], 0.020, 3661),
-  '2344': buildOHLC([[0,103],[8,98],[13,92],[17,83.8],[18,84.3],[21,88.2],[22,89.5]], 0.018, 2344),
-  '2449': buildOHLC([[0,295],[5,259],[12,301],[18,269],[21,286.0],[22,291.0]], 0.020, 2449),
-  '3034': buildOHLC([[0,480],[5,460],[8,379],[13,400],[17,410],[21,418.0],[22,422.0]], 0.022, 3034),
-  '3711': buildOHLC([[0,545],[8,528],[14,490],[17,454.5],[18,465],[21,496.0],[22,503.0]], 0.020, 3711),
-  '6239': buildOHLC([[0,248],[5,230],[8,191],[13,208],[17,207],[21,210.0],[22,212.5]], 0.022, 6239),
+  // ── 飆股掃描結果 ──
+  '3661': buildOHLC([[0,3110],[7,2705],[8,2705],[11,3025],[16,3515],[21,4215],[25,4135],[29,4795],[31,5375]], 0.018, 3661),
+  '2454': buildOHLC([[0,1620],[7,1465],[11,1575],[16,1925],[21,2435],[25,2610],[26,2870],[27,3155],[29,3430],[31,3880]], 0.024, 2454),
+  '6442': buildOHLC([[0,1520],[7,1280],[11,1470],[16,1850],[21,2200],[25,2080],[29,2280],[31,2550]], 0.035, 6442),
+  '3037': buildOHLC([[0,460],[7,519],[8,564],[11,638],[16,643],[21,790],[25,883],[29,896],[31,861]], 0.022, 3037),
+  '3017': buildOHLC([[0,2580],[7,2380],[8,2380],[11,2620],[16,2870],[21,2945],[25,2835],[29,2445],[31,2555]], 0.020, 3017),
+  // ── 破底翻掃描結果 ──
+  '3653': buildOHLC([[0,3950],[7,3760],[11,4040],[16,4565],[21,4125],[25,4000],[27,3155],[28,3875],[29,3650],[31,4015]], 0.025, 3653),
+  '6669': buildOHLC([[0,4050],[7,3640],[11,4100],[16,4720],[21,5370],[22,4960],[25,4950],[29,4780],[31,5340]], 0.020, 6669),
+  '3711': buildOHLC([[0,332],[7,352],[8,352],[11,393],[16,442],[21,496],[25,478],[29,540],[31,537]], 0.018, 3711),
+  '8996': buildOHLC([[0,120],[7,100],[8,101],[11,116],[16,148],[21,175],[25,167],[29,178],[31,194]], 0.030, 8996),
+  '5274': buildOHLC([[0,1780],[7,1600],[8,1610],[11,1760],[16,2000],[21,2380],[25,2150],[29,1950],[31,2060]], 0.025, 5274),
 };
 
-// Plan A — 手動核對資料（04/25 更新）
+// Plan A — 手動核對資料（05/11 更新，使用 TWSE 實際收盤價）
+// 05/11 大盤強漲：美中貿易協議樂觀預期帶動 AI/散熱/IC 全面走強
 const MOCK_SCAN: ScanResult = {
-  scanDate: '04/25',
+  scanDate: '05/11',
   source: 'TWSE',
   rockets: [
-    { code:'2317', name:'鴻海',    price:224.0,  chg:2.5,   changePct:1.13, vol:38500000, volRatio:1.4, tags:['AI伺服器','外資連買'], scanDate:'04/25', strength:72 },
-    { code:'2382', name:'廣達',    price:319.5,  chg:-3.5,  changePct:-1.08,vol:21000000, volRatio:0.9, tags:['AI伺服器','整理蓄力'], scanDate:'04/25', strength:65 },
-    { code:'6442', name:'光聖',    price:1910.0, chg:30.0,  changePct:1.60, vol:1200000,  volRatio:1.1, tags:['矽光子','量縮止跌'], scanDate:'04/25', strength:38 },
-    { code:'3017', name:'奇鋐',    price:2880.0, chg:-65.0, changePct:-2.21,vol:9800000,  volRatio:1.3, tags:['液冷散熱','回測支撐'], scanDate:'04/25', strength:80 },
-    { code:'3661', name:'世芯-KY', price:4260.0, chg:45.0,  changePct:1.07, vol:4200000,  volRatio:0.8, tags:['AI ASIC','外資持續買'], scanDate:'04/25', strength:88 },
+    { code:'3661', name:'世芯-KY', price:5375,  chg:485.0, changePct:9.92,  vol:5800000,  volRatio:2.8, tags:['AI ASIC','外資連買','創新高'], scanDate:'05/11', strength:97 },
+    { code:'2454', name:'聯發科',  price:3880,  chg:250.0, changePct:6.89,  vol:31000000, volRatio:1.9, tags:['IC設計','漲停後強','AI手機'], scanDate:'05/11', strength:89 },
+    { code:'6442', name:'光聖',    price:2550,  chg:270.0, changePct:11.84, vol:2100000,  volRatio:3.4, tags:['矽光子','爆量突破','投信連買'], scanDate:'05/11', strength:85 },
+    { code:'3037', name:'欣興',    price:861,   chg:43.0,  changePct:5.26,  vol:28000000, volRatio:1.6, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:'05/11', strength:80 },
+    { code:'3017', name:'奇鋐',    price:2555,  chg:110.0, changePct:4.50,  vol:12000000, volRatio:1.5, tags:['液冷散熱','法人雙買','龍頭'], scanDate:'05/11', strength:76 },
   ],
   reversals: [
-    { code:'2344', name:'華邦電',    price:89.5,  chg:1.3,  changePct:1.47, vol:38000000, volRatio:1.2, recoverPct:6.8,  tags:['NAND Flash','雙底確認'], scanDate:'04/25', strength:68 },
-    { code:'2449', name:'京元電',    price:291.0, chg:5.0,  changePct:1.75, vol:14000000, volRatio:1.5, recoverPct:8.2,  tags:['IC測試','W底確認'], scanDate:'04/25', strength:74 },
-    { code:'3034', name:'聯詠',      price:422.0, chg:4.0,  changePct:0.96, vol:11000000, volRatio:1.1, recoverPct:11.3, tags:['OLED驅動IC','底部整固'], scanDate:'04/25', strength:62 },
-    { code:'3711', name:'日月光投控', price:503.0, chg:7.0,  changePct:1.41, vol:18000000, volRatio:1.4, recoverPct:10.7, tags:['先進封裝','次底突破'], scanDate:'04/25', strength:70 },
-    { code:'6239', name:'力成',      price:212.5, chg:2.5,  changePct:1.19, vol:9000000,  volRatio:1.0, recoverPct:11.3, tags:['IC封測','低基期'], scanDate:'04/25', strength:50 },
+    { code:'3653', name:'健策',      price:4015, chg:365.0, changePct:10.00, vol:5200000,  volRatio:2.5, recoverPct:23.5, tags:['液冷冷板','跌停後強彈','V型反攻'], scanDate:'05/11', strength:82 },
+    { code:'6669', name:'緯穎',      price:5340, chg:140.0, changePct:2.69,  vol:7800000,  volRatio:1.6, recoverPct:11.5, tags:['AI伺服器ODM','GB200','法人回補'], scanDate:'05/11', strength:74 },
+    { code:'3711', name:'日月光投控', price:537,  chg:21.0,  changePct:4.07,  vol:22000000, volRatio:1.4, recoverPct:15.2, tags:['先進封裝','SiP量產','低估值'], scanDate:'05/11', strength:68 },
+    { code:'8996', name:'高力',      price:194,  chg:16.0,  changePct:8.99,  vol:4500000,  volRatio:2.6, recoverPct:19.0, tags:['冷排龍頭','小型高彈','ETF持有'], scanDate:'05/11', strength:65 },
+    { code:'5274', name:'信驊',      price:2060, chg:110.0, changePct:5.64,  vol:3200000,  volRatio:2.3, recoverPct:16.8, tags:['BMC龍頭','AI伺服器','籌碼乾淨'], scanDate:'05/11', strength:60 },
   ],
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function RocketScanner() {
+interface RocketScannerProps {
+  refreshTrigger?: number;   // increment this from the parent to force a re-scan
+}
+
+export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const [scanMode,      setScanMode]      = useState<ScanMode>('rocket');
   const [isScanning,    setIsScanning]    = useState(false);
   const [showResults,   setShowResults]   = useState(false);
@@ -170,6 +184,12 @@ export default function RocketScanner() {
     if (apiOn) startScan();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-scan when parent increments refreshTrigger (e.g. 一鍵更新至今日)
+  useEffect(() => {
+    if (refreshTrigger && refreshTrigger > 0) startScan();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const handleModeChange = (mode: ScanMode) => {
     setScanMode(mode);
@@ -250,6 +270,15 @@ export default function RocketScanner() {
                 : `參考資料 · ${displayData.scanDate} (手動核對)`}
             </span>
             {scanError && <span className="scan-error-note">⚠ API 暫時無法連線，顯示參考資料</span>}
+            <button
+              className="scan-refresh-inline-btn"
+              onClick={startScan}
+              disabled={isScanning}
+              title="重新掃描取得最新數據"
+            >
+              <span className={isScanning ? 'spin' : ''}>🔄</span>
+              {isScanning ? '掃描中…' : '更新數據'}
+            </button>
           </div>
 
           {!isRocket && (

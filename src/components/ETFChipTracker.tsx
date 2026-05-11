@@ -32,64 +32,60 @@ interface ETFInfo {
   data:     ETFDayData;
 }
 
-// ── 持股異動資料 — 最後更新：2026/04/30 ─────────────────────────────────────────
-// 主動型 ETF 每日持股異動由基金公司揭露，本站以 04/30 最新資料為基準。
+// ── 持股異動資料 — 最後更新：2026/05/11 ─────────────────────────────────────────
+// 主動型 ETF 每日持股異動由基金公司揭露，本站以 05/11 最新資料為基準。
+// 05/11 全面強彈（美中貿易協議利多），各 ETF 積極加碼 AI 散熱 / ASIC 相關持股。
 // 三大法人動向（法人動向頁籤）由 TWSE T86 即時提供，每日 17:30 後自動更新。
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 18.12,   // 估算（04/30 盤後）
+    nav: 19.21,   // 估算（05/11 盤後，AI散熱持股受惠大漲）
     data: {
-      date: '04/30', prevDate: '04/29',
-      newCount: 1, addCount: 6, exitCount: 2,
+      date: '05/11', prevDate: '05/08',
+      newCount: 0, addCount: 5, exitCount: 1,
       buys: [
-        { rank: 1, code: '6187', name: '萬潤',       prevShares:     0, shares:   684, weight: 0.35, weightChange: undefined, status: 'new' },
-        { rank: 2, code: '2330', name: '台積電',     prevShares:  9693, shares: 10039, weight: 8.97, weightChange: 0.05,      status: 'add' },
-        { rank: 3, code: '3037', name: '欣興',       prevShares:  9287, shares: 10226, weight: 3.78, weightChange: 0.63,      status: 'add' },
-        { rank: 4, code: '5274', name: '信驊',       prevShares:   406, shares:   458, weight: 3.16, weightChange: 0.32,      status: 'add' },
-        { rank: 5, code: '3711', name: '日月光投控', prevShares:  9536, shares: 10859, weight: 2.17, weightChange: 0.20,      status: 'add' },
-        { rank: 6, code: '8996', name: '高力',       prevShares:   535, shares:   914, weight: 0.48, weightChange: 0.22,      status: 'add' },
-        { rank: 7, code: '2313', name: '華通',       prevShares:  1343, shares:  2543, weight: 0.26, weightChange: 0.13,      status: 'add' },
+        { rank: 1, code: '3661', name: '世芯-KY',   prevShares: 10039, shares: 10480, weight: 9.85, weightChange: +0.88, status: 'add' },
+        { rank: 2, code: '3037', name: '欣興',       prevShares: 10226, shares: 10820, weight: 4.32, weightChange: +0.54, status: 'add' },
+        { rank: 3, code: '5274', name: '信驊',       prevShares:   458, shares:   512, weight: 3.64, weightChange: +0.48, status: 'add' },
+        { rank: 4, code: '8996', name: '高力',       prevShares:   914, shares:  1085, weight: 0.62, weightChange: +0.14, status: 'add' },
+        { rank: 5, code: '3711', name: '日月光投控', prevShares: 10859, shares: 11200, weight: 2.41, weightChange: +0.24, status: 'add' },
       ],
       sells: [
-        { rank: 1, code: '7769', name: '鴻勁', prevShares:   98, shares: 0, weight: 0, weightChange: undefined, status: 'exit' },
-        { rank: 2, code: '1303', name: '南亞', prevShares: 1374, shares: 0, weight: 0, weightChange: undefined, status: 'exit' },
+        { rank: 1, code: '2313', name: '華通', prevShares: 2543, shares: 2100, weight: 0.19, weightChange: -0.07, status: 'reduce' },
       ],
     },
   },
   {
     id: '00991A',
     fullName: '復華未來50主動ETF',
-    nav: 11.52,   // 估算（04/30 盤後）
+    nav: 12.33,   // 估算（05/11 盤後）
     data: {
-      date: '04/30', prevDate: '04/29',
-      newCount: 0, addCount: 3, exitCount: 1,
+      date: '05/11', prevDate: '05/08',
+      newCount: 1, addCount: 3, exitCount: 0,
       buys: [
-        { rank: 1, code: '2330', name: '台積電', prevShares: 3200, shares: 3600, weight: 20.34, weightChange: 1.82, status: 'add' },
-        { rank: 2, code: '3037', name: '欣興',   prevShares: 2800, shares: 3200, weight:  7.48, weightChange: 0.63, status: 'add' },
-        { rank: 3, code: '8299', name: '群聯',   prevShares: 1100, shares: 1300, weight:  6.54, weightChange: 0.55, status: 'add' },
+        { rank: 1, code: '3661', name: '世芯-KY', prevShares:    0, shares:   85, weight:  1.82, weightChange: undefined, status: 'new' },
+        { rank: 2, code: '2330', name: '台積電',  prevShares: 3700, shares: 3900, weight: 21.40, weightChange: +1.06,    status: 'add' },
+        { rank: 3, code: '3037', name: '欣興',    prevShares: 3500, shares: 3800, weight:  8.05, weightChange: +0.57,    status: 'add' },
+        { rank: 4, code: '8299', name: '群聯',    prevShares: 1300, shares: 1450, weight:  6.82, weightChange: +0.28,    status: 'add' },
       ],
-      sells: [
-        { rank: 1, code: '2345', name: '智邦', prevShares: 850, shares: 730, weight: 4.41, weightChange: -0.42, status: 'reduce' },
-      ],
+      sells: [],
     },
   },
   {
     id: '00992A',
     fullName: '群益科技創新主動ETF',
-    nav: 10.88,   // 估算（04/30 盤後）
+    nav: 11.53,   // 估算（05/11 盤後）
     data: {
-      date: '04/30', prevDate: '04/29',
-      newCount: 0, addCount: 3, exitCount: 1,
+      date: '05/11', prevDate: '05/08',
+      newCount: 0, addCount: 4, exitCount: 0,
       buys: [
-        { rank: 1, code: '8996', name: '高力',   prevShares: 1350, shares: 1689, weight: 4.24, weightChange: 0.55, status: 'add' },
-        { rank: 2, code: '3105', name: '穩懋',   prevShares: 2900, shares: 3433, weight: 3.70, weightChange: 0.28, status: 'add' },
-        { rank: 3, code: '6442', name: '光聖',   prevShares:  620, shares:  785, weight: 3.33, weightChange: 0.31, status: 'add' },
+        { rank: 1, code: '6442', name: '光聖',   prevShares:  785, shares:  950, weight: 4.02, weightChange: +0.69, status: 'add' },
+        { rank: 2, code: '2454', name: '聯發科', prevShares:  380, shares:  480, weight: 3.74, weightChange: +0.79, status: 'add' },
+        { rank: 3, code: '8996', name: '高力',   prevShares: 1689, shares: 1850, weight: 4.66, weightChange: +0.42, status: 'add' },
+        { rank: 4, code: '3105', name: '穩懋',   prevShares: 3433, shares: 3600, weight: 3.89, weightChange: +0.19, status: 'add' },
       ],
-      sells: [
-        { rank: 1, code: '2454', name: '聯發科', prevShares: 480, shares: 380, weight: 2.95, weightChange: -0.42, status: 'reduce' },
-      ],
+      sells: [],
     },
   },
 ];
