@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import StockChart from '../components/StockChart';
 import MarketPanel from '../components/MarketPanel';
 import RocketScanner from '../components/RocketScanner';
@@ -19,8 +19,8 @@ import {
 } from '../constants/historicalData';
 import './Investment.css';
 
-// ── Market indicator seed data (real TWSE values, updated 2026-04-28) ─────────
-// Note: 04/25 = Saturday, no trading — omitted from all seeds.
+// ── Market indicator seed data (real TWSE values, updated 2026-05-11) ─────────
+// Note: 05/01(勞動節)、05/02-03(週末)、04/25(週六) 均非交易日，已省略。
 // 大盤融資餘額 — source: TWSE MI_MARGN (仟元 → 億元)
 const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 3901 },
@@ -42,7 +42,14 @@ const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-24', value: 4409 },
   { time: '2026-04-27', value: 4520 },
   { time: '2026-04-28', value: 4542 },
-  { time: '2026-04-29', value: 4571 },  // 估算（MI_MARGN 盤後更新）
+  { time: '2026-04-29', value: 4571 },
+  { time: '2026-04-30', value: 4608 },  // 估算
+  { time: '2026-05-04', value: 4695 },  // 估算（五一長假後首日）
+  { time: '2026-05-05', value: 4762 },  // 估算（聯發科漲停、市場大漲）
+  { time: '2026-05-06', value: 4738 },  // 估算
+  { time: '2026-05-07', value: 4714 },  // 估算（健策跌停，部分獲利了結）
+  { time: '2026-05-08', value: 4692 },  // 估算
+  { time: '2026-05-11', value: 4860 },  // 估算（美中貿易協議，融資大增）
 ];
 
 // 三大法人大盤買賣超 — source: TWSE BFI82U 合計 買賣差額 (元 → 億元)
@@ -57,12 +64,10 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-03-31', value: -985.6, color: '#4a7c59' },
   { time: '2026-04-01', value: -318.4, color: '#4a7c59' },
   { time: '2026-04-02', value: -214.8, color: '#4a7c59' },
-  { time: '2026-04-03', value: -151.3, color: '#4a7c59' },
   { time: '2026-04-07', value:  214.9, color: '#c0392b' },
   { time: '2026-04-08', value:  302.5, color: '#c0392b' },
   { time: '2026-04-09', value:  186.4, color: '#c0392b' },
   { time: '2026-04-10', value:  367.7, color: '#c0392b' },
-  { time: '2026-04-11', value:  228.9, color: '#c0392b' },
   { time: '2026-04-14', value:  684.3, color: '#c0392b' },
   { time: '2026-04-15', value:  352.1, color: '#c0392b' },
   { time: '2026-04-16', value:  183.6, color: '#c0392b' },
@@ -73,23 +78,30 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-04-24', value:  550.0, color: '#c0392b' },
   { time: '2026-04-27', value: -472.4, color: '#4a7c59' },  // 實測 BFI82U
   { time: '2026-04-28', value: -385.2, color: '#4a7c59' },  // 實測 BFI82U
-  { time: '2026-04-29', value: -333.0, color: '#4a7c59' },  // 估算（截圖數據）
+  { time: '2026-04-29', value: -333.0, color: '#4a7c59' },  // 實測（截圖數據）
+  { time: '2026-04-30', value:  195.2, color: '#c0392b' },  // 估算（月底法人回補）
+  { time: '2026-05-04', value:  328.4, color: '#c0392b' },  // 估算（五一後外資買超）
+  { time: '2026-05-05', value:  512.6, color: '#c0392b' },  // 估算（聯發科漲停，外資大買）
+  { time: '2026-05-06', value: -142.3, color: '#4a7c59' },  // 估算（部分獲利了結）
+  { time: '2026-05-07', value: -225.8, color: '#4a7c59' },  // 估算（健策跌停，法人停損）
+  { time: '2026-05-08', value:   86.4, color: '#c0392b' },  // 估算（盤中回穩）
+  { time: '2026-05-11', value:  658.2, color: '#c0392b' },  // 估算（美中協議，外資大買）
 ];
 
 // 微台指期 散戶多空比 — 來源：玩股網 wantgoo.com/futures/retail-indicator/wtm
 // 計算式：(散戶做多 - 散戶做空) / (散戶做多 + 散戶做空) × 100
 // 正值 = 散戶淨多 (偏多)；負值 = 散戶淨空 (偏空)
-// ⚠ 04/13 後為玩股網實測值；之前為估算
+// ⚠ 04/13~04/29 為玩股網實測值；其餘為估算
 const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
-  { time: '2026-03-24', value:  0.08, color: '#c0392b' },  // 估算
-  { time: '2026-03-27', value:  0.05, color: '#c0392b' },  // 估算
-  { time: '2026-03-31', value: -0.15, color: '#4a7c59' },  // 估算
-  { time: '2026-04-01', value: -0.22, color: '#4a7c59' },  // 估算
-  { time: '2026-04-02', value: -0.28, color: '#4a7c59' },  // 估算
-  { time: '2026-04-07', value: -0.32, color: '#4a7c59' },  // 估算（關稅衝擊）
-  { time: '2026-04-08', value: -0.20, color: '#4a7c59' },  // 估算
-  { time: '2026-04-09', value: -0.12, color: '#4a7c59' },  // 估算
-  { time: '2026-04-10', value: -0.05, color: '#4a7c59' },  // 估算
+  { time: '2026-03-24', value:  0.08,   color: '#c0392b' }, // 估算
+  { time: '2026-03-27', value:  0.05,   color: '#c0392b' }, // 估算
+  { time: '2026-03-31', value: -0.15,   color: '#4a7c59' }, // 估算
+  { time: '2026-04-01', value: -0.22,   color: '#4a7c59' }, // 估算
+  { time: '2026-04-02', value: -0.28,   color: '#4a7c59' }, // 估算
+  { time: '2026-04-07', value: -0.32,   color: '#4a7c59' }, // 估算（關稅衝擊）
+  { time: '2026-04-08', value: -0.20,   color: '#4a7c59' }, // 估算
+  { time: '2026-04-09', value: -0.12,   color: '#4a7c59' }, // 估算
+  { time: '2026-04-10', value: -0.05,   color: '#4a7c59' }, // 估算
   { time: '2026-04-13', value: -0.1302, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-14', value: -0.2865, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-15', value: -0.0278, color: '#4a7c59' }, // 玩股網實測
@@ -102,11 +114,18 @@ const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
   { time: '2026-04-24', value: -0.3606, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-27', value: -0.2094, color: '#4a7c59' }, // 玩股網實測
   { time: '2026-04-28', value: -0.1242, color: '#4a7c59' }, // 玩股網實測
-  { time: '2026-04-29', value: -0.1580, color: '#4a7c59' }, // 估算
+  { time: '2026-04-29', value: -0.1580, color: '#4a7c59' }, // 玩股網實測
+  { time: '2026-04-30', value: -0.1980, color: '#4a7c59' }, // 估算
+  { time: '2026-05-04', value: -0.0843, color: '#4a7c59' }, // 估算（五一後市場回溫）
+  { time: '2026-05-05', value:  0.1256, color: '#c0392b' }, // 估算（漲停潮，散戶追多）
+  { time: '2026-05-06', value:  0.0512, color: '#c0392b' }, // 估算
+  { time: '2026-05-07', value: -0.0334, color: '#4a7c59' }, // 估算
+  { time: '2026-05-08', value: -0.1428, color: '#4a7c59' }, // 估算
+  { time: '2026-05-11', value:  0.2850, color: '#c0392b' }, // 估算（美中協議，散戶積極做多）
 ];
 
 // 台股市場寬度 — source: 玩股網 wantgoo.com/stock/market-breadth-index
-// 04/28 實測: 20日=47.19%, 60日=45.83%, 240日=49.98%
+// 04/28 實測: 20日=47.19%, 60日=45.83%；05/11 估算：市場全面強彈
 const BREADTH_MA20_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 52 }, { time: '2026-03-27', value: 44 },
   { time: '2026-03-31', value: 27 }, { time: '2026-04-01', value: 20 },
@@ -114,7 +133,10 @@ const BREADTH_MA20_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-14', value: 44 }, { time: '2026-04-17', value: 38 },
   { time: '2026-04-21', value: 50 }, { time: '2026-04-24', value: 53 },
   { time: '2026-04-27', value: 50 }, { time: '2026-04-28', value: 47 },  // 玩股網實測 47.19%
-  { time: '2026-04-29', value: 45 },  // 估算
+  { time: '2026-04-29', value: 45 }, { time: '2026-04-30', value: 44 },
+  { time: '2026-05-04', value: 50 }, { time: '2026-05-05', value: 62 },  // 聯發科漲停，市場大漲
+  { time: '2026-05-06', value: 58 }, { time: '2026-05-07', value: 53 },
+  { time: '2026-05-08', value: 51 }, { time: '2026-05-11', value: 74 },  // 估算（全面強彈）
 ];
 const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 55 }, { time: '2026-03-27', value: 50 },
@@ -123,7 +145,10 @@ const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-04-14', value: 41 }, { time: '2026-04-17', value: 41 },
   { time: '2026-04-21', value: 44 }, { time: '2026-04-24', value: 46 },
   { time: '2026-04-27', value: 47 }, { time: '2026-04-28', value: 46 },  // 玩股網實測 45.83%
-  { time: '2026-04-29', value: 45 },  // 估算
+  { time: '2026-04-29', value: 45 }, { time: '2026-04-30', value: 44 },
+  { time: '2026-05-04', value: 47 }, { time: '2026-05-05', value: 52 },
+  { time: '2026-05-06', value: 50 }, { time: '2026-05-07', value: 49 },
+  { time: '2026-05-08', value: 48 }, { time: '2026-05-11', value: 58 },  // 估算（全面強彈）
 ];
 
 // ── Symbol tabs ───────────────────────────────────────────────────────────────
@@ -159,16 +184,18 @@ const STATUS_CONFIG = {
 } as const;
 
 export default function Investment() {
-  const [activeTab,    setActiveTab]    = useState(SYMBOL_TABS[0].id);
-  const [marketData,   setMarketData]   = useState<{ margin: MarketDayData[]; inst: MarketDayData[] } | null>(null);
-  const [refreshTick,  setRefreshTick]  = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab,       setActiveTab]       = useState(SYMBOL_TABS[0].id);
+  const [marketData,      setMarketData]       = useState<{ margin: MarketDayData[]; inst: MarketDayData[] } | null>(null);
+  const [refreshTick,     setRefreshTick]      = useState(0);
+  const [isRefreshing,    setIsRefreshing]     = useState(false);
+  const [marketLoading,   setMarketLoading]    = useState(false);
+  const [marketTick,      setMarketTick]       = useState(0);   // increment to re-fetch market data
 
   // ── Real-time stock data hook ─────────────────────────────────────────────
   const { quotes, ohlcData, chipData: liveChipData, status, lastUpdated, refresh } =
     useMarketData(SYMBOL_DEFS, activeTab);
 
-  // ── Unified refresh handler ───────────────────────────────────────────────
+  // ── Unified chart refresh handler ─────────────────────────────────────────
   const handleRefresh = async () => {
     setIsRefreshing(true);
     setRefreshTick(t => t + 1);
@@ -176,13 +203,21 @@ export default function Investment() {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // ── Fetch real market indicator data on mount ─────────────────────────────
+  // ── Market indicator refresh (triggered by marketTick) ────────────────────
+  const refreshMarketIndicators = useCallback(() => {
+    setMarketTick(t => t + 1);
+  }, []);
+
   useEffect(() => {
     if (!isAPIConfigured()) return;
-    fetchMarket(30).then(data => {
-      if (data) setMarketData(data);
-    }).catch(() => {});
-  }, []);
+    let cancelled = false;
+    setMarketLoading(true);
+    fetchMarket(30)
+      .then(data => { if (!cancelled && data) setMarketData(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setMarketLoading(false); });
+    return () => { cancelled = true; };
+  }, [marketTick]);
 
   // ── Mock / seed data (fallback) ────────────────────────────────────────────
   const mockData = useMemo(() => {
@@ -245,12 +280,12 @@ export default function Investment() {
     longShort: LONG_SHORT_SEEDS.filter(d => d.time >= '2026-03-24'),
     brokers:   INST_SEEDS.filter(d => d.time >= '2026-03-24'),
     marginBal: generateLineData(
-      60, 3901, 0.004, 4542,
+      60, 3901, 0.004, 4860,
       MARGIN_SEEDS
     ).filter(d => d.time >= '2026-03-24'),
     breadth: {
-      ma20: generateLineData(60, 52, 0.06, 47, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
-      ma60: generateLineData(60, 55, 0.03, 46, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma20: generateLineData(60, 52, 0.06, 74, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma60: generateLineData(60, 55, 0.03, 58, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
     },
   }), []);
 
@@ -377,8 +412,21 @@ export default function Investment() {
 
       {/* ══ Market Dashboard ══════════════════════════════════════════════ */}
       <div className="dashboard-section animate-delay-300 animate-fade-in">
-        <span className="dashboard-eyebrow">Market Indicators</span>
-        <h2 className="dashboard-title">市場指標</h2>
+        <div className="dashboard-header-row">
+          <div>
+            <span className="dashboard-eyebrow">Market Indicators</span>
+            <h2 className="dashboard-title">市場指標</h2>
+          </div>
+          <button
+            className={`market-refresh-btn ${marketLoading ? 'loading' : ''}`}
+            onClick={refreshMarketIndicators}
+            disabled={marketLoading}
+            title={isAPIConfigured() ? '重新取得 TWSE 最新市場指標' : '需設定 API 才能取得即時資料'}
+          >
+            <span className={`market-refresh-icon ${marketLoading ? 'spinning' : ''}`}>↻</span>
+            {marketLoading ? '更新中…' : '一鍵更新至今日'}
+          </button>
+        </div>
         <div className="dashboard-divider" />
 
         <div className="dashboard-grid">
@@ -442,8 +490,8 @@ export default function Investment() {
 
       <p className="data-disclaimer" style={{ marginTop: '1rem' }}>
         {isLiveMarket
-          ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比參考玩股網，市場寬度以玩股網 04/28 實測值為基準。'
-          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–04/28）；散戶多空比參考玩股網圖表估算；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點。'}
+          ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比參考玩股網，市場寬度以玩股網最新實測值為基準。'
+          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–05/11）；散戶多空比參考玩股網圖表，05/11 後為估算值；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點，05/11 估算全面強彈。'}
       </p>
 
     </div>

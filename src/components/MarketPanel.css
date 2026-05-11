@@ -157,6 +157,58 @@
   margin-top: 3rem;
 }
 
+/* ── 市場指標 section header + one-click refresh ─────────────────────────── */
+.dashboard-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.market-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-indigo, #3730a3);
+  background: #eef2ff;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-bottom: 0.6rem;   /* align with bottom of title group */
+}
+.market-refresh-btn:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: var(--accent-indigo, #3730a3);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(79,70,229,0.18);
+}
+.market-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.market-refresh-btn.loading {
+  background: #e0e7ff;
+  border-color: var(--accent-indigo, #3730a3);
+}
+.market-refresh-icon {
+  font-size: 1rem;
+  font-style: normal;
+  display: inline-block;
+  transition: transform 0.3s;
+}
+.market-refresh-icon.spinning {
+  animation: spin-once 0.8s linear infinite;
+}
+
 .dashboard-eyebrow {
   font-size: 0.75rem;
   font-weight: 600;
