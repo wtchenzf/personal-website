@@ -625,17 +625,6 @@ export default function FlowScanner() {
             )}
           </p>
         </div>
-        <div className="flow-header-right">
-          <button
-            className={`flow-refresh-btn ${liveLoading ? 'loading' : ''}`}
-            onClick={triggerRefresh}
-            disabled={liveLoading || !isAPIConfigured()}
-            title={isAPIConfigured() ? '重新抓取即時數據' : '請設定 VITE_STOCK_API_URL'}
-          >
-            <span className={liveLoading ? 'spin' : ''}>🔄</span>
-            {liveLoading ? '更新中…' : '更新數據'}
-          </button>
-        </div>
         <div className="flow-summary-pills">
           <div className="summary-pill inflow">
             <span className="pill-label">5日淨流入</span>
@@ -650,6 +639,30 @@ export default function FlowScanner() {
             <span className="pill-val">{hotCount} 個</span>
           </div>
         </div>
+      </div>
+
+      {/* ── 一鍵更新列 ── */}
+      <div className="flow-update-bar">
+        <div className="flow-update-info">
+          <span className={`flow-update-dot ${liveLoading ? 'pulsing' : lastUpdated ? 'live' : 'static'}`} />
+          <span className="flow-update-label">
+            {liveLoading
+              ? '正在更新 K 線 · 籌碼資料，請稍候…'
+              : lastUpdated
+                ? `即時資料 · 已更新 ${lastUpdated.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}`
+                : `靜態資料基準 · ${SCAN_DATE} 盤後（點擊按鈕取得即時資料）`
+            }
+          </span>
+        </div>
+        <button
+          className={`flow-update-btn ${liveLoading ? 'loading' : ''}`}
+          onClick={triggerRefresh}
+          disabled={liveLoading}
+          title={isAPIConfigured() ? '重新取得即時 OHLC + 法人籌碼' : '需設定 VITE_STOCK_API_URL 才能取得即時資料'}
+        >
+          <span className={`flow-update-icon ${liveLoading ? 'spinning' : ''}`}>↻</span>
+          {liveLoading ? '更新中…' : '一鍵更新至今日'}
+        </button>
       </div>
 
       {/* ── Tabs ── */}

@@ -20,7 +20,111 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  flex: 1;
 }
+
+.flow-updated-at {
+  font-size: 0.72rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+/* ── 一鍵更新列 ────────────────────────────────────────────── */
+.flow-update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 1.5px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.65rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.flow-update-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.flow-update-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.flow-update-dot.static  { background: #94a3b8; }
+.flow-update-dot.live    { background: #22c55e; }
+.flow-update-dot.pulsing {
+  background: #3b82f6;
+  animation: flow-dot-pulse 1s ease-in-out infinite;
+}
+@keyframes flow-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.4); }
+}
+
+.flow-update-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e40af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flow-update-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+}
+.flow-update-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+  transform: translateY(-1px);
+}
+.flow-update-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+.flow-update-btn.loading {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+.flow-update-icon {
+  font-style: normal;
+  display: inline-block;
+  font-size: 1rem;
+  transition: transform 0.3s;
+}
+.flow-update-icon.spinning {
+  animation: flow-spin 0.8s linear infinite;
+}
+
+@keyframes flow-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* legacy spin for inline emoji uses */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spin { display: inline-block; animation: spin 0.8s linear infinite; }
 
 .flow-badge {
   display: inline-block;
@@ -664,5 +768,17 @@
   .flow-summary-pills {
     flex-direction: row;
     justify-content: flex-start;
+  }
+  .flow-update-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+  .flow-update-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .flow-update-label {
+    white-space: normal;
   }
 }
