@@ -213,8 +213,10 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     if (tab === 'chips') ensureChips(code);
   };
 
-  // Decide which data to show: live API > manual mock
-  const displayData = scanResult ?? MOCK_SCAN;
+  // Decide which data to show: live API (only when it has real hits) > manual mock
+  // If API returns empty rockets/reversals (no qualifying stocks found), fall back to MOCK_SCAN
+  const hasLiveResults = !!(scanResult && (scanResult.rockets.length > 0 || scanResult.reversals.length > 0));
+  const displayData = hasLiveResults ? scanResult! : MOCK_SCAN;
   const isRocket = scanMode === 'rocket';
   const stocks = isRocket ? displayData.rockets : displayData.reversals;
 
@@ -264,9 +266,9 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
         <div className="scan-results animate-fade-in">
           {/* ── Status bar ── */}
           <div className="scan-status-bar">
-            <span className={`scan-source-dot ${apiOn && scanResult ? 'live' : 'mock'}`} />
+            <span className={`scan-source-dot ${hasLiveResults ? 'live' : 'mock'}`} />
             <span className="scan-source-label">
-              {apiOn && scanResult
+              {hasLiveResults
                 ? `TWSE 即時資料 · 掃描日 ${displayData.scanDate}`
                 : `參考資料 · ${displayData.scanDate} (手動核對)`}
             </span>
