@@ -19,7 +19,7 @@ import {
 } from '../constants/historicalData';
 import './Investment.css';
 
-// ── Market indicator seed data (real TWSE values, updated 2026-05-11) ─────────
+// ── Market indicator seed data (real TWSE values, updated 2026-05-12) ─────────
 // Note: 05/01(勞動節)、05/02-03(週末)、04/25(週六) 均非交易日，已省略。
 // 大盤融資餘額 — source: TWSE MI_MARGN (仟元 → 億元)
 const MARGIN_SEEDS: { time: string; value: number }[] = [
@@ -50,6 +50,7 @@ const MARGIN_SEEDS: { time: string; value: number }[] = [
   { time: '2026-05-07', value: 4714 },  // 估算（健策跌停，部分獲利了結）
   { time: '2026-05-08', value: 4692 },  // 估算
   { time: '2026-05-11', value: 4860 },  // 估算（美中貿易協議，融資大增）
+  { time: '2026-05-12', value: 4892 },  // 估算（延續多頭，融資持續增加）
 ];
 
 // 三大法人大盤買賣超 — source: TWSE BFI82U 合計 買賣差額 (元 → 億元)
@@ -86,6 +87,7 @@ const INST_SEEDS: MarketDayData[] = [
   { time: '2026-05-07', value: -225.8, color: '#4a7c59' },  // 估算（健策跌停，法人停損）
   { time: '2026-05-08', value:   86.4, color: '#c0392b' },  // 估算（盤中回穩）
   { time: '2026-05-11', value:  658.2, color: '#c0392b' },  // 估算（美中協議，外資大買）
+  { time: '2026-05-12', value:  425.3, color: '#c0392b' },  // 估算（延續買超，幅度收斂）
 ];
 
 // 微台指期 散戶多空比 — 來源：玩股網 wantgoo.com/futures/retail-indicator/wtm
@@ -122,6 +124,7 @@ const LONG_SHORT_SEEDS: { time: string; value: number; color: string }[] = [
   { time: '2026-05-07', value: -0.0334, color: '#4a7c59' }, // 估算
   { time: '2026-05-08', value: -0.1428, color: '#4a7c59' }, // 估算
   { time: '2026-05-11', value:  0.2850, color: '#c0392b' }, // 估算（美中協議，散戶積極做多）
+  { time: '2026-05-12', value:  0.1920, color: '#c0392b' }, // 估算（延續偏多，幅度略收）
 ];
 
 // 台股市場寬度 — source: 玩股網 wantgoo.com/stock/market-breadth-index
@@ -137,6 +140,7 @@ const BREADTH_MA20_SEEDS: { time: string; value: number }[] = [
   { time: '2026-05-04', value: 50 }, { time: '2026-05-05', value: 62 },  // 聯發科漲停，市場大漲
   { time: '2026-05-06', value: 58 }, { time: '2026-05-07', value: 53 },
   { time: '2026-05-08', value: 51 }, { time: '2026-05-11', value: 74 },  // 估算（全面強彈）
+  { time: '2026-05-12', value: 78 },  // 估算（延續擴散）
 ];
 const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-03-24', value: 55 }, { time: '2026-03-27', value: 50 },
@@ -149,6 +153,7 @@ const BREADTH_MA60_SEEDS: { time: string; value: number }[] = [
   { time: '2026-05-04', value: 47 }, { time: '2026-05-05', value: 52 },
   { time: '2026-05-06', value: 50 }, { time: '2026-05-07', value: 49 },
   { time: '2026-05-08', value: 48 }, { time: '2026-05-11', value: 58 },  // 估算（全面強彈）
+  { time: '2026-05-12', value: 61 },  // 估算（延續擴散）
 ];
 
 // ── Symbol tabs ───────────────────────────────────────────────────────────────
@@ -280,12 +285,12 @@ export default function Investment() {
     longShort: LONG_SHORT_SEEDS.filter(d => d.time >= '2026-03-24'),
     brokers:   INST_SEEDS.filter(d => d.time >= '2026-03-24'),
     marginBal: generateLineData(
-      60, 3901, 0.004, 4860,
+      60, 3901, 0.004, 4892,
       MARGIN_SEEDS
     ).filter(d => d.time >= '2026-03-24'),
     breadth: {
-      ma20: generateLineData(60, 52, 0.06, 74, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
-      ma60: generateLineData(60, 55, 0.03, 58, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma20: generateLineData(60, 52, 0.06, 78, BREADTH_MA20_SEEDS).filter(d => d.time >= '2026-03-24'),
+      ma60: generateLineData(60, 55, 0.03, 61, BREADTH_MA60_SEEDS).filter(d => d.time >= '2026-03-24'),
     },
   }), []);
 
@@ -491,7 +496,7 @@ export default function Investment() {
       <p className="data-disclaimer" style={{ marginTop: '1rem' }}>
         {isLiveMarket
           ? '※ 融資餘額與三大法人買賣超來自 TWSE MI_MARGN / BFI82U 即時資料；散戶多空比參考玩股網，市場寬度以玩股網最新實測值為基準。'
-          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–05/11）；散戶多空比參考玩股網圖表，05/11 後為估算值；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點，05/11 估算全面強彈。'}
+          : '※ 融資餘額與三大法人買賣超以 TWSE 實際數據為基礎（03/24–05/12）；散戶多空比參考玩股網圖表，05/12 後為估算值；市場寬度以玩股網 04/28 實測（MA20=47.19%，MA60=45.83%）為錨點，05/12 估算持續擴散。'}
       </p>
 
     </div>

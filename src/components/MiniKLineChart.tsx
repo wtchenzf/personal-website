@@ -96,7 +96,7 @@ export default function MiniKLineChart({ data, height = 230 }: Props) {
         <span className="mkl-item mkl-down">▼ 跌</span>
         <span className="mkl-item mkl-ma5">── MA5</span>
         <span className="mkl-item mkl-ma10">── MA10</span>
-        <span className="mkl-item mkl-range">近1個月 (03/26 – 04/24)</span>
+        <span className="mkl-item mkl-range">近1個月 (04/13 – 05/12)</span>
       </div>
       <div ref={containerRef} />
     </div>
