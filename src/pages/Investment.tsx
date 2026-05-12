@@ -245,7 +245,7 @@ export default function Investment() {
         let seed: any = undefined;
         if      (t.id === '2330') seed = CHIP_DATA_2330;
         else if (t.id === '2454') seed = CHIP_DATA_2454;
-        const chipScale = t.id === '2454' ? 500 : 300;
+        const chipScale = t.id === '2454' ? 3000 : t.id === '2330' ? 8000 : 300;
         const generated = generateChipData(60, chipScale, seed);
         c[t.id] = generated.filter((d: any) => d.time >= '2026-04-01');
       }

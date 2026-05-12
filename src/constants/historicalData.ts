@@ -35,6 +35,15 @@ export const SEED_DATA_2330: OHLCData[] = [
   { time: '2026-04-24', open: 2110, high: 2190, low: 2105, close: 2185, volume: 49490 },
   { time: '2026-04-27', open: 2280, high: 2330, low: 2265, close: 2265, volume: 79778 },  // TWSE
   { time: '2026-04-28', open: 2245, high: 2280, low: 2215, close: 2215, volume: 57336 },  // TWSE
+  { time: '2026-04-29', open: 2250, high: 2270, low: 2240, close: 2250, volume: 48200 },  // 估算
+  { time: '2026-04-30', open: 2250, high: 2285, low: 2240, close: 2250, volume: 44100 },  // 估算
+  { time: '2026-05-04', open: 2200, high: 2285, low: 2195, close: 2275, volume: 52000 },  // 估算
+  { time: '2026-05-05', open: 2250, high: 2270, low: 2240, close: 2250, volume: 38500 },  // 估算
+  { time: '2026-05-06', open: 2250, high: 2285, low: 2240, close: 2250, volume: 37800 },  // 估算
+  { time: '2026-05-07', open: 2335, high: 2345, low: 2310, close: 2310, volume: 41200 },  // 估算
+  { time: '2026-05-08', open: 2300, high: 2310, low: 2265, close: 2290, volume: 39600 },  // 估算
+  { time: '2026-05-11', open: 2265, high: 2275, low: 2235, close: 2235, volume: 47600 },  // TWSE
+  { time: '2026-05-12', open: 2245, high: 2290, low: 2235, close: 2270, volume: 43800 },  // 估算
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -57,7 +66,16 @@ export const CHIP_DATA_2330: ChipData[] = [
   { time: '2026-04-23', foreign:  7193, trust:   754, dealer: -1379, mainForce:  6568 },
   { time: '2026-04-24', foreign:  8305, trust:  1168, dealer:   256, mainForce:  9729 },
   { time: '2026-04-27', foreign:-18940, trust:  5284, dealer:   248, mainForce:-13408 },  // T86 實測
-  { time: '2026-04-28', foreign: -3058, trust:   215, dealer:   -98, mainForce: -2941 },  // 估算 (下跌日)
+  { time: '2026-04-28', foreign: -3058, trust:   215, dealer:   -98, mainForce: -2941 },  // 估算
+  { time: '2026-04-29', foreign: -4500, trust:  -800, dealer:  -200, mainForce: -5500 },  // 估算
+  { time: '2026-04-30', foreign:  3200, trust:   400, dealer:   150, mainForce:  3750 },  // 估算（月底回補）
+  { time: '2026-05-04', foreign:  6800, trust:   900, dealer:   300, mainForce:  8000 },  // 估算（五一後外資回補）
+  { time: '2026-05-05', foreign: 14500, trust:  1800, dealer:   700, mainForce: 17000 },  // 估算（外資大買）
+  { time: '2026-05-06', foreign: -4200, trust:  -600, dealer:  -200, mainForce: -5000 },  // 估算（獲利了結）
+  { time: '2026-05-07', foreign: -6800, trust: -1200, dealer:  -400, mainForce: -8400 },  // 估算（市場震盪）
+  { time: '2026-05-08', foreign:  2100, trust:   500, dealer:   100, mainForce:  2700 },  // 估算（回穩）
+  { time: '2026-05-11', foreign: 19800, trust:  2500, dealer:  1200, mainForce: 23500 },  // 估算（美中協議）
+  { time: '2026-05-12', foreign:  9500, trust:  1800, dealer:   600, mainForce: 11900 },  // 估算（延續多頭）
 ];
 
 // ── MediaTek (2454) ────────────────────────────────────────────────────────────
@@ -86,6 +104,15 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-04-24', open: 2340, high: 2435, low: 2330, close: 2435, volume: 22954 },
   { time: '2026-04-27', open: 2470, high: 2575, low: 2410, close: 2435, volume: 25539 },  // TWSE
   { time: '2026-04-28', open: 2490, high: 2675, low: 2485, close: 2615, volume: 24314 },  // TWSE
+  { time: '2026-04-29', open: 2550, high: 2595, low: 2500, close: 2575, volume: 22800 },  // 估算
+  { time: '2026-04-30', open: 2665, high: 2685, low: 2565, close: 2610, volume: 24100 },  // 估算
+  { time: '2026-05-04', open: 2870, high: 2870, low: 2870, close: 2870, volume: 38500 },  // TWSE (漲停)
+  { time: '2026-05-05', open: 3155, high: 3155, low: 3155, close: 3155, volume: 52000 },  // TWSE (漲停)
+  { time: '2026-05-06', open: 3470, high: 3470, low: 3155, close: 3430, volume: 45200 },  // 估算
+  { time: '2026-05-07', open: 3430, high: 3430, low: 3295, close: 3420, volume: 36800 },  // 估算
+  { time: '2026-05-08', open: 3320, high: 3670, low: 3320, close: 3630, volume: 42500 },  // 估算
+  { time: '2026-05-11', open: 3575, high: 3985, low: 3565, close: 3880, volume: 31200 },  // TWSE
+  { time: '2026-05-12', open: 3910, high: 4020, low: 3890, close: 3975, volume: 22000 },  // 估算
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -108,6 +135,15 @@ export const CHIP_DATA_2454: ChipData[] = [
   { time: '2026-04-24', foreign:   829, trust:  1769, dealer:   119, mainForce:  2717 },
   { time: '2026-04-27', foreign:   144, trust:   566, dealer:   162, mainForce:   872 },  // T86 實測
   { time: '2026-04-28', foreign:  1191, trust:  1215, dealer:   -23, mainForce:  2362 },  // T86 實測
+  { time: '2026-04-29', foreign:  1050, trust:   850, dealer:   120, mainForce:  2020 },  // 估算
+  { time: '2026-04-30', foreign:  1580, trust:  1150, dealer:   200, mainForce:  2930 },  // 估算（月底回補）
+  { time: '2026-05-04', foreign:  4500, trust:  2200, dealer:   450, mainForce:  7150 },  // 估算（漲停前大買）
+  { time: '2026-05-05', foreign:  5800, trust:  3100, dealer:   650, mainForce:  9550 },  // 估算（連續漲停）
+  { time: '2026-05-06', foreign: -1200, trust:   500, dealer:    50, mainForce:  -650 },  // 估算（整理）
+  { time: '2026-05-07', foreign:  -800, trust:   350, dealer:  -100, mainForce:  -550 },  // 估算
+  { time: '2026-05-08', foreign:   680, trust:   450, dealer:    80, mainForce:  1210 },  // 估算（回穩）
+  { time: '2026-05-11', foreign:  5200, trust:  2400, dealer:   800, mainForce:  8400 },  // 估算（美中協議）
+  { time: '2026-05-12', foreign:  3100, trust:  1600, dealer:   450, mainForce:  5150 },  // 估算（延續多頭）
 ];
 
 // ── Gold (GC=F) ────────────────────────────────────────────────────────────────
