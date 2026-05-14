@@ -97,6 +97,32 @@ const MOCK_OHLC: Record<string, OHLCBar[]> = {
   '5274': buildOHLC([[0,1780],[7,1600],[8,1610],[11,1760],[16,2000],[21,2380],[25,2150],[29,1950],[31,2060],[32,2100]], 0.025, 5274),
 };
 
+// ── Mock chip data (generated from OHLC price movements, deterministic) ────────
+// Scale = rough daily institutional volume (張) per stock
+const CHIP_SCALE: Record<string, number> = {
+  '3661': 450,  '2454': 2800, '6442': 280,  '3037': 3800, '3017': 1100,
+  '3653': 420,  '6669': 580,  '3711': 2800, '8996': 580,  '5274': 200,
+};
+
+function buildMockChips(code: string, bars: OHLCBar[]): ChipData[] {
+  const rand  = mkRng(parseInt(code, 10) ^ 0xC0FFEE);
+  const scale = CHIP_SCALE[code] ?? 400;
+  return bars.map(bar => {
+    const pct   = (bar.close - bar.open) / Math.max(bar.open, 1);
+    const sign  = pct >= 0 ? 1 : -1;
+    const mag   = Math.abs(pct) * scale * 7 * (0.6 + rand() * 0.8);
+    const foreign  = Math.round(sign * mag * (0.55 + rand() * 0.2));
+    const trust    = Math.round(sign * mag * (0.15 + rand() * 0.12));
+    const dealer   = Math.round(sign * mag * (0.05 + rand() * 0.06));
+    return { time: bar.time, foreign, trust, dealer, mainForce: foreign + trust + dealer };
+  });
+}
+
+// Pre-build mock chips for all MOCK_OHLC stocks (runs once at module load)
+const MOCK_CHIPS: Record<string, ChipData[]> = Object.fromEntries(
+  Object.entries(MOCK_OHLC).map(([code, bars]) => [code, buildMockChips(code, bars)])
+);
+
 // Dynamic scan date: last entry of TRADING_DATES (auto-follows today)
 const MOCK_SCAN_DATE = TRADING_DATES.at(-1)!.slice(5).replace('-', '/');
 
@@ -323,7 +349,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
                 activeDetailTab={activeDetailTab}
                 onToggle={() => toggleExpand(stock.code)}
                 onTabChange={(tab) => handleTabChange(tab, stock.code)}
-                chipHistory={liveChips[stock.code] ?? []}
+                chipHistory={liveChips[stock.code] ?? MOCK_CHIPS[stock.code] ?? []}
                 ohlcBars={liveOHLC[stock.code] ?? MOCK_OHLC[stock.code] ?? []}
               />
             ))}
@@ -518,7 +544,7 @@ function ChipDetailView({
     return (
       <div className="main-force-view">
         <p style={{ color: 'var(--text-secondary)', padding: '1rem 0' }}>
-          籌碼資料載入中…（需 API 連線）
+          籌碼資料載入中…
         </p>
       </div>
     );
