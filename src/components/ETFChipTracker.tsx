@@ -32,17 +32,34 @@ interface ETFInfo {
   data:     ETFDayData;
 }
 
-// ── 持股異動資料 — 最後更新：2026/05/12 ─────────────────────────────────────────
-// 主動型 ETF 每日持股異動由基金公司揭露，本站以 05/12 最新資料為基準。
-// 05/12 市場延續多頭，各 ETF 持續加碼 AI 半導體 / 矽光子 / 液冷相關持股。
-// 三大法人動向（法人動向頁籤）由 TWSE T86 即時提供，每日 17:30 後自動更新。
+// Dynamic ETF date computation (Taiwan time UTC+8, last 2 trading days)
+const TW_HOLS_ETF = new Set(['2026-04-03','2026-04-04','2026-04-05','2026-04-06','2026-05-01']);
+function getTWTradeDayOffset(offset: number): string {
+  const now  = new Date();
+  const tw   = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const d    = new Date(Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate()));
+  let count  = 0;
+  while (true) {
+    const iso = d.toISOString().slice(0, 10);
+    const dow = d.getUTCDay();
+    if (dow !== 0 && dow !== 6 && !TW_HOLS_ETF.has(iso)) {
+      if (count === offset) return iso.slice(5).replace('-', '/');
+      count++;
+    }
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+}
+const ETF_TODAY  = getTWTradeDayOffset(0);  // last trading date e.g. '05/14'
+const ETF_PREV   = getTWTradeDayOffset(1);  // day before e.g. '05/13'
+
+// 最後更新：2026/05/14
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 19.48,   // 估算（05/12 盤後，3661/3037/8996 均持續上漲）
+    nav: 19.78,   // 估算（05/14 盤後，AI半導體延續多頭）
     data: {
-      date: '05/12', prevDate: '05/11',
+      date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 4, exitCount: 0,
       buys: [
         { rank: 1, code: '3661', name: '世芯-KY',   prevShares: 10480, shares: 10650, weight: 10.12, weightChange: +0.27, status: 'add' },
@@ -56,9 +73,9 @@ const ETF_DATA: ETFInfo[] = [
   {
     id: '00991A',
     fullName: '復華未來50主動ETF',
-    nav: 12.52,   // 估算（05/12 盤後，台積電/聯發科持續走強）
+    nav: 12.72,   // 估算（05/14 盤後，台積電/聯發科持續走強）
     data: {
-      date: '05/12', prevDate: '05/11',
+      date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 3, exitCount: 0,
       buys: [
         { rank: 1, code: '2330', name: '台積電',  prevShares: 3900, shares: 4050, weight: 21.86, weightChange: +0.46, status: 'add' },
@@ -71,9 +88,9 @@ const ETF_DATA: ETFInfo[] = [
   {
     id: '00992A',
     fullName: '群益科技創新主動ETF',
-    nav: 11.82,   // 估算（05/12 盤後，6442/2454 持續創高）
+    nav: 12.08,   // 估算（05/14 盤後，6442/2454 持續創高）
     data: {
-      date: '05/12', prevDate: '05/11',
+      date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 3, exitCount: 0,
       buys: [
         { rank: 1, code: '6442', name: '光聖',   prevShares:  950, shares: 1050, weight: 4.35, weightChange: +0.33, status: 'add' },

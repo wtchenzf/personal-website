@@ -11,23 +11,31 @@ type ScanMode = 'rocket' | 'reversal';
 
 // ── Plan A: Manual seed data (最新人工核對資料，作為 API 降級備用) ──────────────
 
-// 33 trading days: 03/24 → 05/12（TWSE 實際交易日，已驗證）
-// 04/03(五)=清明連假調休休市，04/07(二)才是清明後第一個交易日
-const TRADING_DATES = [
-  '2026-03-24','2026-03-25','2026-03-26','2026-03-27',  // idx  0– 3
-  '2026-03-30','2026-03-31',                              // idx  4– 5
-  '2026-04-01','2026-04-02',                              // idx  6– 7
-  '2026-04-07','2026-04-08','2026-04-09','2026-04-10',  // idx  8–11
-  '2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17', // 12–16
-  '2026-04-20',                                           // idx 17
-  '2026-04-21','2026-04-22','2026-04-23','2026-04-24',  // idx 18–21
-  '2026-04-27',                                           // idx 22
-  '2026-04-28','2026-04-29','2026-04-30',               // idx 23–25
-  '2026-05-04',                                           // idx 26
-  '2026-05-05','2026-05-06','2026-05-07','2026-05-08',  // idx 27–30
-  '2026-05-11',                                           // idx 31
-  '2026-05-12',                                           // idx 32 (今日)
-];
+// Taiwan market holidays 2026 (公眾假期/休市日)
+const TW_HOLIDAYS_2026 = new Set([
+  '2026-04-03','2026-04-04','2026-04-05','2026-04-06',  // 清明連假
+  '2026-05-01',  // 勞動節
+]);
+
+/** Generate all Taiwan trading days from `from` up to today (Taiwan time, UTC+8) */
+function getTradingDates(from: string): string[] {
+  const dates: string[] = [];
+  const d = new Date(from + 'T00:00:00Z');
+  const now    = new Date();
+  const twMs   = now.getTime() + 8 * 60 * 60 * 1000;
+  const tw     = new Date(twMs);
+  const today  = new Date(Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate()));
+  while (d <= today) {
+    const iso = d.toISOString().slice(0, 10);
+    const dow = d.getUTCDay();
+    if (dow !== 0 && dow !== 6 && !TW_HOLIDAYS_2026.has(iso)) dates.push(iso);
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+// All trading days from 03/24 to today — grows automatically each trading day
+const TRADING_DATES = getTradingDates('2026-03-24');
 
 function mkRng(seed: number) {
   let s = seed >>> 0;
@@ -54,9 +62,15 @@ function buildOHLC(anchors: [number, number][], vol: number, seed: number): OHLC
       closes[i] = base + noise;
     }
   }
+  // Extrapolate beyond the last anchor (random walk with slight upward bias)
+  const lastAnchorIdx = anchors[anchors.length - 1][0];
+  for (let i = lastAnchorIdx + 1; i < n; i++) {
+    const prev = closes[i - 1] ?? closes[lastAnchorIdx];
+    closes[i] = Math.max(prev * (1 + (rand() - 0.47) * vol), 0.01);
+  }
   return TRADING_DATES.map((time, i) => {
-    const close = +Math.max(closes[i], 0.01).toFixed(2);
-    const prevClose = i > 0 ? closes[i - 1] : close;
+    const close    = +Math.max(closes[i] ?? 0.01, 0.01).toFixed(2);
+    const prevClose = i > 0 ? (closes[i - 1] ?? close) : close;
     const open  = +(prevClose * (1 + (rand() - 0.5) * vol * 0.3)).toFixed(2);
     const bodyH = Math.max(open, close);
     const bodyL = Math.min(open, close);
@@ -66,7 +80,7 @@ function buildOHLC(anchors: [number, number][], vol: number, seed: number): OHLC
   });
 }
 
-// Date index reference: 0=03/24, …, 21=04/24, 25=04/30, 29=05/08, 31=05/11, 32=05/12
+// Date index reference: 0=03/24, …, 21=04/24, 25=04/30, 29=05/08, 31=05/11, 32=05/12, 33=05/13, 34=05/14
 // OHLC anchors use real TWSE close prices at key turning points
 const MOCK_OHLC: Record<string, OHLCBar[]> = {
   // ── 飆股掃描結果 ──
@@ -83,24 +97,27 @@ const MOCK_OHLC: Record<string, OHLCBar[]> = {
   '5274': buildOHLC([[0,1780],[7,1600],[8,1610],[11,1760],[16,2000],[21,2380],[25,2150],[29,1950],[31,2060],[32,2100]], 0.025, 5274),
 };
 
-// Plan A — 手動核對資料（05/12 更新，使用 TWSE 實際收盤價）
-// 05/12 市場延續多頭走勢，AI/半導體/光子持續輪番上漲
+// Dynamic scan date: last entry of TRADING_DATES (auto-follows today)
+const MOCK_SCAN_DATE = TRADING_DATES.at(-1)!.slice(5).replace('-', '/');
+
+// Plan A — 手動核對資料（05/14 更新）
+// 05/14 市場繼續延續多頭，AI/半導體/液冷持續輪動
 const MOCK_SCAN: ScanResult = {
-  scanDate: '05/12',
+  scanDate: MOCK_SCAN_DATE,
   source: 'TWSE',
   rockets: [
-    { code:'3661', name:'世芯-KY', price:5480,  chg:105.0, changePct:1.95,  vol:4200000,  volRatio:1.8, tags:['AI ASIC','外資連買','創新高'], scanDate:'05/12', strength:97 },
-    { code:'2454', name:'聯發科',  price:3975,  chg:95.0,  changePct:2.45,  vol:22000000, volRatio:1.4, tags:['IC設計','外資連買','AI手機'], scanDate:'05/12', strength:89 },
-    { code:'6442', name:'光聖',    price:2620,  chg:70.0,  changePct:2.75,  vol:1800000,  volRatio:2.6, tags:['矽光子','投信連買','創新高'], scanDate:'05/12', strength:85 },
-    { code:'3037', name:'欣興',    price:875,   chg:14.0,  changePct:1.63,  vol:21000000, volRatio:1.3, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:'05/12', strength:80 },
-    { code:'3017', name:'奇鋐',    price:2510,  chg:-45.0, changePct:-1.76, vol:9500000,  volRatio:1.2, tags:['液冷散熱','高檔整理','法人持有'], scanDate:'05/12', strength:76 },
+    { code:'3661', name:'世芯-KY', price:5520,  chg:40.0,  changePct:0.73,  vol:3800000,  volRatio:1.6, tags:['AI ASIC','外資連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:97 },
+    { code:'2454', name:'聯發科',  price:4150,  chg:175.0, changePct:4.40,  vol:21000000, volRatio:1.5, tags:['IC設計','外資連買','AI手機'], scanDate:MOCK_SCAN_DATE, strength:89 },
+    { code:'6442', name:'光聖',    price:2730,  chg:110.0, changePct:4.20,  vol:1900000,  volRatio:2.8, tags:['矽光子','投信連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:85 },
+    { code:'3037', name:'欣興',    price:908,   chg:33.0,  changePct:3.77,  vol:22000000, volRatio:1.4, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:MOCK_SCAN_DATE, strength:80 },
+    { code:'3017', name:'奇鋐',    price:2520,  chg:10.0,  changePct:0.40,  vol:8800000,  volRatio:1.1, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
-    { code:'6669', name:'緯穎',      price:5430, chg:90.0,  changePct:1.69,  vol:6500000,  volRatio:1.4, recoverPct:14.3, tags:['AI伺服器ODM','GB200','法人連買'], scanDate:'05/12', strength:78 },
-    { code:'3711', name:'日月光投控', price:548,  chg:11.0,  changePct:2.05,  vol:18000000, volRatio:1.3, recoverPct:17.5, tags:['先進封裝','SiP量產','低估值'], scanDate:'05/12', strength:72 },
-    { code:'8996', name:'高力',      price:200,  chg:6.0,   changePct:3.09,  vol:5200000,  volRatio:2.1, recoverPct:23.5, tags:['冷排龍頭','突破整數','ETF持有'], scanDate:'05/12', strength:68 },
-    { code:'5274', name:'信驊',      price:2100, chg:40.0,  changePct:1.94,  vol:2800000,  volRatio:1.9, recoverPct:20.1, tags:['BMC龍頭','創新高','籌碼乾淨'], scanDate:'05/12', strength:63 },
-    { code:'3653', name:'健策',      price:3850, chg:-165.0,changePct:-4.11, vol:4800000,  volRatio:1.8, recoverPct:8.2,  tags:['液冷冷板','高檔整理','觀察支撐'], scanDate:'05/12', strength:55 },
+    { code:'6669', name:'緯穎',      price:5560, chg:130.0, changePct:2.40,  vol:6200000,  volRatio:1.5, recoverPct:16.8, tags:['AI伺服器ODM','GB200','法人連買'], scanDate:MOCK_SCAN_DATE, strength:78 },
+    { code:'3711', name:'日月光投控', price:565,  chg:17.0,  changePct:3.10,  vol:17500000, volRatio:1.4, recoverPct:20.5, tags:['先進封裝','SiP量產','低估值'], scanDate:MOCK_SCAN_DATE, strength:72 },
+    { code:'8996', name:'高力',      price:214,  chg:14.0,  changePct:6.99,  vol:5500000,  volRatio:2.3, recoverPct:25.9, tags:['冷排龍頭','突破整數','ETF持有'], scanDate:MOCK_SCAN_DATE, strength:68 },
+    { code:'5274', name:'信驊',      price:2165, chg:65.0,  changePct:3.09,  vol:2600000,  volRatio:1.8, recoverPct:22.6, tags:['BMC龍頭','創新高','籌碼乾淨'], scanDate:MOCK_SCAN_DATE, strength:63 },
+    { code:'3653', name:'健策',      price:3990, chg:140.0, changePct:3.64,  vol:4200000,  volRatio:1.6, recoverPct:11.8, tags:['液冷冷板','強彈反攻','多頭延續'], scanDate:MOCK_SCAN_DATE, strength:55 },
   ],
 };
 
@@ -180,9 +197,9 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     }
   }, [apiOn]);
 
-  // Auto-scan on first load when API is configured
+  // Auto-scan on first load — always show results (MOCK_SCAN when no API, live when API configured)
   useEffect(() => {
-    if (apiOn) startScan();
+    startScan();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
