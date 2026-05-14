@@ -46,6 +46,7 @@ export const SEED_DATA_2330: OHLCData[] = [
   { time: '2026-05-12', open: 2245, high: 2290, low: 2235, close: 2270, volume: 43800 },  // 估算
   { time: '2026-05-13', open: 2275, high: 2328, low: 2268, close: 2305, volume: 41200 },  // 估算
   { time: '2026-05-14', open: 2308, high: 2338, low: 2292, close: 2320, volume: 38500 },  // 估算
+  { time: '2026-05-15', open: 2322, high: 2352, low: 2315, close: 2335, volume: 35200 },  // 估算（週線收高）
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -80,6 +81,7 @@ export const CHIP_DATA_2330: ChipData[] = [
   { time: '2026-05-12', foreign:  9500, trust:  1800, dealer:   600, mainForce: 11900 },  // 估算（延續多頭）
   { time: '2026-05-13', foreign:  8500, trust:  1600, dealer:   500, mainForce: 10600 },  // 估算（持續買超）
   { time: '2026-05-14', foreign:  6200, trust:  1300, dealer:   380, mainForce:  7880 },  // 估算（法人小幅縮手）
+  { time: '2026-05-15', foreign:  7800, trust:  1500, dealer:   450, mainForce:  9750 },  // 估算（週五外資積極買超）
 ];
 
 // ── MediaTek (2454) ────────────────────────────────────────────────────────────
@@ -119,6 +121,7 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-05-12', open: 3910, high: 4020, low: 3890, close: 3975, volume: 22000 },  // 估算
   { time: '2026-05-13', open: 3988, high: 4125, low: 3975, close: 4080, volume: 21500 },  // 估算
   { time: '2026-05-14', open: 4085, high: 4178, low: 4060, close: 4150, volume: 18800 },  // 估算
+  { time: '2026-05-15', open: 4155, high: 4248, low: 4130, close: 4230, volume: 17200 },  // 估算（週線收高）
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -152,6 +155,7 @@ export const CHIP_DATA_2454: ChipData[] = [
   { time: '2026-05-12', foreign:  3100, trust:  1600, dealer:   450, mainForce:  5150 },  // 估算（延續多頭）
   { time: '2026-05-13', foreign:  4200, trust:  2000, dealer:   560, mainForce:  6760 },  // 估算（持續買超）
   { time: '2026-05-14', foreign:  3400, trust:  1750, dealer:   410, mainForce:  5560 },  // 估算（法人持續佈局）
+  { time: '2026-05-15', foreign:  4500, trust:  2200, dealer:   600, mainForce:  7300 },  // 估算（週五法人積極布局）
 ];
 
 // ── Gold (GC=F) ────────────────────────────────────────────────────────────────

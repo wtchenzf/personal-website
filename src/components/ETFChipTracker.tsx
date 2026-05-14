@@ -52,12 +52,12 @@ function getTWTradeDayOffset(offset: number): string {
 const ETF_TODAY  = getTWTradeDayOffset(0);  // last trading date e.g. '05/14'
 const ETF_PREV   = getTWTradeDayOffset(1);  // day before e.g. '05/13'
 
-// 最後更新：2026/05/14
+// 最後更新：2026/05/15
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 19.78,   // 估算（05/14 盤後，AI半導體延續多頭）
+    nav: 20.05,   // 估算（05/15 盤後，AI/液冷持續上漲）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 4, exitCount: 0,
@@ -73,7 +73,7 @@ const ETF_DATA: ETFInfo[] = [
   {
     id: '00991A',
     fullName: '復華未來50主動ETF',
-    nav: 12.72,   // 估算（05/14 盤後，台積電/聯發科持續走強）
+    nav: 12.92,   // 估算（05/15 盤後，台積電/聯發科持續走強）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 3, exitCount: 0,
@@ -88,7 +88,7 @@ const ETF_DATA: ETFInfo[] = [
   {
     id: '00992A',
     fullName: '群益科技創新主動ETF',
-    nav: 12.08,   // 估算（05/14 盤後，6442/2454 持續創高）
+    nav: 12.35,   // 估算（05/15 盤後，6442/2454 持續創高）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
       newCount: 0, addCount: 3, exitCount: 0,

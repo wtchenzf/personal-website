@@ -99,21 +99,23 @@ const MOCK_OHLC: Record<string, OHLCBar[]> = {
 
 // ── Mock chip data (generated from OHLC price movements, deterministic) ────────
 // Scale = rough daily institutional volume (張) per stock
+// Daily institutional net buy/sell scale (張) — calibrated to real TWSE T86 ranges
 const CHIP_SCALE: Record<string, number> = {
-  '3661': 450,  '2454': 2800, '6442': 280,  '3037': 3800, '3017': 1100,
-  '3653': 420,  '6669': 580,  '3711': 2800, '8996': 580,  '5274': 200,
+  '3661': 500,  '2454': 3500, '6442': 350,  '3037': 4500, '3017': 1500,
+  '3653': 500,  '6669': 800,  '3711': 3500, '8996': 700,  '5274': 280,
 };
 
 function buildMockChips(code: string, bars: OHLCBar[]): ChipData[] {
   const rand  = mkRng(parseInt(code, 10) ^ 0xC0FFEE);
   const scale = CHIP_SCALE[code] ?? 400;
   return bars.map(bar => {
-    const pct   = (bar.close - bar.open) / Math.max(bar.open, 1);
-    const sign  = pct >= 0 ? 1 : -1;
-    const mag   = Math.abs(pct) * scale * 7 * (0.6 + rand() * 0.8);
-    const foreign  = Math.round(sign * mag * (0.55 + rand() * 0.2));
-    const trust    = Math.round(sign * mag * (0.15 + rand() * 0.12));
-    const dealer   = Math.round(sign * mag * (0.05 + rand() * 0.06));
+    const pct  = (bar.close - bar.open) / Math.max(bar.open, 1);
+    const sign = pct >= 0 ? 1 : -1;
+    // Base activity floor (scale * 0.8) + price-driven component — ensures realistic values even on flat days
+    const mag  = (scale * 0.8 + Math.abs(pct) * scale * 10) * (0.5 + rand() * 0.9);
+    const foreign = Math.round(sign * mag * (0.55 + rand() * 0.18));
+    const trust   = Math.round(sign * mag * (0.15 + rand() * 0.10));
+    const dealer  = Math.round(sign * mag * (0.06 + rand() * 0.05));
     return { time: bar.time, foreign, trust, dealer, mainForce: foreign + trust + dealer };
   });
 }
@@ -126,24 +128,24 @@ const MOCK_CHIPS: Record<string, ChipData[]> = Object.fromEntries(
 // Dynamic scan date: last entry of TRADING_DATES (auto-follows today)
 const MOCK_SCAN_DATE = TRADING_DATES.at(-1)!.slice(5).replace('-', '/');
 
-// Plan A — 手動核對資料（05/14 更新）
-// 05/14 市場繼續延續多頭，AI/半導體/液冷持續輪動
+// Plan A — 手動核對資料（05/15 更新）
+// 05/15 (五) AI/半導體多頭延續，液冷散熱族群同步走強，週線收高
 const MOCK_SCAN: ScanResult = {
   scanDate: MOCK_SCAN_DATE,
   source: 'TWSE',
   rockets: [
-    { code:'3661', name:'世芯-KY', price:5520,  chg:40.0,  changePct:0.73,  vol:3800000,  volRatio:1.6, tags:['AI ASIC','外資連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:97 },
-    { code:'2454', name:'聯發科',  price:4150,  chg:175.0, changePct:4.40,  vol:21000000, volRatio:1.5, tags:['IC設計','外資連買','AI手機'], scanDate:MOCK_SCAN_DATE, strength:89 },
-    { code:'6442', name:'光聖',    price:2730,  chg:110.0, changePct:4.20,  vol:1900000,  volRatio:2.8, tags:['矽光子','投信連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:85 },
-    { code:'3037', name:'欣興',    price:908,   chg:33.0,  changePct:3.77,  vol:22000000, volRatio:1.4, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:MOCK_SCAN_DATE, strength:80 },
-    { code:'3017', name:'奇鋐',    price:2520,  chg:10.0,  changePct:0.40,  vol:8800000,  volRatio:1.1, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
+    { code:'3661', name:'世芯-KY', price:5580,  chg:60.0,  changePct:1.09,  vol:4100000,  volRatio:1.7, tags:['AI ASIC','外資連買','創週高'], scanDate:MOCK_SCAN_DATE, strength:97 },
+    { code:'2454', name:'聯發科',  price:4230,  chg:80.0,  changePct:1.93,  vol:19500000, volRatio:1.4, tags:['IC設計','外資連買','AI手機'], scanDate:MOCK_SCAN_DATE, strength:89 },
+    { code:'6442', name:'光聖',    price:2815,  chg:85.0,  changePct:3.12,  vol:2100000,  volRatio:3.0, tags:['矽光子','投信連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:85 },
+    { code:'3037', name:'欣興',    price:925,   chg:17.0,  changePct:1.87,  vol:20500000, volRatio:1.3, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:MOCK_SCAN_DATE, strength:80 },
+    { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
-    { code:'6669', name:'緯穎',      price:5560, chg:130.0, changePct:2.40,  vol:6200000,  volRatio:1.5, recoverPct:16.8, tags:['AI伺服器ODM','GB200','法人連買'], scanDate:MOCK_SCAN_DATE, strength:78 },
-    { code:'3711', name:'日月光投控', price:565,  chg:17.0,  changePct:3.10,  vol:17500000, volRatio:1.4, recoverPct:20.5, tags:['先進封裝','SiP量產','低估值'], scanDate:MOCK_SCAN_DATE, strength:72 },
-    { code:'8996', name:'高力',      price:214,  chg:14.0,  changePct:6.99,  vol:5500000,  volRatio:2.3, recoverPct:25.9, tags:['冷排龍頭','突破整數','ETF持有'], scanDate:MOCK_SCAN_DATE, strength:68 },
-    { code:'5274', name:'信驊',      price:2165, chg:65.0,  changePct:3.09,  vol:2600000,  volRatio:1.8, recoverPct:22.6, tags:['BMC龍頭','創新高','籌碼乾淨'], scanDate:MOCK_SCAN_DATE, strength:63 },
-    { code:'3653', name:'健策',      price:3990, chg:140.0, changePct:3.64,  vol:4200000,  volRatio:1.6, recoverPct:11.8, tags:['液冷冷板','強彈反攻','多頭延續'], scanDate:MOCK_SCAN_DATE, strength:55 },
+    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.4, recoverPct:18.7, tags:['AI伺服器ODM','GB200','法人連買'], scanDate:MOCK_SCAN_DATE, strength:78 },
+    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.3, recoverPct:21.6, tags:['先進封裝','SiP量產','低估值'], scanDate:MOCK_SCAN_DATE, strength:72 },
+    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.4, recoverPct:27.5, tags:['冷排龍頭','突破整數','ETF持有'], scanDate:MOCK_SCAN_DATE, strength:68 },
+    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.7, recoverPct:24.1, tags:['BMC龍頭','創新高','籌碼乾淨'], scanDate:MOCK_SCAN_DATE, strength:63 },
+    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:13.9, tags:['液冷冷板','週線收紅','多頭延續'], scanDate:MOCK_SCAN_DATE, strength:55 },
   ],
 };
 
