@@ -326,11 +326,36 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     if (tab === 'chips') ensureChips(code);
   };
 
-  // Decide which data to show: live API (only when it has real hits) > manual mock
-  // If API returns empty rockets/reversals (no qualifying stocks found), fall back to MOCK_SCAN
-  const hasLiveResults = !!(scanResult && (scanResult.rockets.length > 0 || scanResult.reversals.length > 0));
-  const displayData = hasLiveResults ? scanResult! : MOCK_SCAN;
+  // ── Sanity-check live scan results ──────────────────────────────────────────
+  // The Worker occasionally returns erroneous data (e.g. recoverPct = 4000%,
+  // changePct = 4000%) due to bad TWSE source data or calculation bugs.
+  // Filter out any stock that exceeds physically-possible Taiwan market limits
+  // before deciding whether to use live or mock data.
+  const SANE_ROCKETS = scanResult?.rockets.filter(s =>
+    s.price > 0 &&
+    s.volRatio > 0 && s.volRatio <= 50 &&        // ≤50x volume ratio
+    Math.abs(s.changePct) <= 12                   // Taiwan ±10% daily limit + buffer
+  ) ?? [];
+
+  const SANE_REVERSALS = scanResult?.reversals.filter(s =>
+    s.price > 0 &&
+    s.volRatio > 0 && s.volRatio <= 50 &&
+    Math.abs(s.changePct) <= 12 &&
+    (s.recoverPct ?? 0) <= 300                    // ≤300% bounce from low (>300% = bad data)
+  ) ?? [];
+
+  // Fall back to MOCK_SCAN independently per mode so one bad live list
+  // doesn't contaminate the other (e.g. bad reversals still show live rockets).
   const isRocket = scanMode === 'rocket';
+  const displayRockets   = SANE_ROCKETS.length   > 0 ? SANE_ROCKETS   : MOCK_SCAN.rockets;
+  const displayReversals = SANE_REVERSALS.length > 0 ? SANE_REVERSALS : MOCK_SCAN.reversals;
+  const hasLiveResults   = SANE_ROCKETS.length   > 0 || SANE_REVERSALS.length > 0;
+  const displayData = {
+    rockets:   displayRockets,
+    reversals: displayReversals,
+    scanDate:  scanResult?.scanDate ?? MOCK_SCAN.scanDate,
+    source:    'TWSE' as const,
+  };
   const stocks = (isRocket ? displayData.rockets : displayData.reversals)
     .filter(s => s.strength >= filterStrength);
 
