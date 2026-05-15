@@ -746,6 +746,207 @@
   line-height: 1.6;
 }
 
+/* ── Signal filter select ───────────────────────────────── */
+
+.sm-signal-select {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sm-signal-select:hover,
+.sm-signal-select:focus {
+  border-color: var(--accent-indigo);
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Criteria info panel (Smart Money) ──────────────────── */
+
+.sm-criteria-panel {
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sm-criteria-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #f8faff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  transition: background 0.15s;
+}
+
+.sm-criteria-toggle:hover { background: #eef2ff; }
+
+.sm-criteria-toggle-label { letter-spacing: 0.2px; }
+
+.sm-criteria-toggle-icon {
+  font-size: 0.65rem;
+  opacity: 0.6;
+}
+
+.sm-criteria-body {
+  padding: 0.9rem 1rem;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.sm-criteria-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.sm-criteria-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.75rem;
+  background: #f9fafb;
+  border-radius: 5px;
+  border-left: 3px solid var(--accent-indigo);
+}
+
+.sm-ci-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  letter-spacing: 0.3px;
+}
+
+.sm-ci-desc {
+  font-size: 0.73rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.sm-criteria-score-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+/* ── Score Breakdown (inside sm-card-detail) ────────────── */
+
+.flow-score-breakdown {
+  margin: 0.6rem 0 0.9rem;
+  padding: 0.85rem 1rem;
+  background: #f8faff;
+  border: 1px solid #dde6ff;
+  border-radius: 6px;
+}
+
+.flow-bd-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.flow-bd-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flow-bd-total {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-indigo);
+  font-family: var(--font-serif);
+}
+
+.flow-bd-max {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.flow-bd-dims {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.flow-bd-dim {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.flow-dim-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.flow-dim-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.flow-dim-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+.flow-dim-score {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.flow-dim-max {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.flow-dim-bar-bg {
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.flow-dim-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .sector-row {
@@ -780,5 +981,8 @@
   }
   .flow-update-label {
     white-space: normal;
+  }
+  .sm-criteria-grid {
+    grid-template-columns: 1fr;
   }
 }

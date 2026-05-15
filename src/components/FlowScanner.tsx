@@ -386,6 +386,87 @@ const FLOW_DATA: Record<string, { ohlc: (OHLCBar & { volume: number })[]; chips:
   return d;
 })();
 
+// ── Score Breakdown (大戶連買追蹤 4-dimension formula) ─────────────────────────
+
+interface FlowScoreBreakdown {
+  streak:    { score: number; max: number; label: string };
+  volume:    { score: number; max: number; label: string };
+  consensus: { score: number; max: number; label: string };
+  trend:     { score: number; max: number; label: string };
+  total:     number;
+}
+
+/**
+ * Compute a 0-100 signal score from quantitative factors only.
+ * Replaces the manually-hardcoded `signal` field.
+ *
+ * ① 連買天數 (max 40) — foreign × 1.5 + trust × 0.9 + dealer × 0.2
+ * ② 量能確認 (max 20) — volRatio vs 5-day average
+ * ③ 法人共識 (max 25) — number of institutions buying simultaneously
+ * ④ 趨勢動能 (max 15) — distance from recent 30-day low (pricePct)
+ */
+function computeFlowScore(s: SmartMoneyStock): FlowScoreBreakdown {
+  // ① 連買天數 (max 40)
+  const streakRaw  = s.foreignDays * 1.5 + s.trustDays * 0.9 + s.dealerDays * 0.2;
+  const streakScore = Math.min(40, Math.round(streakRaw));
+  const streakLabel = streakScore >= 38 ? '法人全力堆疊'
+    : streakScore >= 30 ? '多方持續佈局'
+    : streakScore >= 20 ? '穩健累積中' : '初步觀察';
+
+  // ② 量能確認 (max 20)
+  const vr = s.volRatio;
+  const volScore = vr >= 3.0 ? 20 : vr >= 2.0 ? 17 : vr >= 1.5 ? 13 : vr >= 1.2 ? 9 : 5;
+  const volLabel  = vr >= 3.0 ? '爆量追買' : vr >= 2.0 ? '明顯放量'
+    : vr >= 1.5 ? '溫和放量' : vr >= 1.2 ? '量能正常' : '量能不足';
+
+  // ③ 法人共識 (max 25)
+  const hasForeign = s.foreignDays >= 5;
+  const hasTrust   = s.trustDays   >= 5;
+  const hasDealer5 = s.dealerDays  >= 5;
+  const hasDealer3 = s.dealerDays  >= 3;
+  let consensusScore: number;
+  let consensusLabel: string;
+  if (hasForeign && hasTrust && hasDealer5) {
+    consensusScore = 25; consensusLabel = '三方共同買超';
+  } else if (hasForeign && hasTrust && hasDealer3) {
+    consensusScore = 22; consensusLabel = '外資投信聯合';
+  } else if (hasForeign && hasTrust) {
+    consensusScore = 18; consensusLabel = '雙向確認';
+  } else if ((hasForeign || hasTrust) && hasDealer3) {
+    consensusScore = 13; consensusLabel = '單向+自營';
+  } else if (hasForeign || hasTrust) {
+    consensusScore = 10; consensusLabel = '單向佈局';
+  } else {
+    consensusScore = 3; consensusLabel = '未見法人';
+  }
+
+  // ④ 趨勢動能 (max 15): distance from 30-day low
+  const pp = s.pricePct;
+  let trendScore: number;
+  let trendLabel: string;
+  if (pp >= 100) {
+    trendScore = 9; trendLabel = '股價偏高';
+  } else if (pp >= 60) {
+    trendScore = 15; trendLabel = '趨勢強勁';
+  } else if (pp >= 40) {
+    trendScore = 13; trendLabel = '上升趨勢';
+  } else if (pp >= 20) {
+    trendScore = 11; trendLabel = '初步上漲';
+  } else if (pp >= 10) {
+    trendScore = 9; trendLabel = '剛起步';
+  } else {
+    trendScore = 7; trendLabel = '仍在底部';
+  }
+
+  return {
+    streak:    { score: streakScore,    max: 40, label: streakLabel    },
+    volume:    { score: volScore,       max: 20, label: volLabel       },
+    consensus: { score: consensusScore, max: 25, label: consensusLabel },
+    trend:     { score: trendScore,     max: 15, label: trendLabel     },
+    total: streakScore + volScore + consensusScore + trendScore,
+  };
+}
+
 // ── Date helpers ───────────────────────────────────────────────────────────────
 
 // Dynamic: last date in FLOW_DATES (e.g. "04/30")
@@ -572,11 +653,13 @@ type InstFilter = 'all' | 'foreign' | 'trust';
 type CardTab   = 'info' | 'chart' | 'report';
 
 export default function FlowScanner() {
-  const [activeTab, setActiveTab]   = useState<FlowTab>('sector');
-  const [filter,    setFilter]      = useState<InstFilter>('all');
-  const [sortBy,    setSortBy]      = useState<'signal' | 'foreignDays' | 'trustDays'>('signal');
-  const [expanded,  setExpanded]    = useState<string | null>(null);
-  const [cardTab,   setCardTab]     = useState<CardTab>('info');
+  const [activeTab,     setActiveTab]     = useState<FlowTab>('sector');
+  const [filter,        setFilter]        = useState<InstFilter>('all');
+  const [sortBy,        setSortBy]        = useState<'signal' | 'foreignDays' | 'trustDays'>('signal');
+  const [expanded,      setExpanded]      = useState<string | null>(null);
+  const [cardTab,       setCardTab]       = useState<CardTab>('info');
+  const [showSmCriteria, setShowSmCriteria] = useState(false);
+  const [minSignal,     setMinSignal]     = useState(0);
 
   // ── Live market data ────────────────────────────────────────────────────────
   const [liveData,    setLiveData]    = useState<Partial<Record<string, FlowEntry>>>({});
@@ -590,10 +673,18 @@ export default function FlowScanner() {
   }, []);
 
   useEffect(() => {
-    if (!isAPIConfigured()) return;
+    // refreshKey === 0 is the initial mount — do NOT auto-fetch on load.
+    // Only fetch when the user explicitly clicks "一鍵更新至今日" (refreshKey ≥ 1).
+    if (!isAPIConfigured() || refreshKey === 0) return;
     let cancelled = false;
     setLiveLoading(true);
     setLiveData({});   // clear stale data so cards show skeleton while loading
+
+    // Safety net: if all fetches hang (e.g. Worker cold-start / unreachable),
+    // force-stop the spinner after 10 s so the page stays usable.
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) setLiveLoading(false);
+    }, 10_000);
 
     (async () => {
       await Promise.allSettled(
@@ -623,13 +714,14 @@ export default function FlowScanner() {
           }
         })
       );
+      clearTimeout(safetyTimer);
       if (!cancelled) {
         setLiveLoading(false);
         setLastUpdated(new Date());
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(safetyTimer); };
   }, [refreshKey]);   // re-runs every time the user hits "更新"
 
   const sorted = [...SMART_MONEY]
@@ -638,7 +730,11 @@ export default function FlowScanner() {
       if (filter === 'trust')   return s.trustDays   >= 5;
       return true;
     })
-    .sort((a, b) => b[sortBy] - a[sortBy]);
+    .filter(s => computeFlowScore(s).total >= minSignal)
+    .sort((a, b) => {
+      if (sortBy === 'signal') return computeFlowScore(b).total - computeFlowScore(a).total;
+      return b[sortBy] - a[sortBy];
+    });
 
   const totalInflow  = SECTORS.filter(s => s.netFlow > 0).reduce((a, s) => a + s.netFlow, 0);
   const totalOutflow = SECTORS.filter(s => s.netFlow < 0).reduce((a, s) => a + s.netFlow, 0);
@@ -779,6 +875,54 @@ export default function FlowScanner() {
                 <button key={k} className={`sm-filter-btn ${sortBy === k ? 'active' : ''}`} onClick={() => setSortBy(k)}>{l}</button>
               ))}
             </div>
+            <div className="sm-filter-group">
+              <span className="toolbar-label">訊號：</span>
+              <select
+                className="sm-signal-select"
+                value={minSignal}
+                onChange={e => setMinSignal(Number(e.target.value))}
+                title="最低訊號強度篩選"
+              >
+                <option value={0}>全部顯示</option>
+                <option value={60}>訊號 ≥ 60</option>
+                <option value={75}>訊號 ≥ 75</option>
+                <option value={88}>訊號 ≥ 88</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Criteria info panel (collapsible) */}
+          <div className="sm-criteria-panel">
+            <button className="sm-criteria-toggle" onClick={() => setShowSmCriteria(v => !v)}>
+              <span className="sm-criteria-toggle-label">💎 大戶連買追蹤篩選條件說明</span>
+              <span className="sm-criteria-toggle-icon">{showSmCriteria ? '▲' : '▼'}</span>
+            </button>
+            {showSmCriteria && (
+              <div className="sm-criteria-body animate-fade-in">
+                <div className="sm-criteria-grid">
+                  <div className="sm-criteria-item">
+                    <span className="sm-ci-score">連買天數 40分</span>
+                    <span className="sm-ci-desc">外資天數×1.5 + 投信天數×0.9 + 自營天數×0.2，反映法人持倉時間與力道</span>
+                  </div>
+                  <div className="sm-criteria-item">
+                    <span className="sm-ci-score">量能確認 20分</span>
+                    <span className="sm-ci-desc">今日成交量÷5日均量，確認法人買進是否有量能配合，≥2×→17分，≥3×→滿分</span>
+                  </div>
+                  <div className="sm-criteria-item">
+                    <span className="sm-ci-score">法人共識 25分</span>
+                    <span className="sm-ci-desc">外資+投信+自營三方共同買超→25分；雙方確認→18-22分；單邊買超→10-13分</span>
+                  </div>
+                  <div className="sm-criteria-item">
+                    <span className="sm-ci-score">趨勢動能 15分</span>
+                    <span className="sm-ci-desc">股價距近30日低點漲幅，40-100%區間為甜蜜點（強勢但未過熱）→13-15分</span>
+                  </div>
+                </div>
+                <div className="sm-criteria-score-note">
+                  💡 <b>公式分數 = 連買天數(40) + 量能(20) + 法人共識(25) + 趨勢(15) = 100分</b>
+                  ｜點擊個股「分析」頁籤可查看詳細評分明細
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Legend */}
@@ -793,7 +937,9 @@ export default function FlowScanner() {
             {sorted.map((s, idx) => {
               const isExp  = expanded === s.code;
               const isUp   = s.changePct >= 0;
-              const color  = signalColor(s.signal);
+              const bd     = computeFlowScore(s);       // computed score (replaces hardcoded signal)
+              const score  = bd.total;
+              const color  = signalColor(score);
               // Prefer live market data; fall back to seed mock data
               const fd = liveData[s.code] ?? FLOW_DATA[s.code];
 
@@ -829,8 +975,8 @@ export default function FlowScanner() {
                         </span>
                       </div>
                       <div className="sm-signal-box" style={{ borderColor: color }}>
-                        <span className="sm-signal-num"  style={{ color }}>{s.signal}</span>
-                        <span className="sm-signal-label" style={{ color }}>{signalLabel(s.signal)}</span>
+                        <span className="sm-signal-num"  style={{ color }}>{score}</span>
+                        <span className="sm-signal-label" style={{ color }}>{signalLabel(score)}</span>
                       </div>
                       <span className="sm-expand-arrow">{isExp ? '▼' : '▶'}</span>
                     </div>
@@ -880,11 +1026,47 @@ export default function FlowScanner() {
                             <div className="detail-stat">
                               <span className="ds-label">訊號強度</span>
                               <div className="ds-signal-bar-wrap">
-                                <div className="ds-signal-bar" style={{ width: `${s.signal}%`, background: color }} />
-                                <span className="ds-signal-num">{s.signal}/100</span>
+                                <div className="ds-signal-bar" style={{ width: `${score}%`, background: color }} />
+                                <span className="ds-signal-num">{score}/100</span>
                               </div>
                             </div>
                           </div>
+
+                          {/* ── Score breakdown ── */}
+                          <div className="flow-score-breakdown">
+                            <div className="flow-bd-header">
+                              <span className="flow-bd-title">訊號評分明細</span>
+                              <span className="flow-bd-total">
+                                {bd.total}
+                                <span className="flow-bd-max"> / 100</span>
+                              </span>
+                            </div>
+                            <div className="flow-bd-dims">
+                              {([
+                                { key: '連買天數', ...bd.streak,    color: '#6366f1' },
+                                { key: '量能確認', ...bd.volume,    color: '#e67e22' },
+                                { key: '法人共識', ...bd.consensus, color: '#c0392b' },
+                                { key: '趨勢動能', ...bd.trend,     color: '#4a7c59' },
+                              ] as { key: string; score: number; max: number; label: string; color: string }[]).map(d => (
+                                <div key={d.key} className="flow-bd-dim">
+                                  <div className="flow-dim-label-row">
+                                    <span className="flow-dim-name">{d.key}</span>
+                                    <span className="flow-dim-tag">{d.label}</span>
+                                    <span className="flow-dim-score">
+                                      {d.score}<span className="flow-dim-max">/{d.max}</span>
+                                    </span>
+                                  </div>
+                                  <div className="flow-dim-bar-bg">
+                                    <div
+                                      className="flow-dim-bar-fill"
+                                      style={{ width: `${(d.score / d.max) * 100}%`, background: d.color }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
                           <div className="sm-note">
                             <span className="note-icon">📋</span>
                             <p>{s.note}</p>

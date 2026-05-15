@@ -149,6 +149,72 @@ const MOCK_SCAN: ScanResult = {
   ],
 };
 
+// ── Score Breakdown ───────────────────────────────────────────────────────────
+
+interface ScoreBreakdown {
+  volume: { score: number; max: number; label: string };
+  inst:   { score: number; max: number; label: string };
+  chips:  { score: number; max: number; label: string };
+  price:  { score: number; max: number; label: string };
+  total:  number;
+}
+
+function computeBreakdown(
+  stock: ScannedStock,
+  chipHistory: ChipData[],
+  isRocket: boolean,
+): ScoreBreakdown {
+  // ① 量能 (max 30): volRatio vs 5-day average
+  const vr = stock.volRatio;
+  const volScore = vr >= 3.0 ? 30 : vr >= 2.0 ? 24 : vr >= 1.5 ? 18 : vr >= 1.2 ? 12 : 6;
+  const volLabel  = vr >= 3.0 ? '爆量突破' : vr >= 2.0 ? '放量走強' : vr >= 1.5 ? '量能放大' : '量能正常';
+
+  // ② 法人 (max 30): tag-based institutional momentum
+  const tagStr    = stock.tags.join(' ');
+  const hasForeign = tagStr.includes('外資');
+  const hasTrust   = tagStr.includes('投信');
+  const hasInst    = tagStr.includes('法人');
+  let instBase = 5;
+  if (hasForeign) instBase += 15;
+  if (hasTrust)   instBase += 10;
+  if (hasInst && !hasForeign && !hasTrust) instBase += 8;
+  const instScore = Math.min(30, instBase);
+  const instLabel = (hasForeign && hasTrust) ? '外資投信共買'
+    : hasForeign ? '外資積極布局'
+    : hasTrust   ? '投信強力買超'
+    : hasInst    ? '法人持續布局' : '法人觀察中';
+
+  // ③ 籌碼 (max 25): number of net-buy days in last 5 sessions
+  const recent5 = chipHistory.slice(-5);
+  const buyDays  = recent5.filter(c => c.mainForce > 0).length;
+  const chipScore = Math.min(25, buyDays >= 5 ? 25 : buyDays * 5);
+  const chipLabel = buyDays >= 5 ? '連買五日' : buyDays >= 4 ? '連買積極'
+    : buyDays >= 3 ? '持續買超' : buyDays >= 2 ? '逢低布局' : '初步觀察';
+
+  // ④ 技術/價格 (max 15)
+  const pctAbs = Math.abs(stock.changePct);
+  let priceScore: number;
+  let priceLabel: string;
+  if (isRocket) {
+    priceScore = pctAbs >= 3 ? 15 : pctAbs >= 2 ? 12 : pctAbs >= 1 ? 9 : 6;
+    priceLabel = pctAbs >= 3 ? '強勢漲停' : pctAbs >= 2 ? '大幅上漲'
+      : pctAbs >= 1 ? '穩步走強' : '小幅上漲';
+  } else {
+    const rec = stock.recoverPct ?? 0;
+    priceScore = rec >= 25 ? 15 : rec >= 20 ? 12 : rec >= 15 ? 9 : rec >= 10 ? 6 : 4;
+    priceLabel = rec >= 25 ? '大幅反彈' : rec >= 20 ? '強力反彈'
+      : rec >= 15 ? '初步反彈' : '底部觀察';
+  }
+
+  return {
+    volume: { score: volScore,  max: 30, label: volLabel  },
+    inst:   { score: instScore, max: 30, label: instLabel },
+    chips:  { score: chipScore, max: 25, label: chipLabel },
+    price:  { score: priceScore,max: 15, label: priceLabel},
+    total:  volScore + instScore + chipScore + priceScore,
+  };
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface RocketScannerProps {
@@ -163,6 +229,8 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const [currentSymbol, setCurrentSymbol] = useState('0000');
   const [expandedCode,  setExpandedCode]  = useState<string | null>(null);
   const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips' | 'chart'>('main');
+  const [showCriteria,  setShowCriteria]  = useState(false);
+  const [filterStrength, setFilterStrength] = useState(0);
 
   // Real scan data from Worker
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -263,7 +331,8 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const hasLiveResults = !!(scanResult && (scanResult.rockets.length > 0 || scanResult.reversals.length > 0));
   const displayData = hasLiveResults ? scanResult! : MOCK_SCAN;
   const isRocket = scanMode === 'rocket';
-  const stocks = isRocket ? displayData.rockets : displayData.reversals;
+  const stocks = (isRocket ? displayData.rockets : displayData.reversals)
+    .filter(s => s.strength >= filterStrength);
 
   return (
     <div className="rocket-scanner-container card">
@@ -273,14 +342,6 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
           <h3 className="scanner-title">{isRocket ? '潛力飆股快選' : '破底翻飆股掃描'}</h3>
           <p className="scanner-subtitle">搜尋台股 1,700+ 標的，篩選高動能個股</p>
         </div>
-        {!isScanning && (
-          <button
-            className={`scan-btn ${showResults ? 'secondary' : 'primary'}`}
-            onClick={startScan}
-          >
-            {showResults ? '重新掃描' : '開始全市場掃描'}
-          </button>
-        )}
       </div>
 
       <div className="scan-mode-tabs">
@@ -290,6 +351,65 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
         <button className={`scan-mode-btn ${!isRocket ? 'active' : ''}`} onClick={() => handleModeChange('reversal')}>
           📈 破底翻
         </button>
+      </div>
+
+      {/* ── Criteria info panel (collapsible) ── */}
+      <div className="criteria-panel">
+        <button className="criteria-toggle-btn" onClick={() => setShowCriteria(v => !v)}>
+          <span className="criteria-toggle-label">
+            {isRocket ? '🚀 潛力飆股篩選條件' : '📈 破底翻篩選條件'}
+          </span>
+          <span className="criteria-toggle-icon">{showCriteria ? '▲' : '▼'}</span>
+        </button>
+        {showCriteria && (
+          <div className="criteria-body animate-fade-in">
+            <div className="criteria-grid">
+              {isRocket ? (
+                <>
+                  <div className="criteria-item">
+                    <span className="ci-score">量能 30分</span>
+                    <span className="ci-desc">今日成交量 ÷ 5日均量 ≥ 1.2×，放量突破確認動能</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">法人 30分</span>
+                    <span className="ci-desc">外資 / 投信連續淨買超，主力認同趨勢</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">籌碼 25分</span>
+                    <span className="ci-desc">近5日主力買超天數，籌碼持續集中</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">技術 15分</span>
+                    <span className="ci-desc">當日漲幅 ≥ 1%，股價站上月線，趨勢向上</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="criteria-item">
+                    <span className="ci-score">量能 30分</span>
+                    <span className="ci-desc">反彈日成交量 ≥ 5日均量 1.2×，非無量反彈</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">法人 30分</span>
+                    <span className="ci-desc">外資 / 投信由賣轉買，籌碼開始回流</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">籌碼 25分</span>
+                    <span className="ci-desc">近5日主力累積買超，確認底部籌碼乾淨</span>
+                  </div>
+                  <div className="criteria-item">
+                    <span className="ci-score">技術 15分</span>
+                    <span className="ci-desc">從近期低點反彈幅度 ≥ 10%，底部結構成立</span>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="criteria-score-note">
+              💡 <b>強勢力道 = 量能(30) + 法人(30) + 籌碼(25) + 技術(15) = 100分</b>
+              ｜點擊個股「主力進出」可查看詳細評分明細
+            </div>
+          </div>
+        )}
       </div>
 
       {isScanning && (
@@ -318,15 +438,17 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
                 : `參考資料 · ${displayData.scanDate} (手動核對)`}
             </span>
             {scanError && <span className="scan-error-note">⚠ API 暫時無法連線，顯示參考資料</span>}
-            <button
-              className="scan-refresh-inline-btn"
-              onClick={startScan}
-              disabled={isScanning}
-              title="重新掃描取得最新數據"
+            <select
+              className="filter-strength-select"
+              value={filterStrength}
+              onChange={e => setFilterStrength(Number(e.target.value))}
+              title="依強勢力道篩選"
             >
-              <span className={isScanning ? 'spin' : ''}>🔄</span>
-              {isScanning ? '掃描中…' : '更新數據'}
-            </button>
+              <option value={0}>全部顯示</option>
+              <option value={60}>強度 ≥ 60</option>
+              <option value={70}>強度 ≥ 70</option>
+              <option value={80}>強度 ≥ 80</option>
+            </select>
           </div>
 
           {!isRocket && (
@@ -479,7 +601,8 @@ function StockCard({
               <ChipDetailView
                 activeTab={activeDetailTab}
                 chipHistory={chipHistory}
-                strength={stock.strength}
+                stock={stock}
+                isRocket={isRocket}
               />
             )}
           </div>
@@ -492,13 +615,15 @@ function StockCard({
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
-  activeTab, chipHistory, strength,
+  activeTab, chipHistory, stock, isRocket,
 }: {
   activeTab:   'main' | 'chips';
   chipHistory: ChipData[];
-  strength:    number;
+  stock:       ScannedStock;
+  isRocket:    boolean;
 }) {
   const recent = chipHistory.slice(-5).reverse(); // latest first
+  const strength = stock.strength;
 
   if (activeTab === 'chips') {
     return (
@@ -553,6 +678,14 @@ function ChipDetailView({
   }
 
   const latest = recent[0];
+  const bd = computeBreakdown(stock, chipHistory, isRocket);
+  const bdDims: Array<{ key: string; score: number; max: number; label: string; color: string }> = [
+    { key: '量能', score: bd.volume.score, max: bd.volume.max, label: bd.volume.label, color: '#e67e22' },
+    { key: '法人', score: bd.inst.score,   max: bd.inst.max,   label: bd.inst.label,   color: '#6366f1' },
+    { key: '籌碼', score: bd.chips.score,  max: bd.chips.max,  label: bd.chips.label,  color: '#c0392b' },
+    { key: '技術', score: bd.price.score,  max: bd.price.max,  label: bd.price.label,  color: '#4a7c59' },
+  ];
+
   return (
     <div className="main-force-view">
       <div className="stats-row">
@@ -569,6 +702,36 @@ function ChipDetailView({
               <span className={(val as number) >= 0 ? 'up' : 'down'}>
                 {(val as number) >= 0 ? '+' : ''}{(val as number).toLocaleString()}
               </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Score breakdown ── */}
+      <div className="score-breakdown">
+        <div className="breakdown-header">
+          <span className="breakdown-title">強勢評分明細</span>
+          <span className="breakdown-total">
+            {bd.total}
+            <span className="breakdown-max"> / 100</span>
+          </span>
+        </div>
+        <div className="breakdown-dims">
+          {bdDims.map(d => (
+            <div key={d.key} className="breakdown-dim">
+              <div className="dim-label-row">
+                <span className="dim-name">{d.key}</span>
+                <span className="dim-tag">{d.label}</span>
+                <span className="dim-score">
+                  {d.score}<span className="dim-max">/{d.max}</span>
+                </span>
+              </div>
+              <div className="dim-bar-bg">
+                <div
+                  className="dim-bar-fill"
+                  style={{ width: `${(d.score / d.max) * 100}%`, background: d.color }}
+                />
+              </div>
             </div>
           ))}
         </div>

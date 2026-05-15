@@ -13,6 +13,18 @@ import { type OHLCData, type ChipData } from './technicalIndicators';
 
 const BASE = (import.meta.env.VITE_STOCK_API_URL as string | undefined) ?? '';
 
+// ── Fetch with timeout ────────────────────────────────────────────────────────
+/**
+ * Wrapper around fetch() that aborts after `ms` milliseconds.
+ * Prevents loading spinners from hanging indefinitely when the Worker
+ * is slow or unreachable (common during cold-starts or network hiccups).
+ */
+function timedFetch(url: string, ms = 8000): Promise<Response> {
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface QuoteResult {
   symbol:      string;
@@ -43,7 +55,7 @@ function toYMD(ts: number): string {
 export async function fetchQuotes(symbols: string[]): Promise<QuoteResult[]> {
   if (!BASE || !symbols.length) return [];
 
-  const res = await fetch(`${BASE}/quote?symbols=${symbols.join(',')}`);
+  const res = await timedFetch(`${BASE}/quote?symbols=${symbols.join(',')}`);
   if (!res.ok) throw new Error(`Quote HTTP ${res.status}`);
 
   const json = await res.json();
@@ -75,7 +87,7 @@ export async function fetchOHLC(
   if (!BASE) return [];
 
   const url = `${BASE}/chart?symbol=${encodeURIComponent(symbol)}&range=${range}&interval=1d`;
-  const res = await fetch(url);
+  const res = await timedFetch(url);
   if (!res.ok) throw new Error(`Chart HTTP ${res.status}`);
 
   const json   = await res.json();
@@ -134,7 +146,7 @@ export interface ScanResult {
 export async function fetchScan(): Promise<ScanResult | null> {
   if (!BASE) return null;
   try {
-    const res = await fetch(`${BASE}/scan`);
+    const res = await timedFetch(`${BASE}/scan`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!json.rockets || !json.reversals) return null;
@@ -152,7 +164,7 @@ export async function fetchChips(symbol: string): Promise<ChipData[]> {
   // Strip exchange suffix: "2330.TW" → "2330"
   const stockNo = symbol.replace(/\.[A-Z]+$/, '');
   const url = `${BASE}/chips?symbol=${encodeURIComponent(stockNo)}&days=40`;
-  const res = await fetch(url);
+  const res = await timedFetch(url);
   if (!res.ok) throw new Error(`Chips HTTP ${res.status}`);
   const json = await res.json();
   return (json?.chips ?? []) as ChipData[];
@@ -196,7 +208,7 @@ export interface ETFHoldingsResult {
 export async function fetchETFHoldings(stockNo: string): Promise<ETFHoldingsResult | null> {
   if (!BASE) return null;
   try {
-    const res = await fetch(`${BASE}/etf-holdings?stockNo=${encodeURIComponent(stockNo)}`);
+    const res = await timedFetch(`${BASE}/etf-holdings?stockNo=${encodeURIComponent(stockNo)}`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!json.buys) return null;
@@ -231,7 +243,7 @@ export async function fetchNews(
 ): Promise<NewsResult | null> {
   if (!BASE) return null;
   try {
-    const res = await fetch(`${BASE}/news?category=${category}&count=${count}`);
+    const res = await timedFetch(`${BASE}/news?category=${category}&count=${count}`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!Array.isArray(json?.items)) return null;
@@ -260,7 +272,7 @@ export interface MarketData {
 export async function fetchMarket(days: number = 30): Promise<MarketData | null> {
   if (!BASE) return null;
   try {
-    const res = await fetch(`${BASE}/market?days=${days}`);
+    const res = await timedFetch(`${BASE}/market?days=${days}`);
     if (!res.ok) return null;
     const json = await res.json();
     if (!json.margin) return null;
