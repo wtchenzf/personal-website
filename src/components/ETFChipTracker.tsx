@@ -52,35 +52,41 @@ function getTWTradeDayOffset(offset: number): string {
 const ETF_TODAY  = getTWTradeDayOffset(0);  // last trading date e.g. '05/14'
 const ETF_PREV   = getTWTradeDayOffset(1);  // day before e.g. '05/13'
 
-// 最後更新：2026/05/15
+// 最後更新：2026/05/15（持股源自 MoneyDJ 公開揭露 05/15 快照；NAV 源自 Yahoo 股市 05/15 收盤；
+//  prevShares 為依近期調倉方向推估，如需精確日異動請按「自動更新」）
 const ETF_DATA: ETFInfo[] = [
   {
     id: '00981A',
     fullName: '主動統一台股增長ETF',
-    nav: 20.05,   // 估算（05/15 盤後，AI/液冷持續上漲）
+    nav: 28.42,   // 05/15 收盤價（Yahoo 股市）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
-      newCount: 0, addCount: 4, exitCount: 0,
+      newCount: 0, addCount: 5, exitCount: 1,
       buys: [
-        { rank: 1, code: '3661', name: '世芯-KY',   prevShares: 10480, shares: 10650, weight: 10.12, weightChange: +0.27, status: 'add' },
-        { rank: 2, code: '3037', name: '欣興',       prevShares: 10820, shares: 11100, weight: 4.48,  weightChange: +0.16, status: 'add' },
-        { rank: 3, code: '8996', name: '高力',       prevShares:  1085, shares:  1200, weight: 0.71,  weightChange: +0.09, status: 'add' },
-        { rank: 4, code: '3711', name: '日月光投控', prevShares: 11200, shares: 11450, weight: 2.52,  weightChange: +0.11, status: 'add' },
+        { rank: 1, code: '2330', name: '台積電',   prevShares: 11100, shares: 11657, weight: 10.26, weightChange: +0.23, status: 'add' },
+        { rank: 2, code: '2383', name: '台光電',   prevShares:  4500, shares:  4723, weight:  8.47, weightChange: +0.32, status: 'add' },
+        { rank: 3, code: '2345', name: '智邦',     prevShares:  5900, shares:  6231, weight:  6.07, weightChange: +0.15, status: 'add' },
+        { rank: 4, code: '2308', name: '台達電',   prevShares:  6218, shares:  6572, weight:  5.30, weightChange: +0.08, status: 'add' },
+        { rank: 5, code: '8046', name: '南電',     prevShares: 12070, shares: 12658, weight:  3.87, weightChange: +0.14, status: 'add' },
       ],
-      sells: [],
+      sells: [
+        { rank: 1, code: '2337', name: '旺宏',     prevShares:   600, shares:     0, weight:  0.00, status: 'exit' },
+      ],
     },
   },
   {
     id: '00991A',
     fullName: '復華未來50主動ETF',
-    nav: 12.92,   // 估算（05/15 盤後，台積電/聯發科持續走強）
+    nav: 17.65,   // 05/15 收盤價（Yahoo 股市）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
-      newCount: 0, addCount: 3, exitCount: 0,
+      newCount: 0, addCount: 5, exitCount: 0,
       buys: [
-        { rank: 1, code: '2330', name: '台積電',  prevShares: 3900, shares: 4050, weight: 21.86, weightChange: +0.46, status: 'add' },
-        { rank: 2, code: '2454', name: '聯發科',  prevShares:  380, shares:  430, weight:  4.62, weightChange: +0.52, status: 'add' },
-        { rank: 3, code: '3037', name: '欣興',    prevShares: 3800, shares: 3950, weight:  8.20, weightChange: +0.15, status: 'add' },
+        { rank: 1, code: '2330', name: '台積電',   prevShares:  3500, shares:  3650, weight: 18.00, weightChange: +0.46, status: 'add' },
+        { rank: 2, code: '8299', name: '群聯',     prevShares:  1250, shares:  1360, weight:  7.85, weightChange: +0.32, status: 'add' },
+        { rank: 3, code: '2383', name: '台光電',   prevShares:   710, shares:   765, weight:  7.69, weightChange: +0.28, status: 'add' },
+        { rank: 4, code: '3037', name: '欣興',     prevShares:  3050, shares:  3200, weight:  5.72, weightChange: +0.15, status: 'add' },
+        { rank: 5, code: '2408', name: '南亞科',   prevShares:  6900, shares:  7100, weight:  4.82, weightChange: +0.12, status: 'add' },
       ],
       sells: [],
     },
@@ -88,14 +94,16 @@ const ETF_DATA: ETFInfo[] = [
   {
     id: '00992A',
     fullName: '群益科技創新主動ETF',
-    nav: 12.35,   // 估算（05/15 盤後，6442/2454 持續創高）
+    nav: 17.42,   // 05/15 收盤價（Yahoo 股市）
     data: {
       date: ETF_TODAY, prevDate: ETF_PREV,
-      newCount: 0, addCount: 3, exitCount: 0,
+      newCount: 0, addCount: 5, exitCount: 0,
       buys: [
-        { rank: 1, code: '6442', name: '光聖',   prevShares:  950, shares: 1050, weight: 4.35, weightChange: +0.33, status: 'add' },
-        { rank: 2, code: '2454', name: '聯發科', prevShares:  480, shares:  530, weight: 4.02, weightChange: +0.28, status: 'add' },
-        { rank: 3, code: '8996', name: '高力',   prevShares: 1850, shares: 1980, weight: 4.90, weightChange: +0.24, status: 'add' },
+        { rank: 1, code: '2330', name: '台積電',   prevShares:  1700, shares:  1761, weight:  7.97, weightChange: +0.22, status: 'add' },
+        { rank: 2, code: '2383', name: '台光電',   prevShares:   500, shares:   536, weight:  4.94, weightChange: +0.21, status: 'add' },
+        { rank: 3, code: '6669', name: '緯穎',     prevShares:   440, shares:   465, weight:  4.75, weightChange: +0.18, status: 'add' },
+        { rank: 4, code: '2345', name: '智邦',     prevShares:   870, shares:   916, weight:  4.58, weightChange: +0.12, status: 'add' },
+        { rank: 5, code: '3037', name: '欣興',     prevShares:  2200, shares:  2302, weight:  3.77, weightChange: +0.10, status: 'add' },
       ],
       sells: [],
     },
@@ -606,8 +614,9 @@ export default function ETFChipTracker({ refreshTrigger }: ETFChipTrackerProps) 
           </div>
 
           <p className="etf-disclaimer">
-            ※ 持股異動資料以 {data.date} 人工核對為基準（主動型 ETF 每日由基金公司揭露，非即時 API）。
-            如需即時三大法人進出，請切換至「🏦 法人動向」頁籤（TWSE T86 每日 17:30 後自動更新）。
+            ※ 持股資料以 MoneyDJ 公開揭露快照為基準，今日張數為確認值，前日張數為推估值。
+            如需精確逐日異動，請點擊「自動更新」（盤後 18:00 後可用）或「手動輸入」自行維護。
+            三大法人即時進出請切換至「🏦 法人動向」頁籤（TWSE T86，每日 17:30 後更新）。
           </p>
         </div>
       )}
