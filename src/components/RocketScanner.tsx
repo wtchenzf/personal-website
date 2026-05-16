@@ -120,9 +120,53 @@ function buildMockChips(code: string, bars: OHLCBar[]): ChipData[] {
   });
 }
 
+// ── Real chip data from 玩股網 (05/11 ~ 05/15, overrides synthetic data) ────
+// Source: wantgoo.com institutional-investors/trend, unit: 張
+const REAL_CHIPS_DATA: Record<string, ChipData[]> = {
+  '6669': [
+    { time: '2026-05-11', foreign: -387, trust:  399, dealer:  26, mainForce:   38 },
+    { time: '2026-05-12', foreign:-1385, trust: 1025, dealer:  21, mainForce: -339 },
+    { time: '2026-05-13', foreign: -671, trust:  450, dealer: -29, mainForce: -250 },
+    { time: '2026-05-14', foreign:  -66, trust:   55, dealer:   2, mainForce:   -9 },
+    { time: '2026-05-15', foreign:  461, trust:  -21, dealer:  -9, mainForce:  431 },
+  ],
+  '3711': [
+    { time: '2026-05-13', foreign:-3900, trust:    0, dealer: 2608, mainForce:-1292 },
+    { time: '2026-05-14', foreign: -881, trust:    0, dealer: -404, mainForce:-1285 },
+    { time: '2026-05-15', foreign:  658, trust:    0, dealer:  695, mainForce: 1353 },
+  ],
+  '8996': [
+    { time: '2026-05-11', foreign: -426, trust:  286, dealer:  20, mainForce: -120 },
+    { time: '2026-05-12', foreign: -682, trust:  520, dealer:   6, mainForce: -156 },
+    { time: '2026-05-13', foreign:  -33, trust: -192, dealer:  -6, mainForce: -231 },
+    { time: '2026-05-14', foreign: -276, trust:  347, dealer:  17, mainForce:   88 },
+    { time: '2026-05-15', foreign: -144, trust:  216, dealer: -40, mainForce:   32 },
+  ],
+  '5274': [
+    { time: '2026-05-11', foreign:   42, trust:    0, dealer:  12, mainForce:   55 },
+    { time: '2026-05-12', foreign:  -35, trust:    0, dealer:  57, mainForce:   20 },
+    { time: '2026-05-13', foreign:    2, trust:    0, dealer:  -9, mainForce:   -7 },
+    { time: '2026-05-14', foreign:   23, trust:    0, dealer:  10, mainForce:   31 },
+    { time: '2026-05-15', foreign:  -12, trust:    0, dealer:   4, mainForce:   -8 },
+  ],
+  '3653': [
+    { time: '2026-05-15', foreign:  208, trust:  -53, dealer: -68, mainForce:   47 },
+  ],
+};
+
+function applyChipOverrides(chips: ChipData[], overrides: ChipData[]): ChipData[] {
+  const overrideMap = new Map(overrides.map(c => [c.time, c]));
+  return chips.map(c => overrideMap.get(c.time) ?? c);
+}
+
 // Pre-build mock chips for all MOCK_OHLC stocks (runs once at module load)
+// Recent dates (05/11~05/15) use real 玩股網 data; older bars remain synthetic
 const MOCK_CHIPS: Record<string, ChipData[]> = Object.fromEntries(
-  Object.entries(MOCK_OHLC).map(([code, bars]) => [code, buildMockChips(code, bars)])
+  Object.entries(MOCK_OHLC).map(([code, bars]) => {
+    const chips = buildMockChips(code, bars);
+    const overrides = REAL_CHIPS_DATA[code];
+    return [code, overrides ? applyChipOverrides(chips, overrides) : chips];
+  })
 );
 
 // Dynamic scan date: last entry of TRADING_DATES (auto-follows today)
@@ -141,11 +185,11 @@ const MOCK_SCAN: ScanResult = {
     { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
-    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2, tags:['KD黃金交叉','MACD收斂','主力買超'], scanDate:MOCK_SCAN_DATE, strength:82 },
-    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.4, recoverPct:5.8, tags:['KD黃金交叉','外資買超','底部放量'], scanDate:MOCK_SCAN_DATE, strength:76 },
-    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.5, recoverPct:8.1, tags:['MACD綠棒收斂','投信買超','量能爆增'], scanDate:MOCK_SCAN_DATE, strength:71 },
-    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.8, recoverPct:4.3, tags:['KD黃金交叉','法人連買','底部確認'], scanDate:MOCK_SCAN_DATE, strength:65 },
-    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:6.7, tags:['MACD綠棒收斂','主力買超','週線翻紅'], scanDate:MOCK_SCAN_DATE, strength:59 },
+    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2, tags:['KD黃金交叉','外資今轉買','投信連買'], scanDate:MOCK_SCAN_DATE, strength:82 },
+    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.4, recoverPct:5.8, tags:['KD黃金交叉','外資自營買超','底部放量'], scanDate:MOCK_SCAN_DATE, strength:76 },
+    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.5, recoverPct:8.1, tags:['MACD綠棒收斂','投信持續買','外資減碼'], scanDate:MOCK_SCAN_DATE, strength:71 },
+    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.8, recoverPct:4.3, tags:['KD黃金交叉','自營買超','外資觀望'], scanDate:MOCK_SCAN_DATE, strength:65 },
+    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:6.7, tags:['MACD綠棒收斂','外資買超','投信減碼'], scanDate:MOCK_SCAN_DATE, strength:59 },
   ],
 };
 
