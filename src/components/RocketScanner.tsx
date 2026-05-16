@@ -141,11 +141,11 @@ const MOCK_SCAN: ScanResult = {
     { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
-    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.4, recoverPct:18.7, tags:['AI伺服器ODM','GB200','法人連買'], scanDate:MOCK_SCAN_DATE, strength:78 },
-    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.3, recoverPct:21.6, tags:['先進封裝','SiP量產','低估值'], scanDate:MOCK_SCAN_DATE, strength:72 },
-    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.4, recoverPct:27.5, tags:['冷排龍頭','突破整數','ETF持有'], scanDate:MOCK_SCAN_DATE, strength:68 },
-    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.7, recoverPct:24.1, tags:['BMC龍頭','創新高','籌碼乾淨'], scanDate:MOCK_SCAN_DATE, strength:63 },
-    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:13.9, tags:['液冷冷板','週線收紅','多頭延續'], scanDate:MOCK_SCAN_DATE, strength:55 },
+    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2, tags:['KD黃金交叉','MACD收斂','主力買超'], scanDate:MOCK_SCAN_DATE, strength:82 },
+    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.4, recoverPct:5.8, tags:['KD黃金交叉','外資買超','底部放量'], scanDate:MOCK_SCAN_DATE, strength:76 },
+    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.5, recoverPct:8.1, tags:['MACD綠棒收斂','投信買超','量能爆增'], scanDate:MOCK_SCAN_DATE, strength:71 },
+    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.8, recoverPct:4.3, tags:['KD黃金交叉','法人連買','底部確認'], scanDate:MOCK_SCAN_DATE, strength:65 },
+    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:6.7, tags:['MACD綠棒收斂','主力買超','週線翻紅'], scanDate:MOCK_SCAN_DATE, strength:59 },
   ],
 };
 
@@ -200,10 +200,19 @@ function computeBreakdown(
     priceLabel = pctAbs >= 3 ? '強勢漲停' : pctAbs >= 2 ? '大幅上漲'
       : pctAbs >= 1 ? '穩步走強' : '小幅上漲';
   } else {
+    // 破底翻：反彈越小越早期越好（目標 0–10%）
     const rec = stock.recoverPct ?? 0;
-    priceScore = rec >= 25 ? 15 : rec >= 20 ? 12 : rec >= 15 ? 9 : rec >= 10 ? 6 : 4;
-    priceLabel = rec >= 25 ? '大幅反彈' : rec >= 20 ? '強力反彈'
-      : rec >= 15 ? '初步反彈' : '底部觀察';
+    const hasKD   = tagStr.includes('KD');
+    const hasMACD = tagStr.includes('MACD');
+    const techBonus = (hasKD ? 1 : 0) + (hasMACD ? 1 : 0);  // 最多 +2
+    const baseScore = rec <= 3  ? 13 : rec <= 5  ? 12 : rec <= 8  ? 10
+                    : rec <= 10 ? 8  : rec <= 15 ? 5  : 3;
+    priceScore = Math.min(15, baseScore + techBonus);
+    priceLabel = rec <= 3  ? 'KD剛黃金交叉'
+               : rec <= 5  ? '底部MACD收斂'
+               : rec <= 8  ? '低檔初步反彈'
+               : rec <= 10 ? '反彈 < 10%'
+               : rec <= 15 ? '反彈偏晚進場' : '反彈幅度偏高';
   }
 
   return {
@@ -341,7 +350,8 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     s.price > 0 &&
     s.volRatio > 0 && s.volRatio <= 50 &&
     Math.abs(s.changePct) <= 12 &&
-    (s.recoverPct ?? 0) <= 300                    // ≤300% bounce from low (>300% = bad data)
+    (s.recoverPct ?? 0) > 0 &&
+    (s.recoverPct ?? 0) <= 10                     // 反彈幅度 0–10%：剛翻底才算早期訊號
   ) ?? [];
 
   // Fall back to MOCK_SCAN independently per mode so one bad live list
@@ -412,19 +422,19 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
                 <>
                   <div className="criteria-item">
                     <span className="ci-score">量能 30分</span>
-                    <span className="ci-desc">反彈日成交量 ≥ 5日均量 1.2×，非無量反彈</span>
+                    <span className="ci-desc">反彈日成交量 ≥ 5日均量 1.2×，主力有量介入非假彈</span>
                   </div>
                   <div className="criteria-item">
-                    <span className="ci-score">法人 30分</span>
-                    <span className="ci-desc">外資 / 投信由賣轉買，籌碼開始回流</span>
+                    <span className="ci-score">主力 30分</span>
+                    <span className="ci-desc">外資 / 投信 / 法人由賣轉買，主力買超確認底部籌碼回流</span>
                   </div>
                   <div className="criteria-item">
                     <span className="ci-score">籌碼 25分</span>
-                    <span className="ci-desc">近5日主力累積買超，確認底部籌碼乾淨</span>
+                    <span className="ci-desc">近5日主力累積淨買超天數 ≥ 3日，籌碼持續集中</span>
                   </div>
                   <div className="criteria-item">
                     <span className="ci-score">技術 15分</span>
-                    <span className="ci-desc">從近期低點反彈幅度 ≥ 10%，底部結構成立</span>
+                    <span className="ci-desc">KD 低檔黃金交叉（K 上穿 D）＋ MACD 綠棒收斂 ＋ 反彈幅度 &lt; 10%（剛翻底最佳入場）</span>
                   </div>
                 </>
               )}
