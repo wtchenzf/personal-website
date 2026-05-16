@@ -44,9 +44,9 @@ export const SEED_DATA_2330: OHLCData[] = [
   { time: '2026-05-08', open: 2300, high: 2310, low: 2265, close: 2290, volume: 39600 },  // 估算
   { time: '2026-05-11', open: 2265, high: 2275, low: 2235, close: 2235, volume: 47600 },  // TWSE
   { time: '2026-05-12', open: 2245, high: 2290, low: 2235, close: 2270, volume: 43800 },  // 估算
-  { time: '2026-05-13', open: 2275, high: 2328, low: 2268, close: 2305, volume: 41200 },  // 估算
-  { time: '2026-05-14', open: 2308, high: 2338, low: 2292, close: 2320, volume: 38500 },  // 估算
-  { time: '2026-05-15', open: 2322, high: 2352, low: 2315, close: 2335, volume: 35200 },  // 估算（週線收高）
+  { time: '2026-05-13', open: 2265, high: 2298, low: 2248, close: 2275, volume: 38400 },  // 估算（外資持續賣）
+  { time: '2026-05-14', open: 2278, high: 2295, low: 2255, close: 2270, volume: 37200 },  // 玩股網收盤 2270
+  { time: '2026-05-15', open: 2310, high: 2325, low: 2250, close: 2265, volume: 29811 },  // 玩股網實測（-0.22%）
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -77,11 +77,11 @@ export const CHIP_DATA_2330: ChipData[] = [
   { time: '2026-05-06', foreign: -4200, trust:  -600, dealer:  -200, mainForce: -5000 },  // 估算（獲利了結）
   { time: '2026-05-07', foreign: -6800, trust: -1200, dealer:  -400, mainForce: -8400 },  // 估算（市場震盪）
   { time: '2026-05-08', foreign:  2100, trust:   500, dealer:   100, mainForce:  2700 },  // 估算（回穩）
-  { time: '2026-05-11', foreign: 19800, trust:  2500, dealer:  1200, mainForce: 23500 },  // 估算（美中協議）
-  { time: '2026-05-12', foreign:  9500, trust:  1800, dealer:   600, mainForce: 11900 },  // 估算（延續多頭）
-  { time: '2026-05-13', foreign:  8500, trust:  1600, dealer:   500, mainForce: 10600 },  // 估算（持續買超）
-  { time: '2026-05-14', foreign:  6200, trust:  1300, dealer:   380, mainForce:  7880 },  // 估算（法人小幅縮手）
-  { time: '2026-05-15', foreign:  7800, trust:  1500, dealer:   450, mainForce:  9750 },  // 估算（週五外資積極買超）
+  { time: '2026-05-11', foreign: -17754, trust:    -53, dealer:    -69, mainForce: -17876 },  // 玩股網實測（外資大幅賣超）
+  { time: '2026-05-12', foreign:  -9238, trust:   8880, dealer:   -731, mainForce:  -1089 },  // 玩股網實測（投信大買補缺口）
+  { time: '2026-05-13', foreign: -11971, trust:   5474, dealer:   -367, mainForce:  -6864 },  // 玩股網實測（外資持續賣）
+  { time: '2026-05-14', foreign:    601, trust:   5857, dealer:   -521, mainForce:   5937 },  // 玩股網實測（外資今轉買）
+  { time: '2026-05-15', foreign:  -3398, trust:   3386, dealer:    -74, mainForce:    -86 },  // 玩股網實測（外資小幅轉賣）
 ];
 
 // ── MediaTek (2454) ────────────────────────────────────────────────────────────
@@ -118,10 +118,10 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-05-07', open: 3430, high: 3430, low: 3295, close: 3420, volume: 36800 },  // 估算
   { time: '2026-05-08', open: 3320, high: 3670, low: 3320, close: 3630, volume: 42500 },  // 估算
   { time: '2026-05-11', open: 3575, high: 3985, low: 3565, close: 3880, volume: 31200 },  // TWSE
-  { time: '2026-05-12', open: 3910, high: 4020, low: 3890, close: 3975, volume: 22000 },  // 估算
-  { time: '2026-05-13', open: 3988, high: 4125, low: 3975, close: 4080, volume: 21500 },  // 估算
-  { time: '2026-05-14', open: 4085, high: 4178, low: 4060, close: 4150, volume: 18800 },  // 估算
-  { time: '2026-05-15', open: 4155, high: 4248, low: 4130, close: 4230, volume: 17200 },  // 估算（週線收高）
+  { time: '2026-05-12', open: 3875, high: 3920, low: 3720, close: 3780, volume: 19800 },  // 估算（外資 -1730 賣超）
+  { time: '2026-05-13', open: 3770, high: 3820, low: 3620, close: 3650, volume: 17500 },  // 估算（外資持續賣超）
+  { time: '2026-05-14', open: 3640, high: 3700, low: 3370, close: 3405, volume: 15800 },  // 估算
+  { time: '2026-05-15', open: 3425, high: 3555, low: 3200, close: 3260, volume:  6664 },  // 玩股網實測（-4.26%）
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -151,11 +151,11 @@ export const CHIP_DATA_2454: ChipData[] = [
   { time: '2026-05-06', foreign: -1200, trust:   500, dealer:    50, mainForce:  -650 },  // 估算（整理）
   { time: '2026-05-07', foreign:  -800, trust:   350, dealer:  -100, mainForce:  -550 },  // 估算
   { time: '2026-05-08', foreign:   680, trust:   450, dealer:    80, mainForce:  1210 },  // 估算（回穩）
-  { time: '2026-05-11', foreign:  5200, trust:  2400, dealer:   800, mainForce:  8400 },  // 估算（美中協議）
-  { time: '2026-05-12', foreign:  3100, trust:  1600, dealer:   450, mainForce:  5150 },  // 估算（延續多頭）
-  { time: '2026-05-13', foreign:  4200, trust:  2000, dealer:   560, mainForce:  6760 },  // 估算（持續買超）
-  { time: '2026-05-14', foreign:  3400, trust:  1750, dealer:   410, mainForce:  5560 },  // 估算（法人持續佈局）
-  { time: '2026-05-15', foreign:  4500, trust:  2200, dealer:   600, mainForce:  7300 },  // 估算（週五法人積極布局）
+  { time: '2026-05-11', foreign:   -371, trust:     0, dealer:    19, mainForce:   -352 },  // 玩股網實測（外資賣超開始）
+  { time: '2026-05-12', foreign:  -1730, trust:     0, dealer:   -98, mainForce:  -1828 },  // 玩股網實測（外資持續賣）
+  { time: '2026-05-13', foreign:   -692, trust:     0, dealer:  -128, mainForce:   -820 },  // 玩股網實測
+  { time: '2026-05-14', foreign:   -264, trust:     0, dealer:  -159, mainForce:   -423 },  // 玩股網實測
+  { time: '2026-05-15', foreign:    335, trust:     0, dealer:  -348, mainForce:    -13 },  // 玩股網實測（外資今轉買，自營賣）
 ];
 
 // ── Gold (GC=F) ────────────────────────────────────────────────────────────────

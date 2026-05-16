@@ -123,6 +123,43 @@ function buildMockChips(code: string, bars: OHLCBar[]): ChipData[] {
 // ── Real chip data from 玩股網 (05/11 ~ 05/15, overrides synthetic data) ────
 // Source: wantgoo.com institutional-investors/trend, unit: 張
 const REAL_CHIPS_DATA: Record<string, ChipData[]> = {
+  // ── 飆股掃描 (rocket) stocks ─────────────────────────────────────────────────
+  '3661': [
+    { time: '2026-05-11', foreign:  314, trust:    1, dealer:    4, mainForce:  319 },
+    { time: '2026-05-12', foreign:   77, trust:   83, dealer:  -13, mainForce:  147 },
+    { time: '2026-05-13', foreign: -513, trust: -143, dealer:  -16, mainForce: -672 },
+    { time: '2026-05-14', foreign:  175, trust:   62, dealer:    2, mainForce:  239 },
+    { time: '2026-05-15', foreign:  401, trust:  -81, dealer:    3, mainForce:  323 },
+  ],
+  '2454': [
+    { time: '2026-05-11', foreign: -371, trust:    0, dealer:   19, mainForce: -352 },
+    { time: '2026-05-12', foreign:-1730, trust:    0, dealer:  -98, mainForce:-1828 },
+    { time: '2026-05-13', foreign: -692, trust:    0, dealer: -128, mainForce: -820 },
+    { time: '2026-05-14', foreign: -264, trust:    0, dealer: -159, mainForce: -423 },
+    { time: '2026-05-15', foreign:  335, trust:    0, dealer: -348, mainForce:  -13 },
+  ],
+  '6442': [
+    { time: '2026-05-11', foreign:  156, trust: -372, dealer:   64, mainForce: -152 },
+    { time: '2026-05-12', foreign: -650, trust: -389, dealer:   -1, mainForce:-1040 },
+    { time: '2026-05-13', foreign:  447, trust: -576, dealer:  -17, mainForce: -146 },
+    { time: '2026-05-14', foreign:  130, trust:   39, dealer:   -1, mainForce:  168 },
+    { time: '2026-05-15', foreign:  828, trust: -493, dealer:   -6, mainForce:  329 },
+  ],
+  '3037': [
+    { time: '2026-05-11', foreign: 2965, trust:  979, dealer:  -31, mainForce: 3913 },
+    { time: '2026-05-12', foreign: 1089, trust: 2465, dealer: -112, mainForce: 3442 },
+    { time: '2026-05-13', foreign: 1355, trust: 1234, dealer: -141, mainForce: 2448 },
+    { time: '2026-05-14', foreign:-3446, trust: 3621, dealer:   40, mainForce:  215 },
+    { time: '2026-05-15', foreign:-6133, trust:-1146, dealer: -732, mainForce:-8011 },
+  ],
+  '3017': [
+    { time: '2026-05-11', foreign: -239, trust:  604, dealer:    8, mainForce:  373 },
+    { time: '2026-05-12', foreign:-1080, trust:  785, dealer:  -57, mainForce: -352 },
+    { time: '2026-05-13', foreign:   63, trust: 1345, dealer:    4, mainForce: 1412 },
+    { time: '2026-05-14', foreign:-1172, trust:  309, dealer:    3, mainForce: -860 },
+    { time: '2026-05-15', foreign: -611, trust:  168, dealer:  -55, mainForce: -498 },
+  ],
+  // ── 破底翻掃描 (reversal) stocks ──────────────────────────────────────────────
   '6669': [
     { time: '2026-05-11', foreign: -387, trust:  399, dealer:  26, mainForce:   38 },
     { time: '2026-05-12', foreign:-1385, trust: 1025, dealer:  21, mainForce: -339 },
@@ -178,11 +215,11 @@ const MOCK_SCAN: ScanResult = {
   scanDate: MOCK_SCAN_DATE,
   source: 'TWSE',
   rockets: [
-    { code:'3661', name:'世芯-KY', price:5580,  chg:60.0,  changePct:1.09,  vol:4100000,  volRatio:1.7, tags:['AI ASIC','外資連買','創週高'], scanDate:MOCK_SCAN_DATE, strength:97 },
-    { code:'2454', name:'聯發科',  price:4230,  chg:80.0,  changePct:1.93,  vol:19500000, volRatio:1.4, tags:['IC設計','外資連買','AI手機'], scanDate:MOCK_SCAN_DATE, strength:89 },
-    { code:'6442', name:'光聖',    price:2815,  chg:85.0,  changePct:3.12,  vol:2100000,  volRatio:3.0, tags:['矽光子','投信連買','創新高'], scanDate:MOCK_SCAN_DATE, strength:85 },
-    { code:'3037', name:'欣興',    price:925,   chg:17.0,  changePct:1.87,  vol:20500000, volRatio:1.3, tags:['ABF載板','外資連買','CoWoS受益'], scanDate:MOCK_SCAN_DATE, strength:80 },
-    { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','法人連買','多頭格局'], scanDate:MOCK_SCAN_DATE, strength:76 },
+    { code:'3661', name:'世芯-KY', price:5580,  chg:60.0,  changePct:1.09,  vol:4100000,  volRatio:1.7, tags:['AI ASIC','外資積極買','投信觀望'], scanDate:MOCK_SCAN_DATE, strength:97 },
+    { code:'2454', name:'聯發科',  price:4230,  chg:80.0,  changePct:1.93,  vol:19500000, volRatio:1.4, tags:['IC設計','外資今轉買','AI手機'], scanDate:MOCK_SCAN_DATE, strength:89 },
+    { code:'6442', name:'光聖',    price:2815,  chg:85.0,  changePct:3.12,  vol:2100000,  volRatio:3.0, tags:['矽光子','外資強買','投信減碼'], scanDate:MOCK_SCAN_DATE, strength:85 },
+    { code:'3037', name:'欣興',    price:925,   chg:17.0,  changePct:1.87,  vol:20500000, volRatio:1.3, tags:['ABF載板','投信積極買','外資減碼'], scanDate:MOCK_SCAN_DATE, strength:80 },
+    { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','投信連買','外資觀望'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
     { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2, tags:['KD黃金交叉','外資今轉買','投信連買'], scanDate:MOCK_SCAN_DATE, strength:82 },
