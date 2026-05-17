@@ -62,21 +62,21 @@ export const CHIP_DATA_2330: ChipData[] = [
   { time: '2026-04-14', foreign: 18955, trust:   615, dealer:   653, mainForce: 20223 },
   { time: '2026-04-15', foreign:  4826, trust:  -138, dealer:   244, mainForce:  4932 },
   { time: '2026-04-16', foreign: -2390, trust:   306, dealer:  1084, mainForce: -1000 },
-  { time: '2026-04-17', foreign: -9383, trust: -2186, dealer:  -270, mainForce:-11839 },
-  { time: '2026-04-20', foreign: -3033, trust:   661, dealer:   -70, mainForce: -2442 },
-  { time: '2026-04-21', foreign:  2210, trust:   696, dealer:   -77, mainForce:  2829 },
-  { time: '2026-04-22', foreign: -2132, trust:  -742, dealer:  -326, mainForce: -3200 },
-  { time: '2026-04-23', foreign:  7193, trust:   754, dealer: -1379, mainForce:  6568 },
-  { time: '2026-04-24', foreign:  8305, trust:  1168, dealer:   256, mainForce:  9729 },
-  { time: '2026-04-27', foreign:-18940, trust:  5284, dealer:   248, mainForce:-13408 },  // T86 實測
-  { time: '2026-04-28', foreign: -3058, trust:   215, dealer:   -98, mainForce: -2941 },  // 估算
-  { time: '2026-04-29', foreign: -4500, trust:  -800, dealer:  -200, mainForce: -5500 },  // 估算
-  { time: '2026-04-30', foreign:  3200, trust:   400, dealer:   150, mainForce:  3750 },  // 估算（月底回補）
-  { time: '2026-05-04', foreign:  6800, trust:   900, dealer:   300, mainForce:  8000 },  // 估算（五一後外資回補）
-  { time: '2026-05-05', foreign: 14500, trust:  1800, dealer:   700, mainForce: 17000 },  // 估算（外資大買）
-  { time: '2026-05-06', foreign: -4200, trust:  -600, dealer:  -200, mainForce: -5000 },  // 估算（獲利了結）
-  { time: '2026-05-07', foreign: -6800, trust: -1200, dealer:  -400, mainForce: -8400 },  // 估算（市場震盪）
-  { time: '2026-05-08', foreign:  2100, trust:   500, dealer:   100, mainForce:  2700 },  // 估算（回穩）
+  { time: '2026-04-17', foreign:  -9383, trust: -2186, dealer:  -359, mainForce: -11928 },  // 玩股網實測
+  { time: '2026-04-20', foreign:  -3033, trust:   660, dealer:   -76, mainForce:  -2449 },  // 玩股網實測
+  { time: '2026-04-21', foreign:   2210, trust:   696, dealer:    -1, mainForce:   2905 },  // 玩股網實測
+  { time: '2026-04-22', foreign:  -2132, trust:  -742, dealer:  -197, mainForce:  -3071 },  // 玩股網實測
+  { time: '2026-04-23', foreign:   7194, trust:   755, dealer:  -835, mainForce:   7114 },  // 玩股網實測
+  { time: '2026-04-24', foreign:   8306, trust:  1169, dealer:    86, mainForce:   9561 },  // 玩股網實測
+  { time: '2026-04-27', foreign: -18940, trust:  5284, dealer:    86, mainForce: -13570 },  // 玩股網實測
+  { time: '2026-04-28', foreign: -22113, trust:   862, dealer:    45, mainForce: -21206 },  // 玩股網實測
+  { time: '2026-04-29', foreign: -15782, trust:  1002, dealer:  -266, mainForce: -15046 },  // 玩股網實測
+  { time: '2026-04-30', foreign: -21183, trust:   597, dealer:    86, mainForce: -20500 },  // 玩股網實測
+  { time: '2026-05-04', foreign:   9112, trust:   809, dealer:    98, mainForce:  10019 },  // 玩股網實測
+  { time: '2026-05-05', foreign:  -8581, trust:  1496, dealer:   -12, mainForce:  -7097 },  // 玩股網實測
+  { time: '2026-05-06', foreign:  -4320, trust:  1935, dealer:  -378, mainForce:  -2763 },  // 玩股網實測
+  { time: '2026-05-07', foreign:   3885, trust:  1433, dealer:  -184, mainForce:   5134 },  // 玩股網實測
+  { time: '2026-05-08', foreign:   -858, trust:  1269, dealer:   -93, mainForce:    318 },  // 玩股網實測
   { time: '2026-05-11', foreign: -17754, trust:    -53, dealer:    -69, mainForce: -17876 },  // 玩股網實測（外資大幅賣超）
   { time: '2026-05-12', foreign:  -9238, trust:   8880, dealer:   -731, mainForce:  -1089 },  // 玩股網實測（投信大買補缺口）
   { time: '2026-05-13', foreign: -11971, trust:   5474, dealer:   -367, mainForce:  -6864 },  // 玩股網實測（外資持續賣）
@@ -124,38 +124,38 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-05-15', open: 3425, high: 3555, low: 3200, close: 3260, volume:  6664 },  // 玩股網實測（-4.26%）
 ];
 
-// 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
+// 籌碼 (單位：張) — 來源 玩股網實測（投信全程為 0，原 trust 欄位實為自營商）
 export const CHIP_DATA_2454: ChipData[] = [
-  { time: '2026-04-01', foreign: -3537, trust:   -63, dealer:   136, mainForce: -3464 },
-  { time: '2026-04-02', foreign:  -824, trust:   -27, dealer:    11, mainForce:  -840 },
-  { time: '2026-04-07', foreign:  -829, trust:  -748, dealer:   126, mainForce: -1451 },
-  { time: '2026-04-08', foreign:   -81, trust:   -55, dealer:   199, mainForce:    63 },
-  { time: '2026-04-09', foreign:  -728, trust:  -178, dealer:   -79, mainForce:  -985 },
-  { time: '2026-04-10', foreign: -1441, trust:  -276, dealer:     2, mainForce: -1715 },
-  { time: '2026-04-13', foreign:   439, trust:  -525, dealer:    11, mainForce:   -75 },
-  { time: '2026-04-14', foreign:   121, trust:   143, dealer:   142, mainForce:   406 },
-  { time: '2026-04-15', foreign:  4491, trust:   264, dealer:   334, mainForce:  5089 },
-  { time: '2026-04-16', foreign:  1180, trust:  1386, dealer:   681, mainForce:  3247 },
-  { time: '2026-04-17', foreign:  5340, trust:  1284, dealer:   148, mainForce:  6772 },
-  { time: '2026-04-20', foreign:   -45, trust:   170, dealer:   -29, mainForce:    96 },
-  { time: '2026-04-21', foreign:  4321, trust:  1052, dealer:   269, mainForce:  5642 },
-  { time: '2026-04-22', foreign:  -568, trust:  2528, dealer:   227, mainForce:  2187 },
-  { time: '2026-04-23', foreign:   747, trust:   595, dealer:   232, mainForce:  1574 },
-  { time: '2026-04-24', foreign:   829, trust:  1769, dealer:   119, mainForce:  2717 },
-  { time: '2026-04-27', foreign:   144, trust:   566, dealer:   162, mainForce:   872 },  // T86 實測
-  { time: '2026-04-28', foreign:  1191, trust:  1215, dealer:   -23, mainForce:  2362 },  // T86 實測
-  { time: '2026-04-29', foreign:  1050, trust:   850, dealer:   120, mainForce:  2020 },  // 估算
-  { time: '2026-04-30', foreign:  1580, trust:  1150, dealer:   200, mainForce:  2930 },  // 估算（月底回補）
-  { time: '2026-05-04', foreign:  4500, trust:  2200, dealer:   450, mainForce:  7150 },  // 估算（漲停前大買）
-  { time: '2026-05-05', foreign:  5800, trust:  3100, dealer:   650, mainForce:  9550 },  // 估算（連續漲停）
-  { time: '2026-05-06', foreign: -1200, trust:   500, dealer:    50, mainForce:  -650 },  // 估算（整理）
-  { time: '2026-05-07', foreign:  -800, trust:   350, dealer:  -100, mainForce:  -550 },  // 估算
-  { time: '2026-05-08', foreign:   680, trust:   450, dealer:    80, mainForce:  1210 },  // 估算（回穩）
-  { time: '2026-05-11', foreign:   -371, trust:     0, dealer:    19, mainForce:   -352 },  // 玩股網實測（外資賣超開始）
-  { time: '2026-05-12', foreign:  -1730, trust:     0, dealer:   -98, mainForce:  -1828 },  // 玩股網實測（外資持續賣）
-  { time: '2026-05-13', foreign:   -692, trust:     0, dealer:  -128, mainForce:   -820 },  // 玩股網實測
-  { time: '2026-05-14', foreign:   -264, trust:     0, dealer:  -159, mainForce:   -423 },  // 玩股網實測
-  { time: '2026-05-15', foreign:    335, trust:     0, dealer:  -348, mainForce:    -13 },  // 玩股網實測（外資今轉買，自營賣）
+  { time: '2026-04-01', foreign: -3537, trust:    0, dealer:   -63, mainForce: -3600 },
+  { time: '2026-04-02', foreign:  -824, trust:    0, dealer:   -27, mainForce:  -851 },
+  { time: '2026-04-07', foreign:  -829, trust:    0, dealer:  -748, mainForce: -1577 },
+  { time: '2026-04-08', foreign:   -81, trust:    0, dealer:   -55, mainForce:  -136 },
+  { time: '2026-04-09', foreign:  -728, trust:    0, dealer:  -178, mainForce:  -906 },
+  { time: '2026-04-10', foreign: -1441, trust:    0, dealer:  -276, mainForce: -1717 },
+  { time: '2026-04-13', foreign:   439, trust:    0, dealer:  -525, mainForce:   -86 },
+  { time: '2026-04-14', foreign:   121, trust:    0, dealer:   143, mainForce:   264 },
+  { time: '2026-04-15', foreign:  4491, trust:    0, dealer:   264, mainForce:  4755 },
+  { time: '2026-04-16', foreign:  1180, trust:    0, dealer:  1386, mainForce:  2566 },
+  { time: '2026-04-17', foreign:  5340, trust:    0, dealer:  1284, mainForce:  6624 },  // 玩股網實測
+  { time: '2026-04-20', foreign:   -45, trust:    0, dealer:   170, mainForce:   125 },  // 玩股網實測
+  { time: '2026-04-21', foreign:  4321, trust:    0, dealer:  1052, mainForce:  5373 },  // 玩股網實測
+  { time: '2026-04-22', foreign:  -568, trust:    0, dealer:  2528, mainForce:  1960 },  // 玩股網實測
+  { time: '2026-04-23', foreign:   746, trust:    0, dealer:   596, mainForce:  1342 },  // 玩股網實測
+  { time: '2026-04-24', foreign:   829, trust:    0, dealer:  1769, mainForce:  2598 },  // 玩股網實測
+  { time: '2026-04-27', foreign:   143, trust:    0, dealer:   566, mainForce:   709 },  // 玩股網實測
+  { time: '2026-04-28', foreign:  1191, trust:    0, dealer:  1215, mainForce:  2406 },  // 玩股網實測
+  { time: '2026-04-29', foreign: -2003, trust:    0, dealer:  1375, mainForce:  -628 },  // 玩股網實測
+  { time: '2026-04-30', foreign:  1447, trust:    0, dealer:    75, mainForce:  1522 },  // 玩股網實測
+  { time: '2026-05-04', foreign:  -823, trust:    0, dealer:  -120, mainForce:  -943 },  // 玩股網實測
+  { time: '2026-05-05', foreign:  2021, trust:    0, dealer:    47, mainForce:  2068 },  // 玩股網實測
+  { time: '2026-05-06', foreign:  4225, trust:    0, dealer:   594, mainForce:  4819 },  // 玩股網實測
+  { time: '2026-05-07', foreign:  -880, trust:    0, dealer:   -62, mainForce:  -942 },  // 玩股網實測
+  { time: '2026-05-08', foreign:  -501, trust:    0, dealer:   186, mainForce:  -315 },  // 玩股網實測
+  { time: '2026-05-11', foreign:  -371, trust:    0, dealer:    19, mainForce:  -352 },  // 玩股網實測
+  { time: '2026-05-12', foreign: -1730, trust:    0, dealer:   -98, mainForce: -1828 },  // 玩股網實測
+  { time: '2026-05-13', foreign:  -692, trust:    0, dealer:  -128, mainForce:  -820 },  // 玩股網實測
+  { time: '2026-05-14', foreign:  -264, trust:    0, dealer:  -159, mainForce:  -423 },  // 玩股網實測
+  { time: '2026-05-15', foreign:   335, trust:    0, dealer:  -348, mainForce:   -13 },  // 玩股網實測
 ];
 
 // ── Gold (GC=F) ────────────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ type ChartTab = 'chip' | 'tech' | 'inst' | 'holder' | 'margin' | 'report';
 const ALL_TABS: { key: ChartTab; label: string }[] = [
   { key: 'chip',   label: '成交量・主力' },
   { key: 'tech',   label: 'KD・MACD・RSI' },
-  { key: 'inst',   label: '外資・投信' },
+  { key: 'inst',   label: '三大法人' },
   { key: 'holder', label: '大戶・散戶' },
   { key: 'margin', label: '融資・融券' },
   { key: 'report', label: '📋 個股報告' },
@@ -164,6 +164,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   // Tab 3 — inst
   const fgnRef  = useRef<HTMLDivElement>(null);
   const trstRef = useRef<HTMLDivElement>(null);
+  const dlrRef  = useRef<HTMLDivElement>(null);
   // Tab 4 — holder
   const bigRef  = useRef<HTMLDivElement>(null);
   const smlRef  = useRef<HTMLDivElement>(null);
@@ -231,6 +232,10 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
     const v = chipByDate.get(d.time)?.trust ?? 0;
     return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
   }), [data, chipByDate]);
+  const dlrChips = useMemo(() => data.map(d => {
+    const v = chipByDate.get(d.time)?.dealer ?? 0;
+    return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
+  }), [data, chipByDate]);
 
   // ── Lookup maps (crosshair) ────────────────────────────────────────────────────
   const ma5Map  = useMemo(() => new Map(ma5Data.map(d  => [d.time, d.value])), [ma5Data]);
@@ -247,6 +252,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   const chipHovMap   = useMemo(() => new Map(mainForceChips.map(d => [d.time, d])), [mainForceChips]);
   const fgnHovMap    = useMemo(() => new Map(fgnChips.map(d => [d.time, d])), [fgnChips]);
   const trstHovMap   = useMemo(() => new Map(trstChips.map(d => [d.time, d])), [trstChips]);
+  const dlrHovMap    = useMemo(() => new Map(dlrChips.map(d => [d.time, d])),  [dlrChips]);
   const holderHovMap = useMemo(() => new Map(holderd.map(d => [d.time, d])), [holderd]);
   const marginHovMap = useMemo(() => new Map(margind.map(d => [d.time, d])), [margind]);
 
@@ -283,6 +289,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
   const latestChip   = (hovT ? chipHovMap.get(hovT)    : undefined) ?? mainForceChips.at(-1);
   const latestFgn    = (hovT ? fgnHovMap.get(hovT)     : undefined) ?? fgnChips.at(-1);
   const latestTrst   = (hovT ? trstHovMap.get(hovT)    : undefined) ?? trstChips.at(-1);
+  const latestDlr    = (hovT ? dlrHovMap.get(hovT)     : undefined) ?? dlrChips.at(-1);
   const latestHolder = (hovT ? holderHovMap.get(hovT)  : undefined) ?? holderd.at(-1);
   const latestMargin = (hovT ? marginHovMap.get(hovT)  : undefined) ?? margind.at(-1);
 
@@ -410,19 +417,22 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       subs.push(rsiChart); syncPairs.push([rsiChart, rsiS]);
     }
 
-    // ── Tab 3: 外資 + 投信 ──────────────────────────────────────────────────
-    if (chartTab === 'inst' && fgnRef.current && trstRef.current) {
-      const fgnChart = subChart(fgnRef.current, 90);
+    // ── Tab 3: 三大法人（外資 + 投信 + 自營商）──────────────────────────────
+    if (chartTab === 'inst' && fgnRef.current && trstRef.current && dlrRef.current) {
+      const fgnChart = subChart(fgnRef.current, 80);
       const fgnS = fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
       fgnS.setData(fgnChips as any);
-      cumLine(fgnChart, fgnChips.map(d => ({ time: d.time, value: d.value })), '#c0392b');
       subs.push(fgnChart); syncPairs.push([fgnChart, fgnS]);
 
-      const trstChart = subChart(trstRef.current, 110, true);
+      const trstChart = subChart(trstRef.current, 80);
       const trstS = trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
       trstS.setData(trstChips as any);
-      cumLine(trstChart, trstChips.map(d => ({ time: d.time, value: d.value })), '#2980b9');
       subs.push(trstChart); syncPairs.push([trstChart, trstS]);
+
+      const dlrChart = subChart(dlrRef.current, 80, true);
+      const dlrS = dlrChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      dlrS.setData(dlrChips as any);
+      subs.push(dlrChart); syncPairs.push([dlrChart, dlrS]);
     }
 
     // ── Tab 4: 大戶持股 + 散戶持股 ──────────────────────────────────────────
@@ -500,7 +510,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
     if (main) main.subscribeCrosshairMove(crosshairHandler);
 
     // ── Resize handler ────────────────────────────────────────────────────────
-    const allSubRefs = [volRef, chipRef, kdRef, macdRef, rsiRef, fgnRef, trstRef, bigRef, smlRef, mrgnRef, shrtRef];
+    const allSubRefs = [volRef, chipRef, kdRef, macdRef, rsiRef, fgnRef, trstRef, dlrRef, bigRef, smlRef, mrgnRef, shrtRef];
     const onResize = () => {
       subs.forEach((ch, i) => {
         const el = allSubRefs[i]?.current;
@@ -518,7 +528,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
       subs.forEach(c => c.remove());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartTab, data, lineOnly, mainForceChips, fgnChips, trstChips, kdd, macdd, rsid, holderd, margind]);
+  }, [chartTab, data, lineOnly, mainForceChips, fgnChips, trstChips, dlrChips, kdd, macdd, rsid, holderd, margind]);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -638,7 +648,7 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
         </>
       )}
 
-      {/* ══ Tab 3: 外資 + 投信 ══ */}
+      {/* ══ Tab 3: 三大法人 ══ */}
       {chartTab === 'inst' && (
         <>
           <div className="smc-sub-label">
@@ -648,9 +658,8 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
                 {latestFgn.value >= 0 ? '+' : ''}{latestFgn.value.toLocaleString()} 張
               </span>
             )}
-            <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={fgnRef} className="smc-sub h90" />
+          <div ref={fgnRef} className="smc-sub h80" />
 
           <div className="smc-sub-label">
             投信買賣超
@@ -659,9 +668,18 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
                 {latestTrst.value >= 0 ? '+' : ''}{latestTrst.value.toLocaleString()} 張
               </span>
             )}
-            <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={trstRef} className="smc-sub h110" />
+          <div ref={trstRef} className="smc-sub h80" />
+
+          <div className="smc-sub-label">
+            自營商買賣超
+            {latestDlr && (
+              <span className={`smc-sub-stat ${latestDlr.value >= 0 ? 'cl-up' : 'cl-down'}`}>
+                {latestDlr.value >= 0 ? '+' : ''}{latestDlr.value.toLocaleString()} 張
+              </span>
+            )}
+          </div>
+          <div ref={dlrRef} className="smc-sub h80" />
         </>
       )}
 
