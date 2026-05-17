@@ -4,6 +4,8 @@ import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
 import { fetchScan, fetchChips, isAPIConfigured, type ScanResult, type ScannedStock } from '../utils/stockAPI';
 import { type ChipData, calculateKD, calculateMACD, calculateRSI } from '../utils/technicalIndicators';
 import { fetchOHLC } from '../utils/stockAPI';
+import StockReportPanel from './StockReportPanel';
+import type { ChipBar } from './SmartMoneyChart';
 import './RocketScanner.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -334,7 +336,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const [scanProgress,  setScanProgress]  = useState(0);
   const [currentSymbol, setCurrentSymbol] = useState('0000');
   const [expandedCode,  setExpandedCode]  = useState<string | null>(null);
-  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips' | 'tech' | 'chart'>('main');
+  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart'>('main');
   const [showCriteria,  setShowCriteria]  = useState(false);
   const [filterStrength, setFilterStrength] = useState(0);
 
@@ -427,10 +429,10 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     }
   };
 
-  const handleTabChange = (tab: 'main' | 'chips' | 'tech' | 'chart', code: string) => {
+  const handleTabChange = (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart', code: string) => {
     setActiveDetailTab(tab);
-    if (tab === 'chart' || tab === 'tech') ensureOHLC(code);
-    if (tab === 'chips') ensureChips(code);
+    if (tab === 'chart' || tab === 'tech' || tab === 'margin' || tab === 'report') ensureOHLC(code);
+    if (tab === 'inst' || tab === 'report') ensureChips(code);
   };
 
   // ── Sanity-check live scan results ──────────────────────────────────────────
@@ -638,9 +640,9 @@ function StockCard({
   idx:            number;
   isRocket:       boolean;
   isExpanded:     boolean;
-  activeDetailTab:'main' | 'chips' | 'tech' | 'chart';
+  activeDetailTab:'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart';
   onToggle:       () => void;
-  onTabChange:    (tab: 'main' | 'chips' | 'tech' | 'chart') => void;
+  onTabChange:    (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart') => void;
   chipHistory:    ChipData[];
   ohlcBars:       OHLCBar[];
 }) {
@@ -715,20 +717,19 @@ function StockCard({
       {isExpanded && (
         <div className="rocket-details-panel animate-fade-in">
           <div className="details-tabs">
-            {/* 破底翻: 主力進出 | 技術指標 | K線圖  /  潛力飆股: 主力進出 | 籌碼詳細 | K線圖 */}
-            {(isRocket
-              ? (['main','chips','chart'] as const)
-              : (['main','tech','chart']  as const)
-            ).map(tab => (
+            {/* 6 unified tabs for both modes */}
+            {((['main','tech','inst','margin','report','chart']) as const).map(tab => (
               <button
                 key={tab}
                 className={`detail-tab-btn ${activeDetailTab === tab ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); onTabChange(tab); }}
+                onClick={(e) => { e.stopPropagation(); onTabChange(tab as 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart'); }}
               >
-                {tab === 'main'  ? '主力進出'
-                 : tab === 'chips' ? '籌碼詳細'
-                 : tab === 'tech'  ? '📊 技術指標'
-                 :                   '📈 K線圖'}
+                {tab === 'main'   ? '成交量・主力'
+                 : tab === 'tech'   ? 'KD・MACD・RSI'
+                 : tab === 'inst'   ? '三大法人'
+                 : tab === 'margin' ? '融資・融券'
+                 : tab === 'report' ? '📋 個股報告'
+                 :                    '📈 K線圖'}
               </button>
             ))}
           </div>
@@ -740,9 +741,34 @@ function StockCard({
             {activeDetailTab === 'tech' && (
               <TechChartPanel bars={ohlcBars} />
             )}
-            {activeDetailTab !== 'chart' && activeDetailTab !== 'tech' && (
+            {activeDetailTab === 'inst' && (
+              <InstBarPanel data={chipHistory} />
+            )}
+            {activeDetailTab === 'margin' && (
+              <MarginChartPanel bars={ohlcBars} seed={parseInt(stock.code, 10)} />
+            )}
+            {activeDetailTab === 'report' && (() => {
+              const chipBars: ChipBar[] = chipHistory.map(c => ({
+                time: c.time,
+                value: c.mainForce,
+                color: c.mainForce >= 0 ? '#c0392b' : '#4a7c59',
+              }));
+              const ohlcData = ohlcBars.map(b => ({ ...b, volume: 0 }));
+              return (
+                <StockReportPanel
+                  code={stock.code}
+                  name={stock.name}
+                  price={stock.price}
+                  changePct={stock.changePct}
+                  signal={stock.strength}
+                  sector={stock.tags[0] ?? '—'}
+                  data={ohlcData}
+                  chips={chipBars}
+                />
+              );
+            })()}
+            {activeDetailTab === 'main' && (
               <ChipDetailView
-                activeTab={activeDetailTab}
                 chipHistory={chipHistory}
                 stock={stock}
                 isRocket={isRocket}
@@ -1034,61 +1060,244 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
   );
 }
 
+// ── Inst Bar Panel (三大法人: foreign / trust / dealer) ───────────────────────
+
+function InstBarPanel({ data }: { data: ChipData[] }) {
+  const fgnRef  = useRef<HTMLDivElement>(null);
+  const trstRef = useRef<HTMLDivElement>(null);
+  const dlrRef  = useRef<HTMLDivElement>(null);
+
+  // Latest values for labels
+  const latest = data.at(-1);
+
+  useEffect(() => {
+    if (!data.length) return;
+    const refs = [fgnRef, trstRef, dlrRef];
+    if (refs.some(r => !r.current)) return;
+
+    const fields: (keyof ChipData)[] = ['foreign', 'trust', 'dealer'];
+    const charts = refs.map((ref, i) => {
+      const isLast = i === refs.length - 1;
+      const chart = createChart(ref.current!, {
+        layout: CHART_LAYOUT,
+        grid: CHART_GRID,
+        width: ref.current!.clientWidth,
+        height: 80,
+        timeScale: { visible: isLast, borderColor: '#e5e7eb', timeVisible: false },
+        rightPriceScale: { borderColor: '#e5e7eb', minimumWidth: 55 },
+        crosshair: {
+          horzLine: { visible: false, labelVisible: false },
+          vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
+        },
+        handleScroll: false,
+        handleScale: false,
+      });
+      const series = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      series.setData(
+        data.map(d => ({
+          time: d.time,
+          value: d[fields[i]] as number,
+          color: (d[fields[i]] as number) >= 0 ? '#c0392b' : '#4a7c59',
+        })) as any
+      );
+      chart.timeScale().fitContent();
+      return chart;
+    });
+
+    // Sync time-range across all panels
+    charts[0].timeScale().subscribeVisibleTimeRangeChange(() => {
+      const r = charts[0].timeScale().getVisibleRange();
+      if (r) charts.slice(1).forEach(c => { try { c.timeScale().setVisibleRange(r); } catch (_) {} });
+    });
+
+    const onResize = () => refs.forEach((ref, i) => {
+      if (ref.current) charts[i].applyOptions({ width: ref.current.clientWidth });
+    });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      charts.forEach(c => c.remove());
+    };
+  }, [data]);
+
+  const fmt = (v: number) => `${v >= 0 ? '+' : ''}${v.toLocaleString()}`;
+  const cls = (v: number) => v >= 0 ? 'up' : 'down';
+
+  return (
+    <div className="tech-chart-panel">
+      <div className="tc-label-row">
+        <span className="tc-name">外資買賣超</span>
+        {latest && <span className={`tc-val ${cls(latest.foreign)}`}>{fmt(latest.foreign)}</span>}
+      </div>
+      <div ref={fgnRef} className="smc-sub h80" />
+
+      <div className="tc-label-row">
+        <span className="tc-name">投信買賣超</span>
+        {latest && <span className={`tc-val ${cls(latest.trust)}`}>{fmt(latest.trust)}</span>}
+      </div>
+      {data.some(d => d.trust !== 0) ? (
+        <div ref={trstRef} className="smc-sub h80" />
+      ) : (
+        <div className="smc-sub h80 smc-nodata-placeholder"><span>本期投信無買賣超記錄</span></div>
+      )}
+
+      <div className="tc-label-row">
+        <span className="tc-name">自營商買賣超</span>
+        {latest && <span className={`tc-val ${cls(latest.dealer)}`}>{fmt(latest.dealer)}</span>}
+      </div>
+      <div ref={dlrRef} className="smc-sub h80" />
+    </div>
+  );
+}
+
+// ── Margin Chart Panel (融資・融券) ────────────────────────────────────────────
+
+function deriveMarginLocal(bars: OHLCBar[], seed: number) {
+  const rand = mkRng(seed ^ 0xFAFAFA);
+  // Base amounts scaled to price magnitude
+  const base = bars[0]?.close ?? 100;
+  let margin = Math.round(base * 200 + rand() * base * 50);
+  let short  = Math.round(base * 8  + rand() * base * 5);
+
+  const marginBal: { time: string; value: number }[] = [];
+  const shortBal:  { time: string; value: number }[] = [];
+
+  bars.forEach((bar, i) => {
+    const pct = i > 0 ? (bar.close - bars[i - 1].close) / bars[i - 1].close : 0;
+    const noise = (rand() - 0.5) * 0.025;
+    // Margin tracks price (more leverage when rising)
+    margin = Math.max(10, Math.round(margin * (1 + pct * 0.35 + noise)));
+    // Short inverse of price (more shorts when falling)
+    short  = Math.max(1,  Math.round(short  * (1 - pct * 0.40 + (rand() - 0.5) * 0.03)));
+    marginBal.push({ time: bar.time, value: margin });
+    shortBal.push({ time: bar.time, value: short });
+  });
+  return { marginBal, shortBal };
+}
+
+function MarginChartPanel({ bars, seed }: { bars: OHLCBar[]; seed: number }) {
+  const marginRef = useRef<HTMLDivElement>(null);
+  const shortRef  = useRef<HTMLDivElement>(null);
+
+  const [mVal, setMVal] = useState<number | null>(null);
+  const [sVal, setSVal] = useState<number | null>(null);
+
+  const { marginBal, shortBal } = deriveMarginLocal(bars, seed);
+
+  // Initialise labels
+  useEffect(() => {
+    setMVal(marginBal.at(-1)?.value ?? null);
+    setSVal(shortBal.at(-1)?.value ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars]);
+
+  useEffect(() => {
+    if (!bars.length || !marginRef.current || !shortRef.current) return;
+
+    const makeChart = (el: HTMLElement, h: number, timeVisible = false) =>
+      createChart(el, {
+        layout: CHART_LAYOUT, grid: CHART_GRID,
+        width: el.clientWidth, height: h,
+        timeScale: { visible: timeVisible, borderColor: '#e5e7eb', timeVisible: false },
+        rightPriceScale: { borderColor: '#e5e7eb', minimumWidth: 60 },
+        crosshair: {
+          horzLine: { visible: false, labelVisible: false },
+          vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
+        },
+        handleScroll: true, handleScale: true,
+      });
+
+    // ── 融資餘額 (line chart, red)
+    const mChart = makeChart(marginRef.current, 100);
+    const mSeries = mChart.addSeries(LineSeries, {
+      color: '#c0392b', lineWidth: 2 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    });
+    mSeries.setData(marginBal as any);
+    mChart.timeScale().fitContent();
+
+    mChart.subscribeCrosshairMove(param => {
+      if (!param.time) { setMVal(marginBal.at(-1)?.value ?? null); return; }
+      const t = String(param.time);
+      const row = marginBal.find(r => r.time === t);
+      if (row) setMVal(row.value);
+    });
+
+    // ── 融券餘額 (line chart, green)
+    const sChart = makeChart(shortRef.current, 90, true);
+    const sSeries = sChart.addSeries(LineSeries, {
+      color: '#4a7c59', lineWidth: 2 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    });
+    sSeries.setData(shortBal as any);
+    sChart.timeScale().fitContent();
+
+    sChart.subscribeCrosshairMove(param => {
+      if (!param.time) { setSVal(shortBal.at(-1)?.value ?? null); return; }
+      const t = String(param.time);
+      const row = shortBal.find(r => r.time === t);
+      if (row) setSVal(row.value);
+    });
+
+    // Sync time range
+    const allCharts = [mChart, sChart];
+    allCharts.forEach(src => {
+      src.timeScale().subscribeVisibleTimeRangeChange(() => {
+        const r = src.timeScale().getVisibleRange();
+        if (r) allCharts.forEach(c => { if (c !== src) { try { c.timeScale().setVisibleRange(r); } catch (_) {} } });
+      });
+    });
+
+    const refs = [marginRef, shortRef];
+    const onResize = () => refs.forEach((ref, i) => {
+      if (ref.current) allCharts[i].applyOptions({ width: ref.current.clientWidth });
+    });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      allCharts.forEach(c => c.remove());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars]);
+
+  if (!bars.length) {
+    return <p className="tc-no-data">K 線資料不足，請先切換至「📈 K線圖」頁載入後再試。</p>;
+  }
+
+  const fmtV = (v: number | null) => v !== null ? v.toLocaleString() : '—';
+
+  return (
+    <div className="tech-chart-panel">
+      <div className="tc-label-row">
+        <span className="tc-name">融資餘額（張）</span>
+        {mVal !== null && <span className="tc-val" style={{ color: '#c0392b' }}>{fmtV(mVal)}</span>}
+        <span className="tc-val" style={{ color: '#9ca3af', fontSize: '0.62rem' }}>模擬估算</span>
+      </div>
+      <div ref={marginRef} className="smc-sub h100" />
+
+      <div className="tc-label-row">
+        <span className="tc-name">融券餘額（張）</span>
+        {sVal !== null && <span className="tc-val" style={{ color: '#4a7c59' }}>{fmtV(sVal)}</span>}
+        <span className="tc-val" style={{ color: '#9ca3af', fontSize: '0.62rem' }}>模擬估算</span>
+      </div>
+      <div ref={shortRef} className="smc-sub h90" />
+    </div>
+  );
+}
+
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
-  activeTab, chipHistory, stock, isRocket,
+  chipHistory, stock, isRocket,
 }: {
-  activeTab:   'main' | 'chips' | 'tech' | 'chart';
   chipHistory: ChipData[];
   stock:       ScannedStock;
   isRocket:    boolean;
 }) {
   const recent = chipHistory.slice(-5).reverse(); // latest first
-  const strength = stock.strength;
 
-  if (activeTab === 'chips') {
-    return (
-      <div className="chips-detail-view">
-        <div className="chips-grid">
-          <div className="chips-card">
-            <h4>集中度分析</h4>
-            <div className="progress-group">
-              <div className="label-row"><span>主力集中度 (1日)</span><span>{(strength / 10 + 2).toFixed(1)}%</span></div>
-              <div className="p-bar"><div className="p-fill" style={{ width: `${strength / 1.2}%` }}></div></div>
-            </div>
-            <div className="progress-group">
-              <div className="label-row"><span>主力集中度 (5日)</span><span>{(strength / 10 + 1.2).toFixed(1)}%</span></div>
-              <div className="p-bar"><div className="p-fill" style={{ width: `${Math.max(0, strength - 10) / 1.2}%` }}></div></div>
-            </div>
-          </div>
-          <div className="chips-card">
-            <h4>三大法人近期流向</h4>
-            {recent.length > 0 ? (
-              <div className="broker-row">
-                <div className="broker-info">
-                  <span>外資 ({recent[0].time?.slice(5)})</span>
-                  <span className={recent[0].foreign >= 0 ? 'up' : 'down'}>
-                    {recent[0].foreign >= 0 ? '+' : ''}{recent[0].foreign.toLocaleString()} 張
-                  </span>
-                </div>
-                <div className="broker-info">
-                  <span>投信 ({recent[0].time?.slice(5)})</span>
-                  <span className={recent[0].trust >= 0 ? 'up' : 'down'}>
-                    {recent[0].trust >= 0 ? '+' : ''}{recent[0].trust.toLocaleString()} 張
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="chip-tip">💡 切換至「主力進出」查看即時籌碼</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // activeTab === 'main'
   if (recent.length === 0) {
     return (
       <div className="main-force-view">
