@@ -393,6 +393,127 @@
 .h-row .up { color: var(--accent-danger); }
 .h-row .down { color: var(--accent-matcha); }
 
+/* ── Tech Signal Panel (KD / MACD / RSI) ────────────────────────────────────── */
+.tech-signal-panel {
+  margin: 0.9rem 0 0.6rem;
+  padding: 0.75rem 0.9rem 0.65rem;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border: 1px solid #e0e4f5;
+  border-radius: 8px;
+}
+.ts-title {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  color: #374151;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+}
+.ts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+}
+.ts-card {
+  padding: 0.5rem 0.6rem 0.45rem;
+  border-radius: 6px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+.ts-card.ts-bullish { border-color: #c0392b; background: #fff8f8; }
+.ts-card.ts-neutral { border-color: #d4a017; background: #fffdf0; }
+.ts-card.ts-normal  { border-color: #e5e7eb; }
+
+.ts-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+  flex-wrap: wrap;
+}
+.ts-name {
+  font-size: 0.60rem;
+  font-weight: 800;
+  color: #374151;
+  letter-spacing: 0.05em;
+}
+.ts-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.ts-badge.ts-bullish { background: #fee2e2; color: #c0392b; }
+.ts-badge.ts-neutral { background: #fef9c3; color: #92400e; }
+.ts-badge.ts-normal  { background: #f3f4f6; color: #6b7280; }
+
+.ts-vals {
+  display: flex;
+  gap: 0.55rem;
+  font-size: 0.63rem;
+  color: #4b5563;
+  margin-bottom: 0.28rem;
+}
+.ts-vals strong { color: #111827; }
+
+/* Progress bar */
+.ts-bar-bg {
+  position: relative;
+  height: 4px;
+  background: #f3f4f6;
+  border-radius: 2px;
+  overflow: visible;
+  margin-top: 0.2rem;
+}
+.ts-bar-k {
+  height: 100%;
+  background: #c0392b;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.ts-bar-rsi   { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.ts-bar-over  { background: #c0392b; }
+.ts-bar-low   { background: #d4a017; }
+.ts-bar-hi    { background: #6366f1; }
+.ts-rsi-mark  {
+  position: absolute;
+  top: -2px;
+  width: 1px;
+  height: 8px;
+  background: #9ca3af;
+}
+
+.ts-rsi-big {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+.ts-rsi-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.50rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+
+.ts-hist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.60rem;
+  margin-top: 0.05rem;
+}
+.ts-hist-label { color: #9ca3af; }
+.ts-hist-val   { font-weight: 700; }
+.ts-hist-pos   { color: #c0392b; }
+.ts-hist-neg   { color: #4a7c59; }
+.ts-trend      { color: #d4a017; font-weight: 700; font-size: 0.55rem; }
+
 /* ── Chip Bar Panel (wantgoo-style stacked bar charts) ─────────────────────── */
 .chip-bar-panel {
   margin-top: 1rem;

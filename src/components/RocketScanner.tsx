@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createChart, ColorType, HistogramSeries } from 'lightweight-charts';
 import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
 import { fetchScan, fetchChips, isAPIConfigured, type ScanResult, type ScannedStock } from '../utils/stockAPI';
-import { type ChipData } from '../utils/technicalIndicators';
+import { type ChipData, calculateKD, calculateMACD, calculateRSI } from '../utils/technicalIndicators';
 import { fetchOHLC } from '../utils/stockAPI';
 import './RocketScanner.css';
 
@@ -231,11 +231,11 @@ const MOCK_SCAN: ScanResult = {
     { code:'3017', name:'奇鋐',    price:2555,  chg:35.0,  changePct:1.39,  vol:9200000,  volRatio:1.2, tags:['液冷散熱','投信連買','外資觀望'], scanDate:MOCK_SCAN_DATE, strength:76 },
   ],
   reversals: [
-    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2, tags:['KD黃金交叉','外資今轉買','投信連買'], scanDate:MOCK_SCAN_DATE, strength:82 },
-    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.4, recoverPct:5.8, tags:['KD黃金交叉','外資自營買超','底部放量'], scanDate:MOCK_SCAN_DATE, strength:76 },
-    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.5, recoverPct:8.1, tags:['MACD綠棒收斂','投信持續買','外資減碼'], scanDate:MOCK_SCAN_DATE, strength:71 },
-    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.8, recoverPct:4.3, tags:['KD黃金交叉','自營買超','外資觀望'], scanDate:MOCK_SCAN_DATE, strength:65 },
-    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:6.7, tags:['MACD綠棒收斂','外資買超','投信減碼'], scanDate:MOCK_SCAN_DATE, strength:59 },
+    { code:'6669', name:'緯穎',      price:5650, chg:90.0,  changePct:1.62,  vol:5800000,  volRatio:1.6, recoverPct:7.2,  tags:['KD黃金交叉','外資今轉買','投信連買'],    scanDate:MOCK_SCAN_DATE, strength:82 },
+    { code:'3711', name:'日月光投控', price:572,  chg:7.0,   changePct:1.24,  vol:16800000, volRatio:1.4, recoverPct:5.8,  tags:['KD黃金交叉','外資自營買超','主力買超'],   scanDate:MOCK_SCAN_DATE, strength:76 },
+    { code:'8996', name:'高力',      price:222,  chg:8.0,   changePct:3.74,  vol:5800000,  volRatio:2.5, recoverPct:8.1,  tags:['MACD綠棒收斂','投信持續買','主力低檔介入'], scanDate:MOCK_SCAN_DATE, strength:71 },
+    { code:'5274', name:'信驊',      price:2200, chg:35.0,  changePct:1.62,  vol:2500000,  volRatio:1.8, recoverPct:12.4, tags:['KD黃金交叉','投信買超','底部放量'],        scanDate:MOCK_SCAN_DATE, strength:65 },
+    { code:'3653', name:'健策',      price:4080, chg:90.0,  changePct:2.26,  vol:4000000,  volRatio:1.5, recoverPct:6.7,  tags:['MACD綠棒收斂','外資買超','KD低檔反彈'],   scanDate:MOCK_SCAN_DATE, strength:59 },
   ],
 };
 
@@ -290,19 +290,26 @@ function computeBreakdown(
     priceLabel = pctAbs >= 3 ? '強勢漲停' : pctAbs >= 2 ? '大幅上漲'
       : pctAbs >= 1 ? '穩步走強' : '小幅上漲';
   } else {
-    // 破底翻：反彈越小越早期越好（目標 0–10%）
+    // 破底翻：KD<20黃金交叉 + 底部翻上 <15% + 主力買超
     const rec = stock.recoverPct ?? 0;
-    const hasKD   = tagStr.includes('KD');
-    const hasMACD = tagStr.includes('MACD');
-    const techBonus = (hasKD ? 1 : 0) + (hasMACD ? 1 : 0);  // 最多 +2
+    const hasKDCross  = tagStr.includes('KD黃金交叉');
+    const hasKDLow    = tagStr.includes('KD') && (tagStr.includes('20') || tagStr.includes('低檔'));
+    const hasMACD     = tagStr.includes('MACD');
+    const hasMainBuy  = tagStr.includes('主力') || tagStr.includes('外資') || tagStr.includes('投信');
+    // Base from recovery distance (tighter range now 0–15%)
     const baseScore = rec <= 3  ? 13 : rec <= 5  ? 12 : rec <= 8  ? 10
-                    : rec <= 10 ? 8  : rec <= 15 ? 5  : 3;
+                    : rec <= 10 ? 8  : rec <= 15 ? 6  : 3;
+    // Bonus for confirmed signals
+    const techBonus = (hasKDCross ? 2 : hasKDLow ? 1 : 0)
+                    + (hasMACD    ? 1 : 0)
+                    + (hasMainBuy ? 1 : 0);
     priceScore = Math.min(15, baseScore + techBonus);
-    priceLabel = rec <= 3  ? 'KD剛黃金交叉'
-               : rec <= 5  ? '底部MACD收斂'
-               : rec <= 8  ? '低檔初步反彈'
-               : rec <= 10 ? '反彈 < 10%'
-               : rec <= 15 ? '反彈偏晚進場' : '反彈幅度偏高';
+    priceLabel = hasKDCross && rec <= 5  ? 'KD<20黃金交叉'
+               : hasKDCross              ? 'KD黃金交叉底翻'
+               : hasMACD && rec <= 8     ? 'MACD綠棒收斂'
+               : rec <= 8               ? '低檔初步反彈'
+               : rec <= 12              ? '反彈 < 12%'
+               : rec <= 15              ? '反彈 < 15%' : '反彈幅度偏高';
   }
 
   return {
@@ -441,7 +448,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     s.volRatio > 0 && s.volRatio <= 50 &&
     Math.abs(s.changePct) <= 12 &&
     (s.recoverPct ?? 0) > 0 &&
-    (s.recoverPct ?? 0) <= 10                     // 反彈幅度 0–10%：剛翻底才算早期訊號
+    (s.recoverPct ?? 0) <= 15                     // 反彈幅度 0–15%：底部翻上去未超過 15% 才算早期訊號
   ) ?? [];
 
   // Fall back to MOCK_SCAN independently per mode so one bad live list
@@ -524,7 +531,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
                   </div>
                   <div className="criteria-item">
                     <span className="ci-score">技術 15分</span>
-                    <span className="ci-desc">KD 低檔黃金交叉（K 上穿 D）＋ MACD 綠棒收斂 ＋ 反彈幅度 &lt; 10%（剛翻底最佳入場）</span>
+                    <span className="ci-desc">KD &lt; 20 黃金交叉（K值 &lt; 20 且 K 上穿 D）＋ MACD 綠棒收斂轉正 ＋ 底部翻上 &lt; 15%（主力明確買超）</span>
                   </div>
                 </>
               )}
@@ -726,6 +733,7 @@ function StockCard({
               <ChipDetailView
                 activeTab={activeDetailTab}
                 chipHistory={chipHistory}
+                ohlcBars={ohlcBars}
                 stock={stock}
                 isRocket={isRocket}
               />
@@ -834,13 +842,135 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
   );
 }
 
+// ── Tech Signal Panel (KD / MACD / RSI) ───────────────────────────────────────
+
+function TechSignalPanel({ bars }: { bars: OHLCBar[] }) {
+  if (bars.length < 14) return null;
+
+  // OHLCBar → OHLCData (add dummy volume)
+  const d = bars.map(b => ({ ...b, volume: 0 }));
+  const kd   = calculateKD(d);
+  const macd = calculateMACD(d);
+  const rsi  = calculateRSI(d, 14);
+
+  if (!kd.length || !macd.dif.length || !rsi.length) return null;
+
+  const latestKD   = kd.at(-1)!;
+  const prevKD     = kd.at(-2);
+  const latestDIF  = macd.dif.at(-1)?.value ?? 0;
+  const latestDEM  = macd.dem.at(-1)?.value ?? 0;
+  const latestHist = macd.histogram.at(-1)?.value ?? 0;
+  const prevHist   = macd.histogram.at(-2)?.value ?? 0;
+  const latestRSI  = rsi.at(-1)?.value ?? 0;
+
+  // KD: golden cross = K crossed above D, with K < 20 zone at crossing
+  const isGoldenCross = !!(prevKD && prevKD.k <= prevKD.d && latestKD.k > latestKD.d);
+  const kCrossVal     = prevKD?.k ?? latestKD.k;
+  const crossBelow20  = isGoldenCross && kCrossVal < 20;
+  const crossBelow30  = isGoldenCross && kCrossVal < 30;
+
+  // MACD: negative and improving (converging) or just turned positive
+  const isMACDPos        = latestHist >= 0;
+  const isMACDConverging = !isMACDPos && latestHist > prevHist;
+
+  // RSI
+  const isOversold = latestRSI < 30;
+  const isLowRSI   = latestRSI < 50;
+
+  // KD status
+  const kdStatus  = crossBelow20 ? 'KD<20 黃金交叉 ✓'
+                  : crossBelow30 ? 'KD<30 黃金交叉'
+                  : isGoldenCross ? 'KD 黃金交叉'
+                  : latestKD.k < 20 ? 'K<20 低檔整理'
+                  : latestKD.k < 30 ? 'K<30 低檔觀察'
+                  : 'K值偏高';
+  const kdClass   = (crossBelow20 || crossBelow30 || isGoldenCross) ? 'ts-bullish'
+                  : latestKD.k < 30 ? 'ts-neutral' : 'ts-normal';
+
+  // MACD status
+  const macdStatus = isMACDPos        ? 'MACD 翻正 ✓'
+                   : isMACDConverging  ? 'MACD 綠棒收斂'
+                   : '空頭延伸中';
+  const macdClass  = isMACDPos ? 'ts-bullish' : isMACDConverging ? 'ts-neutral' : 'ts-normal';
+
+  // RSI status
+  const rsiStatus = isOversold ? 'RSI 超賣 < 30 ✓'
+                  : isLowRSI   ? 'RSI 低檔 < 50'
+                  : 'RSI 中高水位';
+  const rsiClass  = isOversold ? 'ts-bullish' : isLowRSI ? 'ts-neutral' : 'ts-normal';
+
+  return (
+    <div className="tech-signal-panel">
+      <div className="ts-title">技術指標</div>
+      <div className="ts-grid">
+
+        {/* KD */}
+        <div className={`ts-card ${kdClass}`}>
+          <div className="ts-card-header">
+            <span className="ts-name">KD (9)</span>
+            <span className={`ts-badge ${kdClass}`}>{kdStatus}</span>
+          </div>
+          <div className="ts-vals">
+            <span className="ts-kv">K&thinsp;<strong>{latestKD.k.toFixed(1)}</strong></span>
+            <span className="ts-dv">D&thinsp;<strong>{latestKD.d.toFixed(1)}</strong></span>
+          </div>
+          <div className="ts-bar-bg">
+            <div className="ts-bar-k" style={{ width: `${Math.min(latestKD.k, 100)}%` }} />
+          </div>
+        </div>
+
+        {/* MACD */}
+        <div className={`ts-card ${macdClass}`}>
+          <div className="ts-card-header">
+            <span className="ts-name">MACD</span>
+            <span className={`ts-badge ${macdClass}`}>{macdStatus}</span>
+          </div>
+          <div className="ts-vals">
+            <span>DIF&thinsp;<strong>{latestDIF.toFixed(2)}</strong></span>
+            <span>DEM&thinsp;<strong>{latestDEM.toFixed(2)}</strong></span>
+          </div>
+          <div className="ts-hist-row">
+            <span className="ts-hist-label">柱狀</span>
+            <span className={`ts-hist-val ${latestHist >= 0 ? 'ts-hist-pos' : 'ts-hist-neg'}`}>
+              {latestHist >= 0 ? '+' : ''}{latestHist.toFixed(2)}
+            </span>
+            {isMACDConverging && <span className="ts-trend">↗ 收斂中</span>}
+          </div>
+        </div>
+
+        {/* RSI */}
+        <div className={`ts-card ${rsiClass}`}>
+          <div className="ts-card-header">
+            <span className="ts-name">RSI (14)</span>
+            <span className={`ts-badge ${rsiClass}`}>{rsiStatus}</span>
+          </div>
+          <div className="ts-rsi-big">{latestRSI.toFixed(1)}</div>
+          <div className="ts-bar-bg">
+            <div
+              className={`ts-bar-rsi ${isOversold ? 'ts-bar-over' : isLowRSI ? 'ts-bar-low' : 'ts-bar-hi'}`}
+              style={{ width: `${Math.min(latestRSI, 100)}%` }}
+            />
+            <div className="ts-rsi-mark" style={{ left: '30%' }} title="超賣線 30" />
+            <div className="ts-rsi-mark" style={{ left: '70%' }} title="超買線 70" />
+          </div>
+          <div className="ts-rsi-range">
+            <span>超賣 30</span><span>超買 70</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
-  activeTab, chipHistory, stock, isRocket,
+  activeTab, chipHistory, ohlcBars, stock, isRocket,
 }: {
   activeTab:   'main' | 'chips';
   chipHistory: ChipData[];
+  ohlcBars:    OHLCBar[];
   stock:       ScannedStock;
   isRocket:    boolean;
 }) {
@@ -928,6 +1058,9 @@ function ChipDetailView({
           ))}
         </div>
       </div>
+
+      {/* ── Tech signals (破底翻 only) ── */}
+      {!isRocket && <TechSignalPanel bars={ohlcBars} />}
 
       {/* ── Score breakdown ── */}
       <div className="score-breakdown">
