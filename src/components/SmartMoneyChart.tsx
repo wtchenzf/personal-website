@@ -16,7 +16,15 @@ import './SmartMoneyChart.css';
 
 export interface ChipBar { time: string; value: number; color: string; }
 
-interface Props { code: string; name: string; data: OHLCBar[]; chips: ChipBar[]; }
+export interface ChipDetail {
+  time: string;
+  foreign: number;
+  trust: number;
+  dealer: number;
+  mainForce: number;
+}
+
+interface Props { code: string; name: string; data: OHLCBar[]; chips: ChipBar[]; chipDetail?: ChipDetail[]; }
 
 // ── Chart tab config ───────────────────────────────────────────────────────────
 
@@ -25,7 +33,7 @@ type ChartTab = 'chip' | 'tech' | 'inst' | 'holder' | 'margin';
 const TABS: { key: ChartTab; label: string }[] = [
   { key: 'chip',   label: '成交量・主力' },
   { key: 'tech',   label: 'KD・MACD・RSI' },
-  { key: 'inst',   label: '外資・投信' },
+  { key: 'inst',   label: '三大法人' },
   { key: 'holder', label: '大戶・散戶' },
   { key: 'margin', label: '融資・融券' },
 ];
@@ -115,25 +123,41 @@ function mkRng(seed: number) {
   };
 }
 
-/** Split chips into foreign / trust streams with independent daily noise */
-function deriveInst(chips: ChipBar[], seed: number) {
+/**
+ * Split chips into foreign / trust / dealer streams.
+ * When chipDetail entries exist for a date, use those exact values (real wantgoo data).
+ * Otherwise derive synthetically from mainForce.
+ */
+function deriveInst(chips: ChipBar[], chipDetail: ChipDetail[] | undefined, seed: number) {
+  const realMap = new Map((chipDetail ?? []).map(d => [d.time, d]));
   const rf = mkRng(seed);
   const rt = mkRng(seed ^ 0x7777);
-  const foreign = chips.map(c => {
-    // Foreign: 50-72% of chip signal + slight independent noise
-    const base = c.value * (0.52 + rf() * 0.20);
-    const noise = (rf() - 0.5) * Math.abs(c.value) * 0.15;
-    const v = Math.round(base + noise);
-    return { time: c.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
-  });
-  const trust = chips.map(c => {
-    // Trust: 12-28% of chip signal + independent noise (can lag/diverge)
-    const base = c.value * (0.12 + rt() * 0.16);
-    const noise = (rt() - 0.5) * Math.abs(c.value) * 0.20;
-    const v = Math.round(base + noise);
-    return { time: c.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
-  });
-  return { foreign, trust };
+  const rd = mkRng(seed ^ 0x3333);
+
+  const foreign: ChipBar[] = [];
+  const trust:   ChipBar[] = [];
+  const dealer:  ChipBar[] = [];
+
+  for (const c of chips) {
+    const real = realMap.get(c.time);
+    let fv: number, tv: number, dv: number;
+    if (real) {
+      fv = real.foreign;
+      tv = real.trust;
+      dv = real.dealer;
+      // consume rng to keep sequence stable for subsequent synthetic days
+      rf(); rf(); rt(); rt(); rd(); rd();
+    } else {
+      // foreign ≈ 55-72 %, trust ≈ 10-24 %, dealer ≈ 4-12 %
+      fv = Math.round(c.value * (0.52 + rf() * 0.20) + (rf() - 0.5) * Math.abs(c.value) * 0.15);
+      tv = Math.round(c.value * (0.10 + rt() * 0.14) + (rt() - 0.5) * Math.abs(c.value) * 0.15);
+      dv = Math.round(c.value * (0.04 + rd() * 0.08) + (rd() - 0.5) * Math.abs(c.value) * 0.08);
+    }
+    foreign.push({ time: c.time, value: fv, color: fv >= 0 ? '#c0392b' : '#4a7c59' });
+    trust.push(  { time: c.time, value: tv, color: tv >= 0 ? '#c0392b' : '#4a7c59' });
+    dealer.push( { time: c.time, value: dv, color: dv >= 0 ? '#c0392b' : '#4a7c59' });
+  }
+  return { foreign, trust, dealer };
 }
 
 /**
@@ -212,7 +236,7 @@ interface HovBar {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function SmartMoneyChart({ code, name, data, chips }: Props) {
+export default function SmartMoneyChart({ code, name, data, chips, chipDetail }: Props) {
   // ── Refs ─────────────────────────────────────────────────────────────────────
   const mainRef = useRef<HTMLDivElement>(null);
   const mainChartRef = useRef<ReturnType<typeof createChart> | null>(null);
@@ -227,6 +251,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   // Tab 3 — inst
   const fgnRef   = useRef<HTMLDivElement>(null);
   const trstRef  = useRef<HTMLDivElement>(null);
+  const dlrRef   = useRef<HTMLDivElement>(null);
   // Tab 4 — holder
   const bigRef   = useRef<HTMLDivElement>(null);
   const smlRef   = useRef<HTMLDivElement>(null);
@@ -248,7 +273,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
 
   // ── Derived data (memoized) ────────────────────────────────────────────────────
   const codeSeed = useMemo(() => code.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7), [code]);
-  const instd    = useMemo(() => deriveInst(chips, codeSeed),         [chips, codeSeed]);
+  const instd    = useMemo(() => deriveInst(chips, chipDetail, codeSeed), [chips, chipDetail, codeSeed]);
   const holderd  = useMemo(() => {
     const baseBig = 55 + (codeSeed % 20);
     return deriveHolder(chips, baseBig, codeSeed);
@@ -268,6 +293,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   const rsiHovMap    = useMemo(() => new Map(rsid.map(d => [d.time, d.value])), [rsid]);
   const fgnHovMap    = useMemo(() => new Map(instd.foreign.map(d => [d.time, d])), [instd]);
   const trstHovMap   = useMemo(() => new Map(instd.trust.map(d => [d.time, d])), [instd]);
+  const dlrHovMap    = useMemo(() => new Map(instd.dealer.map(d => [d.time, d])), [instd]);
   const holderHovMap = useMemo(() => new Map(holderd.map(d => [d.time, d])), [holderd]);
   const marginHovMap = useMemo(() => new Map(margind.map(d => [d.time, d])), [margind]);
 
@@ -397,19 +423,22 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       subs.push(rsiChart); syncPairs.push([rsiChart, rsiS]);
     }
 
-    // ── Tab 3: 外資 + 投信 ──────────────────────────────────────────────────
-    if (chartTab === 'inst' && fgnRef.current && trstRef.current) {
-      const fgnChart = subChart(fgnRef.current, 90);
+    // ── Tab 3: 外資 + 投信 + 自營商 ─────────────────────────────────────────
+    if (chartTab === 'inst' && fgnRef.current && trstRef.current && dlrRef.current) {
+      const fgnChart = subChart(fgnRef.current, 80);
       const fgnS = fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
       fgnS.setData(instd.foreign as any);
-      cumLine(fgnChart, instd.foreign.map(d => ({ time: d.time, value: d.value })), '#c0392b');
       subs.push(fgnChart); syncPairs.push([fgnChart, fgnS]);
 
-      const trstChart = subChart(trstRef.current, 110, true);
+      const trstChart = subChart(trstRef.current, 80);
       const trstS = trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
       trstS.setData(instd.trust as any);
-      cumLine(trstChart, instd.trust.map(d => ({ time: d.time, value: d.value })), '#2980b9');
       subs.push(trstChart); syncPairs.push([trstChart, trstS]);
+
+      const dlrChart = subChart(dlrRef.current, 80, true);
+      const dlrS = dlrChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      dlrS.setData(instd.dealer as any);
+      subs.push(dlrChart); syncPairs.push([dlrChart, dlrS]);
     }
 
     // ── Tab 4: 大戶持股 + 散戶持股 ──────────────────────────────────────────
@@ -483,7 +512,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
     if (main) main.subscribeCrosshairMove(crosshairHandler);
 
     // ── Resize handler ────────────────────────────────────────────────────────
-    const allSubRefs = [volRef, chipRef, kdRef, macdRef, rsiRef, fgnRef, trstRef, bigRef, smlRef, mrgnRef, shrtRef];
+    const allSubRefs = [volRef, chipRef, kdRef, macdRef, rsiRef, fgnRef, trstRef, dlrRef, bigRef, smlRef, mrgnRef, shrtRef];
     const onResize = () => {
       subs.forEach((ch, i) => {
         const el = allSubRefs[i]?.current ?? allSubRefs.find(r => r.current)?.current;
@@ -501,7 +530,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
       subs.forEach(c => c.remove());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartTab, data, chips, kdd, macdd, rsid, instd, holderd, margind]);
+  }, [chartTab, data, chips, chipDetail, kdd, macdd, rsid, instd, holderd, margind]);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   // Use hovered date when available, fall back to last bar
@@ -511,6 +540,7 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
   const latestRSI5   = (hovT ? rsiHovMap.get(hovT)    : undefined) ?? rsid.at(-1)?.value;
   const latestFgn    = (hovT ? fgnHovMap.get(hovT)    : undefined) ?? instd.foreign.at(-1);
   const latestTrst   = (hovT ? trstHovMap.get(hovT)   : undefined) ?? instd.trust.at(-1);
+  const latestDlr    = (hovT ? dlrHovMap.get(hovT)    : undefined) ?? instd.dealer.at(-1);
   const latestHolder = (hovT ? holderHovMap.get(hovT) : undefined) ?? holderd.at(-1);
   const latestMargin = (hovT ? marginHovMap.get(hovT) : undefined) ?? margind.at(-1);
 
@@ -586,25 +616,30 @@ export default function SmartMoneyChart({ code, name, data, chips }: Props) {
         </>
       )}
 
-      {/* ══ Tab 3: 外資 + 投信 ══ */}
+      {/* ══ Tab 3: 外資 + 投信 + 自營商 ══ */}
       {chartTab === 'inst' && (
         <>
           <div className="smc-sub-label">
-            外資買賣超
+            外資買賣超（張）
             {latestFgn && <span className={`smc-sub-stat ${latestFgn.value >= 0 ? 'cl-up':'cl-down'}`}>
-              {latestFgn.value >= 0 ? '+' : ''}{latestFgn.value.toLocaleString()} 張
+              {latestFgn.value >= 0 ? '+' : ''}{latestFgn.value.toLocaleString()}
             </span>}
-            <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={fgnRef} className="smc-sub h90" />
+          <div ref={fgnRef} className="smc-sub h80" />
           <div className="smc-sub-label">
-            投信買賣超
+            投信買賣超（張）
             {latestTrst && <span className={`smc-sub-stat ${latestTrst.value >= 0 ? 'cl-up':'cl-down'}`}>
-              {latestTrst.value >= 0 ? '+' : ''}{latestTrst.value.toLocaleString()} 張
+              {latestTrst.value >= 0 ? '+' : ''}{latestTrst.value.toLocaleString()}
             </span>}
-            <span className="smc-sub-stat smc-cum">累積線</span>
           </div>
-          <div ref={trstRef} className="smc-sub h110" />
+          <div ref={trstRef} className="smc-sub h80" />
+          <div className="smc-sub-label">
+            自營商買賣超（張）
+            {latestDlr && <span className={`smc-sub-stat ${latestDlr.value >= 0 ? 'cl-up':'cl-down'}`}>
+              {latestDlr.value >= 0 ? '+' : ''}{latestDlr.value.toLocaleString()}
+            </span>}
+          </div>
+          <div ref={dlrRef} className="smc-sub h80" />
         </>
       )}
 

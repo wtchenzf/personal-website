@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import SmartMoneyChart, { type ChipBar } from './SmartMoneyChart';
+import SmartMoneyChart, { type ChipBar, type ChipDetail } from './SmartMoneyChart';
 import StockReportPanel from './StockReportPanel';
 import type { OHLCBar } from './MiniKLineChart';
 import { fetchOHLC, fetchChips, isAPIConfigured } from '../utils/stockAPI';
@@ -153,6 +153,94 @@ function buildFlowData(
 
   return { ohlc, chips };
 }
+
+// ══ Real chip breakdown (外資/投信/自營商) for 05/11-05/15 ═══════════════════
+// Source: wantgoo.com 三大法人買賣超。dealer = 自行買賣 + 避險
+// Used as chipDetail override so SmartMoneyChart shows real bars for recent dates.
+
+const REAL_CHIP_DETAIL: Record<string, ChipDetail[]> = {
+  '3661': [
+    { time:'2026-05-11', foreign:  314, trust:    1, dealer:   94, mainForce:  409 },
+    { time:'2026-05-12', foreign:   77, trust:   83, dealer:  -83, mainForce:   77 },
+    { time:'2026-05-13', foreign: -513, trust: -143, dealer:  -99, mainForce: -755 },
+    { time:'2026-05-14', foreign:  175, trust:   62, dealer:   19, mainForce:  256 },
+    { time:'2026-05-15', foreign:  401, trust:  -81, dealer:  -70, mainForce:  250 },
+  ],
+  '2454': [
+    { time:'2026-05-11', foreign: -371, trust:    0, dealer:   19, mainForce: -352 },
+    { time:'2026-05-12', foreign:-1730, trust:    0, dealer:  -98, mainForce:-1828 },
+    { time:'2026-05-13', foreign: -692, trust:    0, dealer: -128, mainForce: -820 },
+    { time:'2026-05-14', foreign: -264, trust:    0, dealer: -159, mainForce: -423 },
+    { time:'2026-05-15', foreign:  335, trust:    0, dealer: -348, mainForce:  -13 },
+  ],
+  '6442': [
+    { time:'2026-05-11', foreign:  156, trust:    0, dealer: -308, mainForce: -152 },
+    { time:'2026-05-12', foreign: -650, trust:    0, dealer: -390, mainForce:-1040 },
+    { time:'2026-05-13', foreign:  447, trust:    0, dealer: -593, mainForce: -146 },
+    { time:'2026-05-14', foreign:  130, trust:    0, dealer:   38, mainForce:  168 },
+    { time:'2026-05-15', foreign:  828, trust:    0, dealer: -499, mainForce:  329 },
+  ],
+  '3037': [
+    { time:'2026-05-11', foreign: 2965, trust:  979, dealer:   99, mainForce: 4043 },
+    { time:'2026-05-12', foreign: 1089, trust: 2465, dealer: -129, mainForce: 3425 },
+    { time:'2026-05-13', foreign: 1355, trust: 1234, dealer: -301, mainForce: 2288 },
+    { time:'2026-05-14', foreign:-3446, trust: 3621, dealer:   29, mainForce:  204 },
+    { time:'2026-05-15', foreign:-6133, trust:-1146, dealer: -928, mainForce:-8207 },
+  ],
+  '3017': [
+    { time:'2026-05-11', foreign: -239, trust:  604, dealer:   50, mainForce:  415 },
+    { time:'2026-05-12', foreign:-1080, trust:  785, dealer:  -51, mainForce: -346 },
+    { time:'2026-05-13', foreign:   63, trust: 1345, dealer:    7, mainForce: 1415 },
+    { time:'2026-05-14', foreign:-1172, trust:  309, dealer:  -44, mainForce: -907 },
+    { time:'2026-05-15', foreign: -611, trust:  168, dealer: -219, mainForce: -662 },
+  ],
+  '6669': [
+    { time:'2026-05-11', foreign: -387, trust:  399, dealer:   13, mainForce:   25 },
+    { time:'2026-05-12', foreign:-1385, trust: 1025, dealer:   50, mainForce: -310 },
+    { time:'2026-05-13', foreign: -671, trust:  450, dealer:  -52, mainForce: -273 },
+    { time:'2026-05-14', foreign:  -66, trust:   55, dealer:  -26, mainForce:  -37 },
+    { time:'2026-05-15', foreign:  461, trust:  -21, dealer:  -37, mainForce:  403 },
+  ],
+  '3711': [
+    { time:'2026-05-11', foreign: 1420, trust:  657, dealer:  256, mainForce: 2333 },
+    { time:'2026-05-12', foreign:-2402, trust: 5152, dealer:   46, mainForce: 2796 },
+    { time:'2026-05-13', foreign:-3900, trust: 2661, dealer: -344, mainForce:-1583 },
+    { time:'2026-05-14', foreign: -881, trust: -355, dealer: -313, mainForce:-1549 },
+    { time:'2026-05-15', foreign:  658, trust:  419, dealer:  450, mainForce: 1527 },
+  ],
+  '8996': [
+    { time:'2026-05-11', foreign: -426, trust:  286, dealer:   20, mainForce: -120 },
+    { time:'2026-05-12', foreign: -682, trust:  520, dealer:   -3, mainForce: -165 },
+    { time:'2026-05-13', foreign:  -33, trust: -192, dealer:   -6, mainForce: -231 },
+    { time:'2026-05-14', foreign: -276, trust:  347, dealer:   16, mainForce:   87 },
+    { time:'2026-05-15', foreign: -144, trust:  216, dealer:  -39, mainForce:   33 },
+  ],
+  '5274': [
+    { time:'2026-05-11', foreign:   42, trust:   12, dealer:    1, mainForce:   55 },
+    { time:'2026-05-12', foreign:  -35, trust:   57, dealer:   -2, mainForce:   20 },
+    { time:'2026-05-13', foreign:    2, trust:   -9, dealer:    0, mainForce:   -7 },
+    { time:'2026-05-14', foreign:   23, trust:   10, dealer:   -2, mainForce:   31 },
+    { time:'2026-05-15', foreign:  -12, trust:    4, dealer:    0, mainForce:   -8 },
+  ],
+  '3653': [
+    { time:'2026-05-11', foreign:  284, trust:  -23, dealer:  188, mainForce:  449 },
+    { time:'2026-05-12', foreign: -420, trust:  425, dealer: -127, mainForce: -122 },
+    { time:'2026-05-13', foreign:  295, trust: -311, dealer:   77, mainForce:   61 },
+    { time:'2026-05-14', foreign: -165, trust: -184, dealer:  140, mainForce: -209 },
+    { time:'2026-05-15', foreign:  208, trust:  -53, dealer: -106, mainForce:   49 },
+  ],
+  '2330': [
+    { time:'2026-05-11', foreign:-17754, trust:  -53, dealer:   -69, mainForce:-17876 },
+    { time:'2026-05-12', foreign: -9238, trust: 8880, dealer:  -731, mainForce: -1089 },
+    { time:'2026-05-13', foreign:-11971, trust: 5474, dealer:  -367, mainForce: -6864 },
+    { time:'2026-05-14', foreign:   601, trust: 5857, dealer:  -521, mainForce:  5937 },
+    { time:'2026-05-15', foreign: -3398, trust: 3386, dealer:   -74, mainForce:   -86 },
+  ],
+  // 2382 廣達 — 05/15 data; others synthetic
+  '2382': [
+    { time:'2026-05-15', foreign:  891, trust:  -12, dealer:   -7, mainForce:  872 },
+  ],
+};
 
 // ══ Per-stock OHLC + chip data ════════════════════════════════════════════════
 // 9 支股票使用 TWSE 官方實際數據（2026-03-24 至 2026-05-11，共 32 個交易日）
@@ -1088,6 +1176,7 @@ export default function FlowScanner() {
                           name={s.name}
                           data={fd.ohlc}
                           chips={fd.chips}
+                          chipDetail={REAL_CHIP_DETAIL[s.code]}
                         />
                       )}
 
