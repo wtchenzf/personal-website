@@ -393,6 +393,58 @@
 .h-row .up { color: var(--accent-danger); }
 .h-row .down { color: var(--accent-matcha); }
 
+/* ── Tech Chart Panel (KD / MACD / RSI stacked lightweight-charts) ─────────── */
+.tech-chart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.5rem 0 0;
+}
+.tc-row {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 0.35rem;
+}
+.tc-row:first-child { border-top: none; padding-top: 0; }
+.tc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0 0.25rem 0.2rem;
+}
+.tc-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #374151;
+  letter-spacing: 0.07em;
+}
+.tc-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.58rem;
+}
+.tcl-k   { color: #2962FF; font-weight: 700; }
+.tcl-d   { color: #FF6D00; font-weight: 700; }
+.tcl-dif { color: #2962FF; font-weight: 700; }
+.tcl-dem { color: #FF6D00; font-weight: 700; }
+.tcl-rsi { color: #8e44ad; font-weight: 700; }
+.tc-hint {
+  color: #9ca3af;
+  font-size: 0.55rem;
+  margin-left: auto;
+}
+.tc-canvas {
+  width: 100%;
+  overflow: hidden;
+}
+.tc-no-data {
+  color: #9ca3af;
+  font-size: 0.72rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
 /* ── Tech Signal Panel (KD / MACD / RSI) ────────────────────────────────────── */
 .tech-signal-panel {
   margin: 0.9rem 0 0.6rem;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createChart, ColorType, HistogramSeries } from 'lightweight-charts';
+import { createChart, ColorType, HistogramSeries, LineSeries } from 'lightweight-charts';
 import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
 import { fetchScan, fetchChips, isAPIConfigured, type ScanResult, type ScannedStock } from '../utils/stockAPI';
 import { type ChipData, calculateKD, calculateMACD, calculateRSI } from '../utils/technicalIndicators';
@@ -334,7 +334,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const [scanProgress,  setScanProgress]  = useState(0);
   const [currentSymbol, setCurrentSymbol] = useState('0000');
   const [expandedCode,  setExpandedCode]  = useState<string | null>(null);
-  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips' | 'chart'>('main');
+  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'chips' | 'tech' | 'chart'>('main');
   const [showCriteria,  setShowCriteria]  = useState(false);
   const [filterStrength, setFilterStrength] = useState(0);
 
@@ -426,9 +426,9 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
     }
   };
 
-  const handleTabChange = (tab: 'main' | 'chips' | 'chart', code: string) => {
+  const handleTabChange = (tab: 'main' | 'chips' | 'tech' | 'chart', code: string) => {
     setActiveDetailTab(tab);
-    if (tab === 'chart') ensureOHLC(code);
+    if (tab === 'chart' || tab === 'tech') ensureOHLC(code);
     if (tab === 'chips') ensureChips(code);
   };
 
@@ -637,9 +637,9 @@ function StockCard({
   idx:            number;
   isRocket:       boolean;
   isExpanded:     boolean;
-  activeDetailTab:'main' | 'chips' | 'chart';
+  activeDetailTab:'main' | 'chips' | 'tech' | 'chart';
   onToggle:       () => void;
-  onTabChange:    (tab: 'main' | 'chips' | 'chart') => void;
+  onTabChange:    (tab: 'main' | 'chips' | 'tech' | 'chart') => void;
   chipHistory:    ChipData[];
   ohlcBars:       OHLCBar[];
 }) {
@@ -714,13 +714,13 @@ function StockCard({
       {isExpanded && (
         <div className="rocket-details-panel animate-fade-in">
           <div className="details-tabs">
-            {(['main','chips','chart'] as const).map(tab => (
+            {(['main','chips','tech','chart'] as const).map(tab => (
               <button
                 key={tab}
                 className={`detail-tab-btn ${activeDetailTab === tab ? 'active' : ''}`}
                 onClick={(e) => { e.stopPropagation(); onTabChange(tab); }}
               >
-                {tab === 'main' ? '主力進出' : tab === 'chips' ? '籌碼詳細' : '📈 K線圖'}
+                {tab === 'main' ? '主力進出' : tab === 'chips' ? '籌碼詳細' : tab === 'tech' ? '📊 技術分析' : '📈 K線圖'}
               </button>
             ))}
           </div>
@@ -729,7 +729,10 @@ function StockCard({
             {activeDetailTab === 'chart' && (
               <MiniKLineChart data={ohlcBars} />
             )}
-            {activeDetailTab !== 'chart' && (
+            {activeDetailTab === 'tech' && (
+              <TechChartPanel bars={ohlcBars} />
+            )}
+            {activeDetailTab !== 'chart' && activeDetailTab !== 'tech' && (
               <ChipDetailView
                 activeTab={activeDetailTab}
                 chipHistory={chipHistory}
@@ -963,12 +966,152 @@ function TechSignalPanel({ bars }: { bars: OHLCBar[] }) {
   );
 }
 
+// ── Tech Chart Panel (KD / MACD / RSI stacked lightweight-charts) ────────────
+
+function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
+  const kdRef   = useRef<HTMLDivElement>(null);
+  const macdRef = useRef<HTMLDivElement>(null);
+  const rsiRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (bars.length < 14) return;
+    if (!kdRef.current || !macdRef.current || !rsiRef.current) return;
+
+    const d     = bars.map(b => ({ ...b, volume: 0 }));
+    const kdd   = calculateKD(d);
+    const macdd = calculateMACD(d);
+    const rsid  = calculateRSI(d, 14);
+
+    const makeChart = (el: HTMLElement, h: number, timeVisible = false) =>
+      createChart(el, {
+        layout: CHART_LAYOUT, grid: CHART_GRID,
+        width: el.clientWidth, height: h,
+        timeScale: { visible: timeVisible, borderColor: '#e5e7eb', timeVisible: false },
+        rightPriceScale: { borderColor: '#e5e7eb', minimumWidth: 52 },
+        crosshair: {
+          horzLine: { visible: false, labelVisible: false },
+          vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
+        },
+        handleScroll: false, handleScale: false,
+      });
+
+    // ── KD chart (K blue, D orange)
+    const kdChart = makeChart(kdRef.current, 80);
+    kdChart.addSeries(LineSeries, {
+      color: '#2962FF', lineWidth: 1.5 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    }).setData(kdd.map(r => ({ time: r.time, value: r.k })) as any);
+    kdChart.addSeries(LineSeries, {
+      color: '#FF6D00', lineWidth: 1.5 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    }).setData(kdd.map(r => ({ time: r.time, value: r.d })) as any);
+    kdChart.timeScale().fitContent();
+
+    // ── MACD chart (histogram + DIF/DEM lines)
+    const macdChart = makeChart(macdRef.current, 90);
+    const macdHist = macdChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+    macdHist.setData(
+      macdd.histogram.map(r => ({
+        time: r.time, value: r.value,
+        color: r.value >= 0 ? '#c0392b' : '#4a7c59',
+      })) as any
+    );
+    macdChart.addSeries(LineSeries, {
+      color: '#2962FF', lineWidth: 1 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    }).setData(macdd.dif as any);
+    macdChart.addSeries(LineSeries, {
+      color: '#FF6D00', lineWidth: 1 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    }).setData(macdd.dem as any);
+    macdChart.timeScale().fitContent();
+
+    // ── RSI chart (purple line + 30/70 reference lines)
+    const rsiChart = makeChart(rsiRef.current, 80, true);
+    rsiChart.addSeries(LineSeries, {
+      color: '#8e44ad', lineWidth: 1.5 as const,
+      priceLineVisible: false, lastValueVisible: false,
+    }).setData(rsid as any);
+    const refOpts = {
+      lineWidth: 1 as const, priceLineVisible: false,
+      lastValueVisible: false, crosshairMarkerVisible: false,
+    } as const;
+    rsiChart.addSeries(LineSeries, { ...refOpts, color: '#e74c3c' })
+      .setData(rsid.map(r => ({ time: r.time, value: 70 })) as any);
+    rsiChart.addSeries(LineSeries, { ...refOpts, color: '#27ae60' })
+      .setData(rsid.map(r => ({ time: r.time, value: 30 })) as any);
+    rsiChart.timeScale().fitContent();
+
+    const charts = [kdChart, macdChart, rsiChart];
+    const refs   = [kdRef, macdRef, rsiRef];
+
+    // Sync time range
+    kdChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+      const r = kdChart.timeScale().getVisibleRange();
+      if (r) [macdChart, rsiChart].forEach(c => { try { c.timeScale().setVisibleRange(r); } catch (_) {} });
+    });
+
+    const onResize = () => refs.forEach((ref, i) => {
+      if (ref.current) charts[i].applyOptions({ width: ref.current.clientWidth });
+    });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      charts.forEach(c => c.remove());
+    };
+  }, [bars]);
+
+  if (bars.length < 14) {
+    return <p className="tc-no-data">K 線資料不足，請切換至「📈 K線圖」頁載入後再試。</p>;
+  }
+
+  return (
+    <div className="tech-chart-panel">
+      <div className="tc-row">
+        <div className="tc-header">
+          <span className="tc-label">KD (9)</span>
+          <span className="tc-legend">
+            <span className="tcl-k">── K</span>
+            <span className="tcl-d">── D</span>
+            <span className="tc-hint">低於 20 = 低檔</span>
+          </span>
+        </div>
+        <div ref={kdRef} className="tc-canvas" />
+      </div>
+
+      <div className="tc-row">
+        <div className="tc-header">
+          <span className="tc-label">MACD (12,26,9)</span>
+          <span className="tc-legend">
+            <span className="tcl-dif">── DIF</span>
+            <span className="tcl-dem">── DEM</span>
+            <span className="tc-hint">紅↑多頭 綠↓空頭</span>
+          </span>
+        </div>
+        <div ref={macdRef} className="tc-canvas" />
+      </div>
+
+      <div className="tc-row">
+        <div className="tc-header">
+          <span className="tc-label">RSI (14)</span>
+          <span className="tc-legend">
+            <span className="tcl-rsi">── RSI</span>
+            <span className="tc-hint">30 超賣 · 70 超買</span>
+          </span>
+        </div>
+        <div ref={rsiRef} className="tc-canvas" />
+      </div>
+    </div>
+  );
+}
+
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
   activeTab, chipHistory, ohlcBars, stock, isRocket,
 }: {
-  activeTab:   'main' | 'chips';
+  activeTab:   'main' | 'chips' | 'tech' | 'chart';
   chipHistory: ChipData[];
   ohlcBars:    OHLCBar[];
   stock:       ScannedStock;
