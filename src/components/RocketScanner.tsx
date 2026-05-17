@@ -744,7 +744,6 @@ function StockCard({
               <ChipDetailView
                 activeTab={activeDetailTab}
                 chipHistory={chipHistory}
-                ohlcBars={ohlcBars}
                 stock={stock}
                 isRocket={isRocket}
               />
@@ -1038,11 +1037,10 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
-  activeTab, chipHistory, ohlcBars, stock, isRocket,
+  activeTab, chipHistory, stock, isRocket,
 }: {
   activeTab:   'main' | 'chips' | 'tech' | 'chart';
   chipHistory: ChipData[];
-  ohlcBars:    OHLCBar[];
   stock:       ScannedStock;
   isRocket:    boolean;
 }) {
