@@ -649,6 +649,9 @@ function StockCard({
 }) {
   const isUp = stock.changePct >= 0;
 
+  // ── Crosshair sync: main K-line chart → sub-panels (one-directional, no loop) ──
+  const [syncTime, setSyncTime] = useState<string | null>(null);
+
   return (
     <div className={`rocket-wrapper ${isExpanded ? 'expanded' : ''}`}>
       <div
@@ -718,8 +721,8 @@ function StockCard({
       {isExpanded && (
         <div className="rocket-details-panel animate-fade-in">
 
-          {/* ── Always-visible K-line chart at top (like StockChart layout) ── */}
-          <MainKLinePanel bars={ohlcBars} />
+          {/* ── Always-visible K-line chart at top — crosshair syncs to sub-panels ── */}
+          <MainKLinePanel bars={ohlcBars} onCrosshairMove={setSyncTime} />
 
           {/* ── 5 sub-panel tabs ── */}
           <div className="details-tabs">
@@ -740,13 +743,13 @@ function StockCard({
 
           <div className="details-content">
             {activeDetailTab === 'tech' && (
-              <TechChartPanel bars={ohlcBars} />
+              <TechChartPanel bars={ohlcBars} syncTime={syncTime} />
             )}
             {activeDetailTab === 'inst' && (
-              <InstBarPanel data={chipHistory} />
+              <InstBarPanel data={chipHistory} syncTime={syncTime} />
             )}
             {activeDetailTab === 'margin' && (
-              <MarginChartPanel bars={ohlcBars} seed={parseInt(stock.code, 10)} />
+              <MarginChartPanel bars={ohlcBars} seed={parseInt(stock.code, 10)} syncTime={syncTime} />
             )}
             {activeDetailTab === 'report' && (() => {
               const chipBars: ChipBar[] = chipHistory.map(c => ({
@@ -773,6 +776,7 @@ function StockCard({
                 chipHistory={chipHistory}
                 stock={stock}
                 isRocket={isRocket}
+                syncTime={syncTime}
               />
             )}
           </div>
@@ -784,7 +788,10 @@ function StockCard({
 
 // ── Main K-Line Panel (always shown at top — candlestick + MA5/MA10/MA20) ─────
 
-function MainKLinePanel({ bars }: { bars: OHLCBar[] }) {
+function MainKLinePanel({ bars, onCrosshairMove }: {
+  bars: OHLCBar[];
+  onCrosshairMove?: (time: string | null) => void;
+}) {
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Pre-compute MA arrays (outside effect so they're stable for crosshair)
@@ -865,13 +872,14 @@ function MainKLinePanel({ bars }: { bars: OHLCBar[] }) {
 
     chart.timeScale().fitContent();
 
-    // Crosshair → update legend
+    // Crosshair → update legend + broadcast to sub-panels
     chart.subscribeCrosshairMove(param => {
       const i0 = bars.length - 1;
       if (!param.time) {
         const b = bars[i0];
         setLegend({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
           ma5: ma5arr[i0], ma10: ma10arr[i0], ma20: ma20arr[i0] });
+        onCrosshairMove?.(null);
         return;
       }
       const t = String(param.time);
@@ -880,6 +888,7 @@ function MainKLinePanel({ bars }: { bars: OHLCBar[] }) {
       const b = bars[i];
       setLegend({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
         ma5: ma5arr[i], ma10: ma10arr[i], ma20: ma20arr[i] });
+      onCrosshairMove?.(t);
     });
 
     const onResize = () => {
@@ -932,11 +941,27 @@ const CHART_LAYOUT = {
 };
 const CHART_GRID = { vertLines: { color: '#f3f4f6' }, horzLines: { color: '#f3f4f6' } };
 
-function ChipBarPanel({ data }: { data: ChipData[] }) {
+function ChipBarPanel({ data, syncTime }: { data: ChipData[]; syncTime?: string | null }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const fgnRef  = useRef<HTMLDivElement>(null);
   const trstRef = useRef<HTMLDivElement>(null);
   const dlrRef  = useRef<HTMLDivElement>(null);
+
+  // Refs to chart instances + first series for crosshair sync
+  const chartInstancesRef = useRef<any[]>([]);
+  const firstSeriesRef    = useRef<any[]>([]);
+
+  // Sync crosshair from main K-line to these charts
+  useEffect(() => {
+    chartInstancesRef.current.forEach((chart, i) => {
+      const series = firstSeriesRef.current[i];
+      if (!chart || !series) return;
+      try {
+        if (syncTime) chart.setCrosshairPosition(NaN, syncTime, series);
+        else chart.clearCrosshairPosition?.();
+      } catch {}
+    });
+  }, [syncTime]);
 
   useEffect(() => {
     if (!data.length) return;
@@ -950,6 +975,7 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
       { field: 'dealer',    upColor: '#c0392b', downColor: '#4a7c59' },
     ];
 
+    const localSeries: any[] = [];
     const charts = refs.map((ref, i) => {
       const isLast = i === panels.length - 1;
       const chart = createChart(ref.current!, {
@@ -976,8 +1002,13 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
         })) as any
       );
       chart.timeScale().fitContent();
+      localSeries.push(series);
       return chart;
     });
+
+    // Store for crosshair sync
+    chartInstancesRef.current = charts;
+    firstSeriesRef.current    = localSeries;
 
     // Sync visible range across all panels
     charts[0].timeScale().subscribeVisibleTimeRangeChange(() => {
@@ -992,6 +1023,8 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      chartInstancesRef.current = [];
+      firstSeriesRef.current    = [];
       charts.forEach(c => c.remove());
     };
   }, [data]);
@@ -1020,10 +1053,26 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
 
 // ── Tech Chart Panel (KD / MACD / RSI — matches StockChart KD・MACD・RSI tab) ──
 
-function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
+function TechChartPanel({ bars, syncTime }: { bars: OHLCBar[]; syncTime?: string | null }) {
   const kdRef   = useRef<HTMLDivElement>(null);
   const macdRef = useRef<HTMLDivElement>(null);
   const rsiRef  = useRef<HTMLDivElement>(null);
+
+  // Chart + series refs for crosshair sync
+  const syncChartsRef  = useRef<any[]>([]);
+  const syncSeriesRef  = useRef<any[]>([]);
+
+  // Sync crosshair from main K-line → KD/MACD/RSI panels
+  useEffect(() => {
+    syncChartsRef.current.forEach((chart, i) => {
+      const series = syncSeriesRef.current[i];
+      if (!chart || !series) return;
+      try {
+        if (syncTime) chart.setCrosshairPosition(NaN, syncTime, series);
+        else chart.clearCrosshairPosition?.();
+      } catch {}
+    });
+  }, [syncTime]);
 
   // Displayed label values (latest or crosshair)
   const [kdVals,   setKdVals]   = useState<{ k: number; d: number } | null>(null);
@@ -1143,6 +1192,10 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
       });
     });
 
+    // Store for crosshair sync
+    syncChartsRef.current = allCharts;
+    syncSeriesRef.current = [kdK, macdHist, rsiSeries];
+
     const refs = [kdRef, macdRef, rsiRef];
     const onResize = () => refs.forEach((ref, i) => {
       if (ref.current) allCharts[i].applyOptions({ width: ref.current.clientWidth });
@@ -1151,6 +1204,8 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      syncChartsRef.current = [];
+      syncSeriesRef.current = [];
       allCharts.forEach(c => c.remove());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1202,10 +1257,24 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
 
 // ── Inst Bar Panel (三大法人: foreign / trust / dealer) ───────────────────────
 
-function InstBarPanel({ data }: { data: ChipData[] }) {
+function InstBarPanel({ data, syncTime }: { data: ChipData[]; syncTime?: string | null }) {
   const fgnRef  = useRef<HTMLDivElement>(null);
   const trstRef = useRef<HTMLDivElement>(null);
   const dlrRef  = useRef<HTMLDivElement>(null);
+
+  const syncChartsRef = useRef<any[]>([]);
+  const syncSeriesRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    syncChartsRef.current.forEach((chart, i) => {
+      const series = syncSeriesRef.current[i];
+      if (!chart || !series) return;
+      try {
+        if (syncTime) chart.setCrosshairPosition(NaN, syncTime, series);
+        else chart.clearCrosshairPosition?.();
+      } catch {}
+    });
+  }, [syncTime]);
 
   // Latest values for labels
   const latest = data.at(-1);
@@ -1216,6 +1285,7 @@ function InstBarPanel({ data }: { data: ChipData[] }) {
     if (refs.some(r => !r.current)) return;
 
     const fields: (keyof ChipData)[] = ['foreign', 'trust', 'dealer'];
+    const localSeries: any[] = [];
     const charts = refs.map((ref, i) => {
       const isLast = i === refs.length - 1;
       const chart = createChart(ref.current!, {
@@ -1241,8 +1311,13 @@ function InstBarPanel({ data }: { data: ChipData[] }) {
         })) as any
       );
       chart.timeScale().fitContent();
+      localSeries.push(series);
       return chart;
     });
+
+    // Store for crosshair sync
+    syncChartsRef.current = charts;
+    syncSeriesRef.current = localSeries;
 
     // Sync time-range across all panels
     charts[0].timeScale().subscribeVisibleTimeRangeChange(() => {
@@ -1257,6 +1332,8 @@ function InstBarPanel({ data }: { data: ChipData[] }) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      syncChartsRef.current = [];
+      syncSeriesRef.current = [];
       charts.forEach(c => c.remove());
     };
   }, [data]);
@@ -1316,9 +1393,23 @@ function deriveMarginLocal(bars: OHLCBar[], seed: number) {
   return { marginBal, shortBal };
 }
 
-function MarginChartPanel({ bars, seed }: { bars: OHLCBar[]; seed: number }) {
+function MarginChartPanel({ bars, seed, syncTime }: { bars: OHLCBar[]; seed: number; syncTime?: string | null }) {
   const marginRef = useRef<HTMLDivElement>(null);
   const shortRef  = useRef<HTMLDivElement>(null);
+
+  const syncChartsRef = useRef<any[]>([]);
+  const syncSeriesRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    syncChartsRef.current.forEach((chart, i) => {
+      const series = syncSeriesRef.current[i];
+      if (!chart || !series) return;
+      try {
+        if (syncTime) chart.setCrosshairPosition(NaN, syncTime, series);
+        else chart.clearCrosshairPosition?.();
+      } catch {}
+    });
+  }, [syncTime]);
 
   const [mVal, setMVal] = useState<number | null>(null);
   const [sVal, setSVal] = useState<number | null>(null);
@@ -1380,6 +1471,10 @@ function MarginChartPanel({ bars, seed }: { bars: OHLCBar[]; seed: number }) {
       if (row) setSVal(row.value);
     });
 
+    // Store for crosshair sync
+    syncChartsRef.current = [mChart, sChart];
+    syncSeriesRef.current = [mSeries, sSeries];
+
     // Sync time range
     const allCharts = [mChart, sChart];
     allCharts.forEach(src => {
@@ -1397,6 +1492,8 @@ function MarginChartPanel({ bars, seed }: { bars: OHLCBar[]; seed: number }) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      syncChartsRef.current = [];
+      syncSeriesRef.current = [];
       allCharts.forEach(c => c.remove());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1430,11 +1527,12 @@ function MarginChartPanel({ bars, seed }: { bars: OHLCBar[]; seed: number }) {
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
-  chipHistory, stock, isRocket,
+  chipHistory, stock, isRocket, syncTime,
 }: {
   chipHistory: ChipData[];
   stock:       ScannedStock;
   isRocket:    boolean;
+  syncTime?:   string | null;
 }) {
   const recent = chipHistory.slice(-5).reverse(); // latest first
 
@@ -1509,7 +1607,7 @@ function ChipDetailView({
       </div>
 
       {/* ── Bar charts (wantgoo style) ── */}
-      <ChipBarPanel data={chipHistory} />
+      <ChipBarPanel data={chipHistory} syncTime={syncTime} />
     </div>
   );
 }
