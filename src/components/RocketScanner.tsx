@@ -414,6 +414,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const handleModeChange = (mode: ScanMode) => {
     setScanMode(mode);
     setExpandedCode(null);
+    setActiveDetailTab('main');   // reset tab so 破底翻↔飆股 don't share stale tab state
   };
 
   const toggleExpand = (code: string) => {
@@ -714,13 +715,20 @@ function StockCard({
       {isExpanded && (
         <div className="rocket-details-panel animate-fade-in">
           <div className="details-tabs">
-            {(['main','chips','tech','chart'] as const).map(tab => (
+            {/* 破底翻: 主力進出 | 技術指標 | K線圖  /  潛力飆股: 主力進出 | 籌碼詳細 | K線圖 */}
+            {(isRocket
+              ? (['main','chips','chart'] as const)
+              : (['main','tech','chart']  as const)
+            ).map(tab => (
               <button
                 key={tab}
                 className={`detail-tab-btn ${activeDetailTab === tab ? 'active' : ''}`}
                 onClick={(e) => { e.stopPropagation(); onTabChange(tab); }}
               >
-                {tab === 'main' ? '主力進出' : tab === 'chips' ? '籌碼詳細' : tab === 'tech' ? '📊 技術分析' : '📈 K線圖'}
+                {tab === 'main'  ? '主力進出'
+                 : tab === 'chips' ? '籌碼詳細'
+                 : tab === 'tech'  ? '📊 技術指標'
+                 :                   '📈 K線圖'}
               </button>
             ))}
           </div>
