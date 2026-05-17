@@ -37,6 +37,7 @@ export default function MiniKLineChart({ data, height = 230 }: Props) {
         textColor: '#6b7280',
         fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
         fontSize: 10,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: '#f3f4f6' },

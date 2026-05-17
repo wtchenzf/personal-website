@@ -744,6 +744,7 @@ const CHART_LAYOUT = {
   textColor: '#6b7280',
   fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
   fontSize: 10,
+  attributionLogo: false,
 };
 const CHART_GRID = { vertLines: { color: '#f3f4f6' }, horzLines: { color: '#f3f4f6' } };
 

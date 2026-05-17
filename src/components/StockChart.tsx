@@ -63,6 +63,7 @@ const LAYOUT = {
   textColor: '#6b7280',
   fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
   fontSize: 11,
+  attributionLogo: false,
 };
 const GRID = { vertLines: { color: '#f3f4f6' }, horzLines: { color: '#f3f4f6' } };
 
