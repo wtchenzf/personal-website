@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createChart, ColorType, HistogramSeries } from 'lightweight-charts';
 import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
 import { fetchScan, fetchChips, isAPIConfigured, type ScanResult, type ScannedStock } from '../utils/stockAPI';
 import { type ChipData } from '../utils/technicalIndicators';
@@ -736,6 +737,102 @@ function StockCard({
   );
 }
 
+// ── Chip Bar Panel (wantgoo-style stacked bar charts) ─────────────────────────
+
+const CHART_LAYOUT = {
+  background: { type: ColorType.Solid, color: 'transparent' },
+  textColor: '#6b7280',
+  fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
+  fontSize: 10,
+};
+const CHART_GRID = { vertLines: { color: '#f3f4f6' }, horzLines: { color: '#f3f4f6' } };
+
+function ChipBarPanel({ data }: { data: ChipData[] }) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const fgnRef  = useRef<HTMLDivElement>(null);
+  const trstRef = useRef<HTMLDivElement>(null);
+  const dlrRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!data.length) return;
+    const refs = [mainRef, fgnRef, trstRef, dlrRef];
+    if (refs.some(r => !r.current)) return;
+
+    const panels: Array<{ field: keyof ChipData; upColor: string; downColor: string }> = [
+      { field: 'mainForce', upColor: '#c0392b', downColor: '#4a7c59' },
+      { field: 'foreign',   upColor: '#c0392b', downColor: '#4a7c59' },
+      { field: 'trust',     upColor: '#c0392b', downColor: '#4a7c59' },
+      { field: 'dealer',    upColor: '#c0392b', downColor: '#4a7c59' },
+    ];
+
+    const charts = refs.map((ref, i) => {
+      const isLast = i === panels.length - 1;
+      const chart = createChart(ref.current!, {
+        layout: CHART_LAYOUT,
+        grid: CHART_GRID,
+        width: ref.current!.clientWidth,
+        height: 72,
+        timeScale: { visible: isLast, borderColor: '#e5e7eb', timeVisible: false },
+        rightPriceScale: { borderColor: '#e5e7eb', minimumWidth: 55 },
+        crosshair: {
+          horzLine: { visible: false, labelVisible: false },
+          vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
+        },
+        handleScroll: false,
+        handleScale: false,
+      });
+      const { field, upColor, downColor } = panels[i];
+      const series = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+      series.setData(
+        data.map(d => ({
+          time: d.time,
+          value: d[field] as number,
+          color: (d[field] as number) >= 0 ? upColor : downColor,
+        })) as any
+      );
+      chart.timeScale().fitContent();
+      return chart;
+    });
+
+    // Sync visible range across all panels
+    charts[0].timeScale().subscribeVisibleTimeRangeChange(() => {
+      const r = charts[0].timeScale().getVisibleRange();
+      if (r) charts.slice(1).forEach(c => { try { c.timeScale().setVisibleRange(r); } catch (_) {} });
+    });
+
+    const onResize = () => refs.forEach((ref, i) => {
+      if (ref.current) charts[i].applyOptions({ width: ref.current.clientWidth });
+    });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      charts.forEach(c => c.remove());
+    };
+  }, [data]);
+
+  const labels = ['主力買賣超', '外資買賣超', '投信買賣超', '自營商買賣超'];
+  const refs   = [mainRef, fgnRef, trstRef, dlrRef];
+  const latest = data.at(-1);
+  const vals   = latest ? [latest.mainForce, latest.foreign, latest.trust, latest.dealer] : [0,0,0,0];
+
+  return (
+    <div className="chip-bar-panel">
+      {labels.map((label, i) => (
+        <div key={label} className="chip-bar-row">
+          <div className="chip-bar-label">
+            <span className="chip-bar-name">{label}</span>
+            <span className={`chip-bar-val ${vals[i] >= 0 ? 'up' : 'down'}`}>
+              {vals[i] >= 0 ? '+' : ''}{vals[i].toLocaleString()}
+            </span>
+          </div>
+          <div ref={refs[i]} className="chip-bar-chart" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Chip Detail View ──────────────────────────────────────────────────────────
 
 function ChipDetailView({
@@ -861,19 +958,8 @@ function ChipDetailView({
         </div>
       </div>
 
-      <div className="history-table">
-        <div className="h-row h-header">
-          <span>日期</span><span>主力</span><span>外資</span><span>投信</span>
-        </div>
-        {recent.map(h => (
-          <div key={h.time} className="h-row">
-            <span className="h-date">{h.time?.slice(5)}</span>
-            <span className={h.mainForce >= 0 ? 'up' : 'down'}>{h.mainForce >= 0 ? '+' : ''}{h.mainForce.toLocaleString()}</span>
-            <span className={h.foreign  >= 0 ? 'up' : 'down'}>{h.foreign  >= 0 ? '+' : ''}{h.foreign.toLocaleString()}</span>
-            <span className={h.trust    >= 0 ? 'up' : 'down'}>{h.trust    >= 0 ? '+' : ''}{h.trust.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
+      {/* ── Bar charts (wantgoo style) ── */}
+      <ChipBarPanel data={chipHistory} />
     </div>
   );
 }

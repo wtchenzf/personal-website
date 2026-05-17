@@ -393,6 +393,52 @@
 .h-row .up { color: var(--accent-danger); }
 .h-row .down { color: var(--accent-matcha); }
 
+/* ── Chip Bar Panel (wantgoo-style stacked bar charts) ─────────────────────── */
+.chip-bar-panel {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.chip-bar-row {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #f3f4f6;
+  padding: 4px 8px 2px;
+}
+.chip-bar-row:last-child { border-bottom: none; }
+
+.chip-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.chip-bar-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.02em;
+}
+
+.chip-bar-val {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.chip-bar-val.up   { color: var(--accent-danger); }
+.chip-bar-val.down { color: var(--accent-matcha); }
+
+.chip-bar-chart {
+  width: 100%;
+  height: 72px;
+}
+
 /* Chips Detail View */
 .chips-grid {
   display: grid;
