@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createChart, ColorType, HistogramSeries, LineSeries } from 'lightweight-charts';
-import MiniKLineChart, { type OHLCBar } from './MiniKLineChart';
+import { createChart, ColorType, HistogramSeries, LineSeries, CandlestickSeries } from 'lightweight-charts';
+import { type OHLCBar } from './MiniKLineChart';
 import { fetchScan, fetchChips, isAPIConfigured, type ScanResult, type ScannedStock } from '../utils/stockAPI';
 import { type ChipData, calculateKD, calculateMACD, calculateRSI } from '../utils/technicalIndicators';
 import { fetchOHLC } from '../utils/stockAPI';
@@ -336,7 +336,7 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
   const [scanProgress,  setScanProgress]  = useState(0);
   const [currentSymbol, setCurrentSymbol] = useState('0000');
   const [expandedCode,  setExpandedCode]  = useState<string | null>(null);
-  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart'>('main');
+  const [activeDetailTab, setActiveDetailTab] = useState<'main' | 'tech' | 'inst' | 'margin' | 'report'>('main');
   const [showCriteria,  setShowCriteria]  = useState(false);
   const [filterStrength, setFilterStrength] = useState(0);
 
@@ -426,12 +426,13 @@ export default function RocketScanner({ refreshTrigger }: RocketScannerProps) {
       setExpandedCode(code);
       setActiveDetailTab('main');
       ensureChips(code);
+      ensureOHLC(code);  // always pre-fetch OHLC — K-line is always visible
     }
   };
 
-  const handleTabChange = (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart', code: string) => {
+  const handleTabChange = (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report', code: string) => {
     setActiveDetailTab(tab);
-    if (tab === 'chart' || tab === 'tech' || tab === 'margin' || tab === 'report') ensureOHLC(code);
+    if (tab === 'tech' || tab === 'margin' || tab === 'report') ensureOHLC(code);
     if (tab === 'inst' || tab === 'report') ensureChips(code);
   };
 
@@ -640,9 +641,9 @@ function StockCard({
   idx:            number;
   isRocket:       boolean;
   isExpanded:     boolean;
-  activeDetailTab:'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart';
+  activeDetailTab:'main' | 'tech' | 'inst' | 'margin' | 'report';
   onToggle:       () => void;
-  onTabChange:    (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart') => void;
+  onTabChange:    (tab: 'main' | 'tech' | 'inst' | 'margin' | 'report') => void;
   chipHistory:    ChipData[];
   ohlcBars:       OHLCBar[];
 }) {
@@ -716,28 +717,28 @@ function StockCard({
 
       {isExpanded && (
         <div className="rocket-details-panel animate-fade-in">
+
+          {/* ── Always-visible K-line chart at top (like StockChart layout) ── */}
+          <MainKLinePanel bars={ohlcBars} />
+
+          {/* ── 5 sub-panel tabs ── */}
           <div className="details-tabs">
-            {/* 6 unified tabs for both modes */}
-            {((['main','tech','inst','margin','report','chart']) as const).map(tab => (
+            {(['main','tech','inst','margin','report'] as const).map(tab => (
               <button
                 key={tab}
                 className={`detail-tab-btn ${activeDetailTab === tab ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); onTabChange(tab as 'main' | 'tech' | 'inst' | 'margin' | 'report' | 'chart'); }}
+                onClick={(e) => { e.stopPropagation(); onTabChange(tab); }}
               >
                 {tab === 'main'   ? '成交量・主力'
                  : tab === 'tech'   ? 'KD・MACD・RSI'
                  : tab === 'inst'   ? '三大法人'
                  : tab === 'margin' ? '融資・融券'
-                 : tab === 'report' ? '📋 個股報告'
-                 :                    '📈 K線圖'}
+                 :                    '📋 個股報告'}
               </button>
             ))}
           </div>
 
           <div className="details-content">
-            {activeDetailTab === 'chart' && (
-              <MiniKLineChart data={ohlcBars} />
-            )}
             {activeDetailTab === 'tech' && (
               <TechChartPanel bars={ohlcBars} />
             )}
@@ -777,6 +778,145 @@ function StockCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Main K-Line Panel (always shown at top — candlestick + MA5/MA10/MA20) ─────
+
+function MainKLinePanel({ bars }: { bars: OHLCBar[] }) {
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  // Pre-compute MA arrays (outside effect so they're stable for crosshair)
+  const calcMAArr = (n: number): (number | null)[] =>
+    bars.map((_, i) => {
+      if (i < n - 1) return null;
+      return bars.slice(i - n + 1, i + 1).reduce((s, b) => s + b.close, 0) / n;
+    });
+  const ma5arr  = calcMAArr(5);
+  const ma10arr = calcMAArr(10);
+  const ma20arr = calcMAArr(20);
+
+  const lastIdx = bars.length - 1;
+  const lastBar = bars[lastIdx];
+
+  const [legend, setLegend] = useState<{
+    time: string; open: number; high: number; low: number; close: number;
+    ma5: number | null; ma10: number | null; ma20: number | null;
+  } | null>(lastBar ? {
+    time: lastBar.time,
+    open: lastBar.open, high: lastBar.high, low: lastBar.low, close: lastBar.close,
+    ma5: ma5arr[lastIdx], ma10: ma10arr[lastIdx], ma20: ma20arr[lastIdx],
+  } : null);
+
+  // Refresh legend when bars change
+  useEffect(() => {
+    if (!bars.length) return;
+    const i = bars.length - 1;
+    const b = bars[i];
+    setLegend({
+      time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
+      ma5: ma5arr[i], ma10: ma10arr[i], ma20: ma20arr[i],
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars]);
+
+  useEffect(() => {
+    if (!bars.length || !chartRef.current) return;
+
+    const chart = createChart(chartRef.current, {
+      layout: CHART_LAYOUT,
+      grid: CHART_GRID,
+      width: chartRef.current.clientWidth,
+      height: 230,
+      timeScale: { visible: true, borderColor: '#e5e7eb', timeVisible: false },
+      rightPriceScale: { borderColor: '#e5e7eb', minimumWidth: 62 },
+      crosshair: {
+        horzLine: { visible: true, labelVisible: true, style: 2 as const, color: '#9ca3af', labelBackgroundColor: '#6b7280' },
+        vertLine: { style: 0 as const, color: '#9ca3af', labelVisible: true, labelBackgroundColor: '#6b7280' },
+      },
+      handleScroll: true,
+      handleScale: true,
+    });
+
+    // Candlestick series
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#c0392b', downColor: '#4a7c59',
+      borderUpColor: '#c0392b', borderDownColor: '#4a7c59',
+      wickUpColor: '#c0392b', wickDownColor: '#4a7c59',
+    });
+    candleSeries.setData(bars as any);
+
+    // MA helper
+    const addMA = (vals: (number | null)[], color: string) => {
+      const series = chart.addSeries(LineSeries, {
+        color, lineWidth: 2 as const,
+        priceLineVisible: false, lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      series.setData(
+        bars.map((b, i) => ({ time: b.time, value: vals[i] }))
+          .filter(d => d.value !== null) as any
+      );
+    };
+    addMA(ma5arr,  '#d4a017'); // MA5  gold
+    addMA(ma10arr, '#e67e22'); // MA10 orange
+    addMA(ma20arr, '#3498db'); // MA20 blue
+
+    chart.timeScale().fitContent();
+
+    // Crosshair → update legend
+    chart.subscribeCrosshairMove(param => {
+      const i0 = bars.length - 1;
+      if (!param.time) {
+        const b = bars[i0];
+        setLegend({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
+          ma5: ma5arr[i0], ma10: ma10arr[i0], ma20: ma20arr[i0] });
+        return;
+      }
+      const t = String(param.time);
+      const i = bars.findIndex(b => b.time === t);
+      if (i < 0) return;
+      const b = bars[i];
+      setLegend({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
+        ma5: ma5arr[i], ma10: ma10arr[i], ma20: ma20arr[i] });
+    });
+
+    const onResize = () => {
+      if (chartRef.current) chart.applyOptions({ width: chartRef.current.clientWidth });
+    };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      chart.remove();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars]);
+
+  if (!bars.length) return <div className="mk-no-data">K線資料載入中…</div>;
+
+  const isUp = (legend?.close ?? 0) >= (legend?.open ?? 0);
+
+  return (
+    <div className="mk-panel">
+      {legend && (
+        <div className="mk-legend">
+          <span className="mk-date">{legend.time.slice(5).replace('-', '/')}</span>
+          <span className="mk-lbl">開</span>
+          <span className={`mk-val ${isUp ? 'mk-up' : 'mk-dn'}`}>{legend.open.toFixed(2)}</span>
+          <span className="mk-lbl">高</span>
+          <span className="mk-val mk-up">{legend.high.toFixed(2)}</span>
+          <span className="mk-lbl">低</span>
+          <span className="mk-val mk-dn">{legend.low.toFixed(2)}</span>
+          <span className="mk-lbl">收</span>
+          <span className={`mk-val ${isUp ? 'mk-up' : 'mk-dn'}`}>{legend.close.toFixed(2)}</span>
+          {legend.ma5  !== null && <><span className="mk-lbl mk-ma5 ">MA5 </span><span className="mk-val mk-ma5 ">{legend.ma5.toFixed(2)}</span></>}
+          {legend.ma10 !== null && <><span className="mk-lbl mk-ma10">MA10</span><span className="mk-val mk-ma10">{legend.ma10.toFixed(2)}</span></>}
+          {legend.ma20 !== null && <><span className="mk-lbl mk-ma20">MA20</span><span className="mk-val mk-ma20">{legend.ma20.toFixed(2)}</span></>}
+        </div>
+      )}
+      <div ref={chartRef} />
     </div>
   );
 }

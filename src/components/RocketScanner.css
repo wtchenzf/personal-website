@@ -1137,3 +1137,38 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Main K-Line Panel (always on top of expanded card) ─────────────────────── */
+.mk-panel {
+  border-bottom: 2px solid #f0f0f0;
+  background: #fff;
+}
+
+.mk-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.55rem;
+  padding: 0.3rem 0.5rem 0.25rem;
+  font-size: 0.68rem;
+  font-family: 'Inter', var(--font-sans);
+  border-bottom: 1px solid #f3f4f6;
+  background: #fafafa;
+  min-height: 28px;
+}
+
+.mk-date  { font-weight: 700; color: var(--text-primary); margin-right: 0.15rem; letter-spacing: 0.03em; }
+.mk-lbl   { color: var(--text-secondary); font-weight: 500; }
+.mk-val   { font-weight: 700; color: var(--text-primary); }
+.mk-up    { color: #c0392b !important; }
+.mk-dn    { color: #4a7c59 !important; }
+.mk-ma5   { color: #d4a017 !important; }
+.mk-ma10  { color: #e67e22 !important; }
+.mk-ma20  { color: #3498db !important; }
+
+.mk-no-data {
+  padding: 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
