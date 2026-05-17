@@ -236,6 +236,8 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
     const v = chipByDate.get(d.time)?.dealer ?? 0;
     return { time: d.time, value: v, color: v >= 0 ? '#c0392b' : '#4a7c59' };
   }), [data, chipByDate]);
+  // Whether each inst series has any non-zero value (skip chart if all-zero)
+  const trstHasData = useMemo(() => trstChips.some(d => d.value !== 0), [trstChips]);
 
   // ── Lookup maps (crosshair) ────────────────────────────────────────────────────
   const ma5Map  = useMemo(() => new Map(ma5Data.map(d  => [d.time, d.value])), [ma5Data]);
@@ -418,21 +420,25 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
     }
 
     // ── Tab 3: 三大法人（外資 + 投信 + 自營商）──────────────────────────────
-    if (chartTab === 'inst' && fgnRef.current && trstRef.current && dlrRef.current) {
-      const fgnChart = subChart(fgnRef.current, 80);
-      const fgnS = fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
-      fgnS.setData(fgnChips as any);
-      subs.push(fgnChart); syncPairs.push([fgnChart, fgnS]);
-
-      const trstChart = subChart(trstRef.current, 80);
-      const trstS = trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
-      trstS.setData(trstChips as any);
-      subs.push(trstChart); syncPairs.push([trstChart, trstS]);
-
-      const dlrChart = subChart(dlrRef.current, 80, true);
-      const dlrS = dlrChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
-      dlrS.setData(dlrChips as any);
-      subs.push(dlrChart); syncPairs.push([dlrChart, dlrS]);
+    if (chartTab === 'inst') {
+      if (fgnRef.current) {
+        const fgnChart = subChart(fgnRef.current, 80);
+        const fgnS = fgnChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+        fgnS.setData(fgnChips as any);
+        subs.push(fgnChart); syncPairs.push([fgnChart, fgnS]);
+      }
+      if (trstRef.current) {
+        const trstChart = subChart(trstRef.current, 80);
+        const trstS = trstChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+        trstS.setData(trstChips as any);
+        subs.push(trstChart); syncPairs.push([trstChart, trstS]);
+      }
+      if (dlrRef.current) {
+        const dlrChart = subChart(dlrRef.current, 80, true);
+        const dlrS = dlrChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
+        dlrS.setData(dlrChips as any);
+        subs.push(dlrChart); syncPairs.push([dlrChart, dlrS]);
+      }
     }
 
     // ── Tab 4: 大戶持股 + 散戶持股 ──────────────────────────────────────────
@@ -663,13 +669,19 @@ export default function StockChart({ data, chipData, symbol, name, lineOnly = fa
 
           <div className="smc-sub-label">
             投信買賣超
-            {latestTrst && (
+            {latestTrst && latestTrst.value !== 0 && (
               <span className={`smc-sub-stat ${latestTrst.value >= 0 ? 'cl-up' : 'cl-down'}`}>
                 {latestTrst.value >= 0 ? '+' : ''}{latestTrst.value.toLocaleString()} 張
               </span>
             )}
           </div>
-          <div ref={trstRef} className="smc-sub h80" />
+          {trstHasData ? (
+            <div ref={trstRef} className="smc-sub h80" />
+          ) : (
+            <div className="smc-sub h80 smc-nodata-placeholder">
+              <span>本期投信無買賣超記錄</span>
+            </div>
+          )}
 
           <div className="smc-sub-label">
             自營商買賣超
