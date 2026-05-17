@@ -121,15 +121,17 @@ function buildMockChips(code: string, bars: OHLCBar[]): ChipData[] {
 }
 
 // ── Real chip data from 玩股網 (05/11 ~ 05/15, overrides synthetic data) ────
-// Source: wantgoo.com institutional-investors/trend, unit: 張
+// Source: wantgoo.com institutional-investors/trend
+// 外資 = 外資(不含自營) | 投信 | 自營商 = 自行買賣 + 避險 | mainForce = 總合
+// unit: 張
 const REAL_CHIPS_DATA: Record<string, ChipData[]> = {
   // ── 飆股掃描 (rocket) stocks ─────────────────────────────────────────────────
   '3661': [
-    { time: '2026-05-11', foreign:  314, trust:    1, dealer:    4, mainForce:  319 },
-    { time: '2026-05-12', foreign:   77, trust:   83, dealer:  -13, mainForce:  147 },
-    { time: '2026-05-13', foreign: -513, trust: -143, dealer:  -16, mainForce: -672 },
-    { time: '2026-05-14', foreign:  175, trust:   62, dealer:    2, mainForce:  239 },
-    { time: '2026-05-15', foreign:  401, trust:  -81, dealer:    3, mainForce:  323 },
+    { time: '2026-05-11', foreign:  314, trust:    1, dealer:   94, mainForce:  409 },  // dealer=4+90
+    { time: '2026-05-12', foreign:   77, trust:   83, dealer:  -83, mainForce:   77 },  // dealer=-13-70
+    { time: '2026-05-13', foreign: -513, trust: -143, dealer:  -99, mainForce: -755 },  // dealer=-16-83
+    { time: '2026-05-14', foreign:  175, trust:   62, dealer:   19, mainForce:  256 },  // dealer=2+17
+    { time: '2026-05-15', foreign:  401, trust:  -81, dealer:  -70, mainForce:  250 },  // dealer=3-73
   ],
   '2454': [
     { time: '2026-05-11', foreign: -371, trust:    0, dealer:   19, mainForce: -352 },
@@ -139,55 +141,61 @@ const REAL_CHIPS_DATA: Record<string, ChipData[]> = {
     { time: '2026-05-15', foreign:  335, trust:    0, dealer: -348, mainForce:  -13 },
   ],
   '6442': [
-    { time: '2026-05-11', foreign:  156, trust: -372, dealer:   64, mainForce: -152 },
-    { time: '2026-05-12', foreign: -650, trust: -389, dealer:   -1, mainForce:-1040 },
-    { time: '2026-05-13', foreign:  447, trust: -576, dealer:  -17, mainForce: -146 },
-    { time: '2026-05-14', foreign:  130, trust:   39, dealer:   -1, mainForce:  168 },
-    { time: '2026-05-15', foreign:  828, trust: -493, dealer:   -6, mainForce:  329 },
+    { time: '2026-05-11', foreign:  156, trust:    0, dealer: -308, mainForce: -152 },  // dealer=-372+64, 投信無參與
+    { time: '2026-05-12', foreign: -650, trust:    0, dealer: -390, mainForce:-1040 },  // dealer=-389-1
+    { time: '2026-05-13', foreign:  447, trust:    0, dealer: -593, mainForce: -146 },  // dealer=-576-17
+    { time: '2026-05-14', foreign:  130, trust:    0, dealer:   38, mainForce:  168 },  // dealer=39-1
+    { time: '2026-05-15', foreign:  828, trust:    0, dealer: -499, mainForce:  329 },  // dealer=-493-6
   ],
   '3037': [
-    { time: '2026-05-11', foreign: 2965, trust:  979, dealer:  -31, mainForce: 3913 },
-    { time: '2026-05-12', foreign: 1089, trust: 2465, dealer: -112, mainForce: 3442 },
-    { time: '2026-05-13', foreign: 1355, trust: 1234, dealer: -141, mainForce: 2448 },
-    { time: '2026-05-14', foreign:-3446, trust: 3621, dealer:   40, mainForce:  215 },
-    { time: '2026-05-15', foreign:-6133, trust:-1146, dealer: -732, mainForce:-8011 },
+    { time: '2026-05-11', foreign: 2965, trust:  979, dealer:   99, mainForce: 4043 },  // dealer=-31+130
+    { time: '2026-05-12', foreign: 1089, trust: 2465, dealer: -129, mainForce: 3425 },  // dealer=-112-17
+    { time: '2026-05-13', foreign: 1355, trust: 1234, dealer: -301, mainForce: 2288 },  // dealer=-141-160
+    { time: '2026-05-14', foreign:-3446, trust: 3621, dealer:   29, mainForce:  204 },  // dealer=40-11
+    { time: '2026-05-15', foreign:-6133, trust:-1146, dealer: -928, mainForce:-8207 },  // dealer=-732-196
   ],
   '3017': [
-    { time: '2026-05-11', foreign: -239, trust:  604, dealer:    8, mainForce:  373 },
-    { time: '2026-05-12', foreign:-1080, trust:  785, dealer:  -57, mainForce: -352 },
-    { time: '2026-05-13', foreign:   63, trust: 1345, dealer:    4, mainForce: 1412 },
-    { time: '2026-05-14', foreign:-1172, trust:  309, dealer:    3, mainForce: -860 },
-    { time: '2026-05-15', foreign: -611, trust:  168, dealer:  -55, mainForce: -498 },
+    { time: '2026-05-11', foreign: -239, trust:  604, dealer:   50, mainForce:  415 },  // dealer=8+42
+    { time: '2026-05-12', foreign:-1080, trust:  785, dealer:  -51, mainForce: -346 },  // dealer=-57+6
+    { time: '2026-05-13', foreign:   63, trust: 1345, dealer:    7, mainForce: 1415 },  // dealer=4+3
+    { time: '2026-05-14', foreign:-1172, trust:  309, dealer:  -44, mainForce: -907 },  // dealer=3-47
+    { time: '2026-05-15', foreign: -611, trust:  168, dealer: -219, mainForce: -662 },  // dealer=-55-164
   ],
   // ── 破底翻掃描 (reversal) stocks ──────────────────────────────────────────────
   '6669': [
-    { time: '2026-05-11', foreign: -387, trust:  399, dealer:  26, mainForce:   38 },
-    { time: '2026-05-12', foreign:-1385, trust: 1025, dealer:  21, mainForce: -339 },
-    { time: '2026-05-13', foreign: -671, trust:  450, dealer: -29, mainForce: -250 },
-    { time: '2026-05-14', foreign:  -66, trust:   55, dealer:   2, mainForce:   -9 },
-    { time: '2026-05-15', foreign:  461, trust:  -21, dealer:  -9, mainForce:  431 },
+    { time: '2026-05-11', foreign: -387, trust:  399, dealer:   13, mainForce:   25 },  // dealer=26-13
+    { time: '2026-05-12', foreign:-1385, trust: 1025, dealer:   50, mainForce: -310 },  // dealer=21+29
+    { time: '2026-05-13', foreign: -671, trust:  450, dealer:  -52, mainForce: -273 },  // dealer=-29-23
+    { time: '2026-05-14', foreign:  -66, trust:   55, dealer:  -26, mainForce:  -37 },  // dealer=2-28
+    { time: '2026-05-15', foreign:  461, trust:  -21, dealer:  -37, mainForce:  403 },  // dealer=-9-28
   ],
   '3711': [
-    { time: '2026-05-13', foreign:-3900, trust:    0, dealer: 2608, mainForce:-1292 },
-    { time: '2026-05-14', foreign: -881, trust:    0, dealer: -404, mainForce:-1285 },
-    { time: '2026-05-15', foreign:  658, trust:    0, dealer:  695, mainForce: 1353 },
+    { time: '2026-05-11', foreign: 1420, trust:  657, dealer:  256, mainForce: 2333 },  // dealer=168+88
+    { time: '2026-05-12', foreign:-2402, trust: 5152, dealer:   46, mainForce: 2796 },  // dealer=-19+65
+    { time: '2026-05-13', foreign:-3900, trust: 2661, dealer: -344, mainForce:-1583 },  // dealer=-53-291
+    { time: '2026-05-14', foreign: -881, trust: -355, dealer: -313, mainForce:-1549 },  // dealer=-49-264
+    { time: '2026-05-15', foreign:  658, trust:  419, dealer:  450, mainForce: 1527 },  // dealer=276+174
   ],
   '8996': [
-    { time: '2026-05-11', foreign: -426, trust:  286, dealer:  20, mainForce: -120 },
-    { time: '2026-05-12', foreign: -682, trust:  520, dealer:   6, mainForce: -156 },
-    { time: '2026-05-13', foreign:  -33, trust: -192, dealer:  -6, mainForce: -231 },
-    { time: '2026-05-14', foreign: -276, trust:  347, dealer:  17, mainForce:   88 },
-    { time: '2026-05-15', foreign: -144, trust:  216, dealer: -40, mainForce:   32 },
+    { time: '2026-05-11', foreign: -426, trust:  286, dealer:   20, mainForce: -120 },  // dealer=20+0
+    { time: '2026-05-12', foreign: -682, trust:  520, dealer:   -3, mainForce: -165 },  // dealer=6-9
+    { time: '2026-05-13', foreign:  -33, trust: -192, dealer:   -6, mainForce: -231 },  // dealer=-6+0
+    { time: '2026-05-14', foreign: -276, trust:  347, dealer:   16, mainForce:   87 },  // dealer=17-1
+    { time: '2026-05-15', foreign: -144, trust:  216, dealer:  -39, mainForce:   33 },  // dealer=-40+1
   ],
   '5274': [
-    { time: '2026-05-11', foreign:   42, trust:    0, dealer:  12, mainForce:   55 },
-    { time: '2026-05-12', foreign:  -35, trust:    0, dealer:  57, mainForce:   20 },
-    { time: '2026-05-13', foreign:    2, trust:    0, dealer:  -9, mainForce:   -7 },
-    { time: '2026-05-14', foreign:   23, trust:    0, dealer:  10, mainForce:   31 },
-    { time: '2026-05-15', foreign:  -12, trust:    0, dealer:   4, mainForce:   -8 },
+    { time: '2026-05-11', foreign:   42, trust:   12, dealer:    1, mainForce:   55 },  // 投信+12非dealer
+    { time: '2026-05-12', foreign:  -35, trust:   57, dealer:   -2, mainForce:   20 },
+    { time: '2026-05-13', foreign:    2, trust:   -9, dealer:    0, mainForce:   -7 },
+    { time: '2026-05-14', foreign:   23, trust:   10, dealer:   -2, mainForce:   31 },
+    { time: '2026-05-15', foreign:  -12, trust:    4, dealer:    0, mainForce:   -8 },
   ],
   '3653': [
-    { time: '2026-05-15', foreign:  208, trust:  -53, dealer: -68, mainForce:   47 },
+    { time: '2026-05-11', foreign:  284, trust:  -23, dealer:  188, mainForce:  449 },  // dealer=108+80
+    { time: '2026-05-12', foreign: -420, trust:  425, dealer: -127, mainForce: -122 },  // dealer=-107-20
+    { time: '2026-05-13', foreign:  295, trust: -311, dealer:   77, mainForce:   61 },  // dealer=33+44
+    { time: '2026-05-14', foreign: -165, trust: -184, dealer:  140, mainForce: -209 },  // dealer=41+99
+    { time: '2026-05-15', foreign:  208, trust:  -53, dealer: -106, mainForce:   49 },  // dealer=-68-38
   ],
 };
 
