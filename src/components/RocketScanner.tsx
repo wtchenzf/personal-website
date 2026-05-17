@@ -845,142 +845,35 @@ function ChipBarPanel({ data }: { data: ChipData[] }) {
   );
 }
 
-// ── Tech Signal Panel (KD / MACD / RSI) ───────────────────────────────────────
-
-function TechSignalPanel({ bars }: { bars: OHLCBar[] }) {
-  if (bars.length < 14) return null;
-
-  // OHLCBar → OHLCData (add dummy volume)
-  const d = bars.map(b => ({ ...b, volume: 0 }));
-  const kd   = calculateKD(d);
-  const macd = calculateMACD(d);
-  const rsi  = calculateRSI(d, 14);
-
-  if (!kd.length || !macd.dif.length || !rsi.length) return null;
-
-  const latestKD   = kd.at(-1)!;
-  const prevKD     = kd.at(-2);
-  const latestDIF  = macd.dif.at(-1)?.value ?? 0;
-  const latestDEM  = macd.dem.at(-1)?.value ?? 0;
-  const latestHist = macd.histogram.at(-1)?.value ?? 0;
-  const prevHist   = macd.histogram.at(-2)?.value ?? 0;
-  const latestRSI  = rsi.at(-1)?.value ?? 0;
-
-  // KD: golden cross = K crossed above D, with K < 20 zone at crossing
-  const isGoldenCross = !!(prevKD && prevKD.k <= prevKD.d && latestKD.k > latestKD.d);
-  const kCrossVal     = prevKD?.k ?? latestKD.k;
-  const crossBelow20  = isGoldenCross && kCrossVal < 20;
-  const crossBelow30  = isGoldenCross && kCrossVal < 30;
-
-  // MACD: negative and improving (converging) or just turned positive
-  const isMACDPos        = latestHist >= 0;
-  const isMACDConverging = !isMACDPos && latestHist > prevHist;
-
-  // RSI
-  const isOversold = latestRSI < 30;
-  const isLowRSI   = latestRSI < 50;
-
-  // KD status
-  const kdStatus  = crossBelow20 ? 'KD<20 黃金交叉 ✓'
-                  : crossBelow30 ? 'KD<30 黃金交叉'
-                  : isGoldenCross ? 'KD 黃金交叉'
-                  : latestKD.k < 20 ? 'K<20 低檔整理'
-                  : latestKD.k < 30 ? 'K<30 低檔觀察'
-                  : 'K值偏高';
-  const kdClass   = (crossBelow20 || crossBelow30 || isGoldenCross) ? 'ts-bullish'
-                  : latestKD.k < 30 ? 'ts-neutral' : 'ts-normal';
-
-  // MACD status
-  const macdStatus = isMACDPos        ? 'MACD 翻正 ✓'
-                   : isMACDConverging  ? 'MACD 綠棒收斂'
-                   : '空頭延伸中';
-  const macdClass  = isMACDPos ? 'ts-bullish' : isMACDConverging ? 'ts-neutral' : 'ts-normal';
-
-  // RSI status
-  const rsiStatus = isOversold ? 'RSI 超賣 < 30 ✓'
-                  : isLowRSI   ? 'RSI 低檔 < 50'
-                  : 'RSI 中高水位';
-  const rsiClass  = isOversold ? 'ts-bullish' : isLowRSI ? 'ts-neutral' : 'ts-normal';
-
-  return (
-    <div className="tech-signal-panel">
-      <div className="ts-title">技術指標</div>
-      <div className="ts-grid">
-
-        {/* KD */}
-        <div className={`ts-card ${kdClass}`}>
-          <div className="ts-card-header">
-            <span className="ts-name">KD (9)</span>
-            <span className={`ts-badge ${kdClass}`}>{kdStatus}</span>
-          </div>
-          <div className="ts-vals">
-            <span className="ts-kv">K&thinsp;<strong>{latestKD.k.toFixed(1)}</strong></span>
-            <span className="ts-dv">D&thinsp;<strong>{latestKD.d.toFixed(1)}</strong></span>
-          </div>
-          <div className="ts-bar-bg">
-            <div className="ts-bar-k" style={{ width: `${Math.min(latestKD.k, 100)}%` }} />
-          </div>
-        </div>
-
-        {/* MACD */}
-        <div className={`ts-card ${macdClass}`}>
-          <div className="ts-card-header">
-            <span className="ts-name">MACD</span>
-            <span className={`ts-badge ${macdClass}`}>{macdStatus}</span>
-          </div>
-          <div className="ts-vals">
-            <span>DIF&thinsp;<strong>{latestDIF.toFixed(2)}</strong></span>
-            <span>DEM&thinsp;<strong>{latestDEM.toFixed(2)}</strong></span>
-          </div>
-          <div className="ts-hist-row">
-            <span className="ts-hist-label">柱狀</span>
-            <span className={`ts-hist-val ${latestHist >= 0 ? 'ts-hist-pos' : 'ts-hist-neg'}`}>
-              {latestHist >= 0 ? '+' : ''}{latestHist.toFixed(2)}
-            </span>
-            {isMACDConverging && <span className="ts-trend">↗ 收斂中</span>}
-          </div>
-        </div>
-
-        {/* RSI */}
-        <div className={`ts-card ${rsiClass}`}>
-          <div className="ts-card-header">
-            <span className="ts-name">RSI (14)</span>
-            <span className={`ts-badge ${rsiClass}`}>{rsiStatus}</span>
-          </div>
-          <div className="ts-rsi-big">{latestRSI.toFixed(1)}</div>
-          <div className="ts-bar-bg">
-            <div
-              className={`ts-bar-rsi ${isOversold ? 'ts-bar-over' : isLowRSI ? 'ts-bar-low' : 'ts-bar-hi'}`}
-              style={{ width: `${Math.min(latestRSI, 100)}%` }}
-            />
-            <div className="ts-rsi-mark" style={{ left: '30%' }} title="超賣線 30" />
-            <div className="ts-rsi-mark" style={{ left: '70%' }} title="超買線 70" />
-          </div>
-          <div className="ts-rsi-range">
-            <span>超賣 30</span><span>超買 70</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-// ── Tech Chart Panel (KD / MACD / RSI stacked lightweight-charts) ────────────
+// ── Tech Chart Panel (KD / MACD / RSI — matches StockChart KD・MACD・RSI tab) ──
 
 function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
   const kdRef   = useRef<HTMLDivElement>(null);
   const macdRef = useRef<HTMLDivElement>(null);
   const rsiRef  = useRef<HTMLDivElement>(null);
 
+  // Displayed label values (latest or crosshair)
+  const [kdVals,   setKdVals]   = useState<{ k: number; d: number } | null>(null);
+  const [macdVals, setMacdVals] = useState<{ dif: number; dem: number } | null>(null);
+  const [rsiVal,   setRsiVal]   = useState<number | null>(null);
+
+  // Pre-compute indicators synchronously so labels show on first render
+  const d     = bars.map(b => ({ ...b, volume: 0 }));
+  const kdd   = calculateKD(d);
+  const macdd = calculateMACD(d);
+  const rsid  = calculateRSI(d, 14);
+
+  // Initialise label states from latest bar
+  useEffect(() => {
+    if (kdd.length)        setKdVals({ k: kdd.at(-1)!.k, d: kdd.at(-1)!.d });
+    if (macdd.dif.length)  setMacdVals({ dif: macdd.dif.at(-1)!.value, dem: macdd.dem.at(-1)!.value });
+    if (rsid.length)       setRsiVal(rsid.at(-1)!.value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars]);
+
   useEffect(() => {
     if (bars.length < 14) return;
     if (!kdRef.current || !macdRef.current || !rsiRef.current) return;
-
-    const d     = bars.map(b => ({ ...b, volume: 0 }));
-    const kdd   = calculateKD(d);
-    const macdd = calculateMACD(d);
-    const rsid  = calculateRSI(d, 14);
 
     const makeChart = (el: HTMLElement, h: number, timeVisible = false) =>
       createChart(el, {
@@ -992,23 +885,32 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
           horzLine: { visible: false, labelVisible: false },
           vertLine: { style: 0, color: '#9ca3af', labelVisible: false },
         },
-        handleScroll: false, handleScale: false,
+        handleScroll: true, handleScale: true,
       });
 
-    // ── KD chart (K blue, D orange)
-    const kdChart = makeChart(kdRef.current, 80);
-    kdChart.addSeries(LineSeries, {
-      color: '#2962FF', lineWidth: 1.5 as const,
+    // ── KD (9): K blue, D orange ─────────────────────────────────────────────
+    const kdChart = makeChart(kdRef.current, 90);
+    const kdK = kdChart.addSeries(LineSeries, {
+      color: '#2962FF', lineWidth: 2 as const,
       priceLineVisible: false, lastValueVisible: false,
-    }).setData(kdd.map(r => ({ time: r.time, value: r.k })) as any);
+    });
+    kdK.setData(kdd.map(r => ({ time: r.time, value: r.k })) as any);
     kdChart.addSeries(LineSeries, {
-      color: '#FF6D00', lineWidth: 1.5 as const,
+      color: '#FF6D00', lineWidth: 2 as const,
       priceLineVisible: false, lastValueVisible: false,
     }).setData(kdd.map(r => ({ time: r.time, value: r.d })) as any);
     kdChart.timeScale().fitContent();
 
-    // ── MACD chart (histogram + DIF/DEM lines)
-    const macdChart = makeChart(macdRef.current, 90);
+    // Crosshair → update KD labels
+    kdChart.subscribeCrosshairMove(param => {
+      if (!param.time) { setKdVals({ k: kdd.at(-1)!.k, d: kdd.at(-1)!.d }); return; }
+      const t = String(param.time);
+      const row = kdd.find(r => r.time === t);
+      if (row) setKdVals({ k: row.k, d: row.d });
+    });
+
+    // ── MACD (12,26,9): histogram + DIF/DEM ─────────────────────────────────
+    const macdChart = makeChart(macdRef.current, 80);
     const macdHist = macdChart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' } });
     macdHist.setData(
       macdd.histogram.map(r => ({
@@ -1016,92 +918,111 @@ function TechChartPanel({ bars }: { bars: OHLCBar[] }) {
         color: r.value >= 0 ? '#c0392b' : '#4a7c59',
       })) as any
     );
-    macdChart.addSeries(LineSeries, {
+    const difSeries = macdChart.addSeries(LineSeries, {
       color: '#2962FF', lineWidth: 1 as const,
       priceLineVisible: false, lastValueVisible: false,
-    }).setData(macdd.dif as any);
+    });
+    difSeries.setData(macdd.dif as any);
     macdChart.addSeries(LineSeries, {
       color: '#FF6D00', lineWidth: 1 as const,
       priceLineVisible: false, lastValueVisible: false,
     }).setData(macdd.dem as any);
     macdChart.timeScale().fitContent();
 
-    // ── RSI chart (purple line + 30/70 reference lines)
-    const rsiChart = makeChart(rsiRef.current, 80, true);
-    rsiChart.addSeries(LineSeries, {
-      color: '#8e44ad', lineWidth: 1.5 as const,
+    macdChart.subscribeCrosshairMove(param => {
+      if (!param.time) {
+        setMacdVals({ dif: macdd.dif.at(-1)!.value, dem: macdd.dem.at(-1)!.value });
+        return;
+      }
+      const t = String(param.time);
+      const difR = macdd.dif.find(r => r.time === t);
+      const demR = macdd.dem.find(r => r.time === t);
+      if (difR && demR) setMacdVals({ dif: difR.value, dem: demR.value });
+    });
+
+    // ── RSI (14): purple + 30/70 refs ────────────────────────────────────────
+    const rsiChart = makeChart(rsiRef.current, 90, true);
+    const rsiSeries = rsiChart.addSeries(LineSeries, {
+      color: '#8e44ad', lineWidth: 2 as const,
       priceLineVisible: false, lastValueVisible: false,
-    }).setData(rsid as any);
-    const refOpts = {
-      lineWidth: 1 as const, priceLineVisible: false,
-      lastValueVisible: false, crosshairMarkerVisible: false,
-    } as const;
-    rsiChart.addSeries(LineSeries, { ...refOpts, color: '#e74c3c' })
+    });
+    rsiSeries.setData(rsid as any);
+    const refLine = { lineWidth: 1 as const, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false };
+    rsiChart.addSeries(LineSeries, { ...refLine, color: '#e74c3c' })
       .setData(rsid.map(r => ({ time: r.time, value: 70 })) as any);
-    rsiChart.addSeries(LineSeries, { ...refOpts, color: '#27ae60' })
+    rsiChart.addSeries(LineSeries, { ...refLine, color: '#27ae60' })
       .setData(rsid.map(r => ({ time: r.time, value: 30 })) as any);
     rsiChart.timeScale().fitContent();
 
-    const charts = [kdChart, macdChart, rsiChart];
-    const refs   = [kdRef, macdRef, rsiRef];
-
-    // Sync time range
-    kdChart.timeScale().subscribeVisibleTimeRangeChange(() => {
-      const r = kdChart.timeScale().getVisibleRange();
-      if (r) [macdChart, rsiChart].forEach(c => { try { c.timeScale().setVisibleRange(r); } catch (_) {} });
+    rsiChart.subscribeCrosshairMove(param => {
+      if (!param.time) { setRsiVal(rsid.at(-1)!.value); return; }
+      const t = String(param.time);
+      const row = rsid.find(r => r.time === t);
+      if (row) setRsiVal(row.value);
     });
 
+    // ── Time-range sync (scroll one → all follow) ─────────────────────────────
+    const allCharts = [kdChart, macdChart, rsiChart];
+    allCharts.forEach(src => {
+      src.timeScale().subscribeVisibleTimeRangeChange(() => {
+        const r = src.timeScale().getVisibleRange();
+        if (r) allCharts.forEach(c => { if (c !== src) { try { c.timeScale().setVisibleRange(r); } catch (_) {} } });
+      });
+    });
+
+    const refs = [kdRef, macdRef, rsiRef];
     const onResize = () => refs.forEach((ref, i) => {
-      if (ref.current) charts[i].applyOptions({ width: ref.current.clientWidth });
+      if (ref.current) allCharts[i].applyOptions({ width: ref.current.clientWidth });
     });
     window.addEventListener('resize', onResize);
 
     return () => {
       window.removeEventListener('resize', onResize);
-      charts.forEach(c => c.remove());
+      allCharts.forEach(c => c.remove());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bars]);
 
   if (bars.length < 14) {
-    return <p className="tc-no-data">K 線資料不足，請切換至「📈 K線圖」頁載入後再試。</p>;
+    return <p className="tc-no-data">K 線資料不足，請先切換至「📈 K線圖」頁載入後再試。</p>;
   }
 
   return (
     <div className="tech-chart-panel">
-      <div className="tc-row">
-        <div className="tc-header">
-          <span className="tc-label">KD (9)</span>
-          <span className="tc-legend">
-            <span className="tcl-k">── K</span>
-            <span className="tcl-d">── D</span>
-            <span className="tc-hint">低於 20 = 低檔</span>
-          </span>
-        </div>
-        <div ref={kdRef} className="tc-canvas" />
-      </div>
 
-      <div className="tc-row">
-        <div className="tc-header">
-          <span className="tc-label">MACD (12,26,9)</span>
-          <span className="tc-legend">
-            <span className="tcl-dif">── DIF</span>
-            <span className="tcl-dem">── DEM</span>
-            <span className="tc-hint">紅↑多頭 綠↓空頭</span>
-          </span>
-        </div>
-        <div ref={macdRef} className="tc-canvas" />
+      {/* KD */}
+      <div className="tc-label-row">
+        <span className="tc-name">KD (9)</span>
+        {kdVals && (
+          <>
+            <span className="tc-val tc-k">K {kdVals.k.toFixed(2)}</span>
+            <span className="tc-val tc-d">D {kdVals.d.toFixed(2)}</span>
+          </>
+        )}
       </div>
+      <div ref={kdRef} className="smc-sub h90" />
 
-      <div className="tc-row">
-        <div className="tc-header">
-          <span className="tc-label">RSI (14)</span>
-          <span className="tc-legend">
-            <span className="tcl-rsi">── RSI</span>
-            <span className="tc-hint">30 超賣 · 70 超買</span>
-          </span>
-        </div>
-        <div ref={rsiRef} className="tc-canvas" />
+      {/* MACD */}
+      <div className="tc-label-row">
+        <span className="tc-name">MACD (12,26,9)</span>
+        {macdVals && (
+          <>
+            <span className="tc-val tc-dif">DIF {macdVals.dif.toFixed(2)}</span>
+            <span className="tc-val tc-dem">DEM {macdVals.dem.toFixed(2)}</span>
+          </>
+        )}
       </div>
+      <div ref={macdRef} className="smc-sub h80" />
+
+      {/* RSI */}
+      <div className="tc-label-row">
+        <span className="tc-name">RSI (14)</span>
+        {rsiVal !== null && (
+          <span className="tc-val tc-rsi">{rsiVal.toFixed(2)}</span>
+        )}
+      </div>
+      <div ref={rsiRef} className="smc-sub h90" />
+
     </div>
   );
 }
@@ -1201,9 +1122,6 @@ function ChipDetailView({
           ))}
         </div>
       </div>
-
-      {/* ── Tech signals (破底翻 only) ── */}
-      {!isRocket && <TechSignalPanel bars={ohlcBars} />}
 
       {/* ── Score breakdown ── */}
       <div className="score-breakdown">
