@@ -35,18 +35,18 @@ export const SEED_DATA_2330: OHLCData[] = [
   { time: '2026-04-24', open: 2110, high: 2190, low: 2105, close: 2185, volume: 49490 },
   { time: '2026-04-27', open: 2280, high: 2330, low: 2265, close: 2265, volume: 79778 },  // TWSE
   { time: '2026-04-28', open: 2245, high: 2280, low: 2215, close: 2215, volume: 57336 },  // TWSE
-  { time: '2026-04-29', open: 2250, high: 2270, low: 2240, close: 2250, volume: 48200 },  // 估算
-  { time: '2026-04-30', open: 2250, high: 2285, low: 2240, close: 2250, volume: 44100 },  // 估算
+  { time: '2026-04-29', open: 2175, high: 2210, low: 2165, close: 2180, volume: 49147 },  // TWSE
+  { time: '2026-04-30', open: 2205, high: 2215, low: 2135, close: 2135, volume: 59584 },  // TWSE
   { time: '2026-05-04', open: 2200, high: 2285, low: 2195, close: 2275, volume: 52000 },  // 估算
   { time: '2026-05-05', open: 2250, high: 2270, low: 2240, close: 2250, volume: 38500 },  // 估算
   { time: '2026-05-06', open: 2250, high: 2285, low: 2240, close: 2250, volume: 37800 },  // 估算
   { time: '2026-05-07', open: 2335, high: 2345, low: 2310, close: 2310, volume: 41200 },  // 估算
   { time: '2026-05-08', open: 2300, high: 2310, low: 2265, close: 2290, volume: 39600 },  // 估算
   { time: '2026-05-11', open: 2265, high: 2275, low: 2235, close: 2235, volume: 47600 },  // TWSE
-  { time: '2026-05-12', open: 2245, high: 2290, low: 2235, close: 2270, volume: 43800 },  // 估算
-  { time: '2026-05-13', open: 2265, high: 2298, low: 2248, close: 2275, volume: 38400 },  // 估算（外資持續賣）
-  { time: '2026-05-14', open: 2278, high: 2295, low: 2255, close: 2270, volume: 37200 },  // 玩股網收盤 2270
-  { time: '2026-05-15', open: 2310, high: 2325, low: 2250, close: 2265, volume: 29811 },  // 玩股網實測（-0.22%）
+  { time: '2026-05-12', open: 2235, high: 2280, low: 2210, close: 2255, volume: 54240 },  // TWSE
+  { time: '2026-05-13', open: 2205, high: 2240, low: 2205, close: 2220, volume: 43728 },  // TWSE
+  { time: '2026-05-14', open: 2250, high: 2270, low: 2230, close: 2270, volume: 39565 },  // TWSE
+  { time: '2026-05-15', open: 2310, high: 2325, low: 2250, close: 2265, volume: 34361 },  // TWSE
 ];
 
 // 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報
@@ -112,16 +112,16 @@ export const SEED_DATA_2454: OHLCData[] = [
   { time: '2026-04-28', open: 2490, high: 2675, low: 2485, close: 2615, volume: 24314 },  // TWSE
   { time: '2026-04-29', open: 2550, high: 2595, low: 2500, close: 2575, volume: 22800 },  // 估算
   { time: '2026-04-30', open: 2665, high: 2685, low: 2565, close: 2610, volume: 24100 },  // 估算
-  { time: '2026-05-04', open: 2870, high: 2870, low: 2870, close: 2870, volume: 38500 },  // TWSE (漲停)
-  { time: '2026-05-05', open: 3155, high: 3155, low: 3155, close: 3155, volume: 52000 },  // TWSE (漲停)
+  { time: '2026-05-04', open: 2870, high: 2870, low: 2870, close: 2870, volume:  4020 },  // TWSE (漲停)
+  { time: '2026-05-05', open: 3155, high: 3155, low: 3155, close: 3155, volume: 10092 },  // TWSE (漲停)
   { time: '2026-05-06', open: 3470, high: 3470, low: 3155, close: 3430, volume: 45200 },  // 估算
   { time: '2026-05-07', open: 3430, high: 3430, low: 3295, close: 3420, volume: 36800 },  // 估算
   { time: '2026-05-08', open: 3320, high: 3670, low: 3320, close: 3630, volume: 42500 },  // 估算
   { time: '2026-05-11', open: 3575, high: 3985, low: 3565, close: 3880, volume: 31200 },  // TWSE
-  { time: '2026-05-12', open: 3875, high: 3920, low: 3720, close: 3780, volume: 19800 },  // 估算（外資 -1730 賣超）
-  { time: '2026-05-13', open: 3770, high: 3820, low: 3620, close: 3650, volume: 17500 },  // 估算（外資持續賣超）
-  { time: '2026-05-14', open: 3640, high: 3700, low: 3370, close: 3405, volume: 15800 },  // 估算
-  { time: '2026-05-15', open: 3425, high: 3555, low: 3200, close: 3260, volume:  6664 },  // 玩股網實測（-4.26%）
+  { time: '2026-05-12', open: 3835, high: 3910, low: 3700, close: 3700, volume: 11090 },  // TWSE
+  { time: '2026-05-13', open: 3625, high: 3680, low: 3400, close: 3495, volume:  9694 },  // TWSE
+  { time: '2026-05-14', open: 3585, high: 3590, low: 3385, close: 3405, volume:  7104 },  // TWSE
+  { time: '2026-05-15', open: 3425, high: 3555, low: 3200, close: 3260, volume:  7341 },  // TWSE
 ];
 
 // 籌碼 (單位：張) — 來源 玩股網實測（投信全程為 0，原 trust 欄位實為自營商）
@@ -208,54 +208,80 @@ export const SEED_DATA_SILVER: OHLCData[] = [
 
 // ── 智邦科技 (2345) ─────────────────────────────────────────────────────────────
 // AI 網通龍頭；GB200/GB300 超高速交換器供應商，受惠 AI 資料中心建設
-// 03/26–04/28 (估算參考 鉅亨網/TWSE；精確至個位數)
+// OHLC: TWSE STOCK_DAY (April–May real data); March 估算（依 04/01 開盤倒推）
 export const SEED_DATA_2345: OHLCData[] = [
-  // March
-  { time: '2026-03-26', open: 432, high: 440, low: 428, close: 436, volume: 3512 },
-  { time: '2026-03-27', open: 430, high: 438, low: 424, close: 428, volume: 3284 },
-  { time: '2026-03-30', open: 420, high: 428, low: 415, close: 418, volume: 3855 },
-  { time: '2026-03-31', open: 415, high: 422, low: 408, close: 410, volume: 4102 },
-  // April
-  { time: '2026-04-01', open: 418, high: 430, low: 412, close: 425, volume: 4435 },
-  { time: '2026-04-02', open: 428, high: 432, low: 418, close: 420, volume: 3965 },
-  { time: '2026-04-07', open: 415, high: 425, low: 410, close: 422, volume: 3640 },
-  { time: '2026-04-08', open: 430, high: 448, low: 428, close: 445, volume: 5128 },
-  { time: '2026-04-09', open: 448, high: 458, low: 442, close: 455, volume: 4875 },
-  { time: '2026-04-10', open: 458, high: 468, low: 452, close: 465, volume: 4320 },
-  { time: '2026-04-13', open: 462, high: 472, low: 455, close: 468, volume: 4185 },
-  { time: '2026-04-14', open: 470, high: 490, low: 468, close: 488, volume: 5620 },
-  { time: '2026-04-15', open: 492, high: 510, low: 488, close: 505, volume: 6250 },
-  { time: '2026-04-16', open: 508, high: 525, low: 502, close: 518, volume: 5840 },
-  { time: '2026-04-17', open: 515, high: 528, low: 508, close: 512, volume: 5125 },
-  { time: '2026-04-20', open: 510, high: 522, low: 505, close: 518, volume: 4680 },
-  { time: '2026-04-21', open: 522, high: 540, low: 518, close: 538, volume: 5420 },
-  { time: '2026-04-22', open: 540, high: 558, low: 535, close: 552, volume: 5935 },
-  { time: '2026-04-23', open: 555, high: 570, low: 548, close: 562, volume: 5285 },
-  { time: '2026-04-24', open: 565, high: 582, low: 560, close: 578, volume: 5648 },
-  { time: '2026-04-27', open: 582, high: 598, low: 575, close: 588, volume: 6125 },  // 估算
-  { time: '2026-04-28', open: 585, high: 602, low: 580, close: 595, volume: 5880 },  // 估算
+  // March (估算 — 依 04/01 開盤 1585 倒推)
+  { time: '2026-03-26', open: 1480, high: 1510, low: 1465, close: 1498, volume: 2850 },
+  { time: '2026-03-27', open: 1495, high: 1528, low: 1478, close: 1512, volume: 3120 },
+  { time: '2026-03-30', open: 1508, high: 1538, low: 1490, close: 1525, volume: 2980 },
+  { time: '2026-03-31', open: 1520, high: 1558, low: 1508, close: 1545, volume: 3250 },
+  // April (TWSE STOCK_DAY)
+  { time: '2026-04-01', open: 1585, high: 1660, low: 1575, close: 1660, volume: 4304 },
+  { time: '2026-04-02', open: 1670, high: 1685, low: 1580, close: 1590, volume: 3328 },
+  { time: '2026-04-07', open: 1660, high: 1685, low: 1600, close: 1615, volume: 3377 },
+  { time: '2026-04-08', open: 1680, high: 1765, low: 1680, close: 1710, volume: 5374 },
+  { time: '2026-04-09', open: 1730, high: 1760, low: 1670, close: 1690, volume: 3271 },
+  { time: '2026-04-10', open: 1750, high: 1855, low: 1720, close: 1835, volume: 5713 },
+  { time: '2026-04-13', open: 1820, high: 1855, low: 1785, close: 1820, volume: 2934 },
+  { time: '2026-04-14', open: 1885, high: 1910, low: 1850, close: 1890, volume: 4060 },
+  { time: '2026-04-15', open: 1900, high: 2075, low: 1870, close: 1970, volume: 7294 },
+  { time: '2026-04-16', open: 2025, high: 2050, low: 1975, close: 2035, volume: 3885 },
+  { time: '2026-04-17', open: 2035, high: 2110, low: 2020, close: 2070, volume: 3419 },
+  { time: '2026-04-20', open: 2045, high: 2060, low: 1995, close: 2005, volume: 4047 },
+  { time: '2026-04-21', open: 2100, high: 2205, low: 2060, close: 2190, volume: 6399 },
+  { time: '2026-04-22', open: 2150, high: 2250, low: 2130, close: 2200, volume: 4732 },
+  { time: '2026-04-23', open: 2220, high: 2230, low: 2010, close: 2080, volume: 6589 },
+  { time: '2026-04-24', open: 2105, high: 2170, low: 2050, close: 2140, volume: 5128 },
+  { time: '2026-04-27', open: 2205, high: 2225, low: 2105, close: 2175, volume: 4987 },
+  { time: '2026-04-28', open: 2250, high: 2340, low: 2195, close: 2295, volume: 5956 },
+  { time: '2026-04-29', open: 2245, high: 2270, low: 2190, close: 2210, volume: 4562 },
+  { time: '2026-04-30', open: 2225, high: 2315, low: 2215, close: 2280, volume: 3776 },
+  // May (TWSE STOCK_DAY)
+  { time: '2026-05-04', open: 2380, high: 2505, low: 2360, close: 2505, volume: 4412 },
+  { time: '2026-05-05', open: 2520, high: 2550, low: 2440, close: 2495, volume: 3475 },
+  { time: '2026-05-06', open: 2545, high: 2620, low: 2325, close: 2485, volume: 6256 },
+  { time: '2026-05-07', open: 2495, high: 2560, low: 2465, close: 2560, volume: 3820 },
+  { time: '2026-05-08', open: 2400, high: 2425, low: 2305, close: 2375, volume: 10934 },
+  { time: '2026-05-11', open: 2490, high: 2610, low: 2485, close: 2590, volume: 8849 },
+  { time: '2026-05-12', open: 2675, high: 2695, low: 2520, close: 2525, volume: 6057 },
+  { time: '2026-05-13', open: 2510, high: 2555, low: 2435, close: 2435, volume: 4120 },
+  { time: '2026-05-14', open: 2625, high: 2675, low: 2605, close: 2675, volume: 7660 },
+  { time: '2026-05-15', open: 2640, high: 2640, low: 2500, close: 2505, volume: 7040 },
 ];
 
-// 籌碼 (單位：張) — 來源估算（參考三大法人比例）
+// 籌碼 (單位：張) — 來源 TWSE T86 三大法人買賣超日報（shares ÷ 1000 = 張）
+// 未出現在 T86 當日資料 = 三大法人均為零
 export const CHIP_DATA_2345: ChipData[] = [
-  { time: '2026-04-01', foreign:   245, trust:   128, dealer:   38, mainForce:   411 },
-  { time: '2026-04-02', foreign:  -182, trust:    45, dealer:   22, mainForce:  -115 },
-  { time: '2026-04-07', foreign:   312, trust:   195, dealer:   55, mainForce:   562 },
-  { time: '2026-04-08', foreign:   685, trust:   380, dealer:   92, mainForce:  1157 },
-  { time: '2026-04-09', foreign:   428, trust:   252, dealer:   68, mainForce:   748 },
-  { time: '2026-04-10', foreign:   518, trust:   315, dealer:   82, mainForce:   915 },
-  { time: '2026-04-13', foreign:  -245, trust:   188, dealer:  -12, mainForce:   -69 },
-  { time: '2026-04-14', foreign:   892, trust:   465, dealer:  118, mainForce:  1475 },
-  { time: '2026-04-15', foreign:  1245, trust:   625, dealer:  152, mainForce:  2022 },
-  { time: '2026-04-16', foreign:   965, trust:   518, dealer:  128, mainForce:  1611 },
-  { time: '2026-04-17', foreign:  -385, trust:   285, dealer:   45, mainForce:   -55 },
-  { time: '2026-04-20', foreign:   425, trust:   312, dealer:   75, mainForce:   812 },
-  { time: '2026-04-21', foreign:   825, trust:   480, dealer:  112, mainForce:  1417 },
-  { time: '2026-04-22', foreign:   985, trust:   558, dealer:  135, mainForce:  1678 },
-  { time: '2026-04-23', foreign:   645, trust:   385, dealer:   95, mainForce:  1125 },
-  { time: '2026-04-24', foreign:   782, trust:   445, dealer:  108, mainForce:  1335 },
-  { time: '2026-04-27', foreign:  1125, trust:   620, dealer:  148, mainForce:  1893 },  // 估算
-  { time: '2026-04-28', foreign:   865, trust:   485, dealer:  118, mainForce:  1468 },  // 估算
+  { time: '2026-04-01', foreign:  -105, trust:   385, dealer:   106, mainForce:   386 },
+  { time: '2026-04-02', foreign:  -243, trust:   395, dealer:   -82, mainForce:    70 },
+  { time: '2026-04-07', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-08', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-09', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-10', foreign:   692, trust:   227, dealer:   452, mainForce:  1371 },
+  { time: '2026-04-13', foreign:    64, trust:    68, dealer:    20, mainForce:   153 },
+  { time: '2026-04-14', foreign:  -142, trust:   196, dealer:   -18, mainForce:    35 },
+  { time: '2026-04-15', foreign:   575, trust:   438, dealer:   -99, mainForce:   914 },
+  { time: '2026-04-16', foreign:   138, trust:   154, dealer:     1, mainForce:   294 },
+  { time: '2026-04-17', foreign:   125, trust:   204, dealer:   -28, mainForce:   301 },
+  { time: '2026-04-20', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-21', foreign:   970, trust:   407, dealer:    16, mainForce:  1393 },
+  { time: '2026-04-22', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-23', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-04-24', foreign:   825, trust:   -71, dealer:    61, mainForce:   815 },
+  { time: '2026-04-27', foreign:  -208, trust:   771, dealer:    29, mainForce:   593 },
+  { time: '2026-04-28', foreign:   830, trust:   237, dealer:    70, mainForce:  1137 },
+  { time: '2026-04-29', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 未取得
+  { time: '2026-04-30', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 未取得
+  { time: '2026-05-04', foreign:  1277, trust:    29, dealer:     9, mainForce:  1314 },
+  { time: '2026-05-05', foreign:    -6, trust:   211, dealer:    39, mainForce:   244 },
+  { time: '2026-05-06', foreign:   133, trust:   -70, dealer:    30, mainForce:    93 },
+  { time: '2026-05-07', foreign:   544, trust:    26, dealer:    60, mainForce:   630 },
+  { time: '2026-05-08', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-05-11', foreign:  2647, trust:   669, dealer:   -38, mainForce:  3278 },
+  { time: '2026-05-12', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-05-13', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
+  { time: '2026-05-14', foreign:  2982, trust:   799, dealer:  -121, mainForce:  3660 },
+  { time: '2026-05-15', foreign:     0, trust:     0, dealer:     0, mainForce:     0 },  // T86 無此股
 ];
 
 // ── VIXTWN ─────────────────────────────────────────────────────────────────────
